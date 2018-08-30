@@ -1,0 +1,12 @@
+#these are some cmds to use in Raspberry pi terminal
+
+mkdir - testdir #creates the directory 'testdir' in the current directory
+
+nano mytest.py -- RPi text editor and creates the file 'mytest.py' 
+rm -- removes a file from a directory
+
+rm -r dirtest -- removes directory 'dirtest' and all of its subfolders and files
+
+rmdir dirtest -- removes directory 'dirtest' and all of its subfolders and files
+
+cat testfile.py -- catalogs or displays on the terminal the contents of the file testfile.py
