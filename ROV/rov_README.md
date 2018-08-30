@@ -1,1 +1,1 @@
-Python program used to control the ROV and poll sensor for data
+Python program used to control the ROV and poll sensors for data
