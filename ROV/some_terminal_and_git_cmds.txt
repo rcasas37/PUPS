@@ -1,0 +1,31 @@
+#Terminal cmds ###################
+
+mkdir - testdir #creates the directory 'testdir' in the current directory
+
+nano mytest.py -- RPi text editor and creates the file 'mytest.py' 
+rm -- removes a file from a directory
+
+rm -r dirtest -- removes directory 'dirtest' and all of its subfolders and files
+
+rmdir dirtest -- removes directory 'dirtest' and all of its subfolders and files
+
+cat testfile.py -- catalogs or displays on the terminal the contents of the file testfile.py
+
+
+#Github basic cmds 
+
+git #shows all of the commands that are available via the 'git' cmd
+
+git clone URL #clones the repository at the provided 'URL'
+
+git add testfile.txt #adds 'testfile.txt' to the commit list
+git add . #adds all of your changes to a commit list 
+git add -a #same as above
+
+git commit -m "my message for changes made" ###commits all your changes and assigns the given message to each file you changed/added
+
+git push #pushes all commits to github repository
+
+git pull #gets the most recent commits from the repo before you begin working
+
+git status #shows the status of all things that are on your computer e.g. file mods and commit status
