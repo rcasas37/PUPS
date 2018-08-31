@@ -1,4 +1,4 @@
-#this is a test example .py file
+#C:\Users\lledb\AppData\Local\Programs\Python\Python35-32\%compiles python%this is a test example .py file
 #this is a test example .py file
 #this is a test example .py file
 
