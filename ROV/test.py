@@ -26,8 +26,8 @@ def main():
 		continue with main definition execution"""
 		if capstone_grade == 100:
 			print_finalgrade(capstone_grade)
-			return 0;
-			
+			return;
+
 #fn definition
 def print_grade(capstone_grade):
 	print("Your capstone grade: %d" %capstone_grade)
