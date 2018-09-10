@@ -5,16 +5,17 @@ ESET-420 Capstone II
 Author: SEAL
 File: rov_skeleton.py
 --------
-Will contain the main loop and functions that run SEAL's rov. Including movement, 
+Will contain the rov class and functions that run SEAL's rov. Including movement, 
 sensor readings, and communication to SEAL's cmd center.
 """
 
-#Import python modules
+#Import python/sensor modules
 import sys	#Module provides access to fns maintained by the interpreter
 import os	#Module provides fns allowing one to use OS dependent functionality
 from threading import Thread 	#Module provides multiple thread functionality
 import time	#Module provides SW delay functionality
-
+###########import all of the sensor modules here#############
+#import dis_oxy 
 
 
 #Global variables
@@ -128,7 +129,7 @@ Notes:
 def parse_control_data():
 	#parse the data string from buffer then write each piece to .xml
 
-	#write_xml()
+	#write_xml()	#writes to control.xml values of each control data pt.
 	return
 
 
@@ -144,18 +145,88 @@ Notes:
 def send_sensor_data():
 	#Open sensor.xml concatenate all sensor data into string close sensor.xml
 
-	#write_seral_port() the string we just created
+	#write_serial_port() #Write the string we just created to serial port
 	return
 
 
 
+"""
+Uses control.xml values to calculate PWM (dir & spd) of selected motor
+Parameters:
+	list of parameters
+Return:
+	Do we return any value?
+Notes:
+"""
+def calc_motor_spd():
+	#Open control.xml read selected value, calc PWM write it into .xml and close xml
+
+	return
+
+
+
+"""
+Uses control.xml values to send PWM value to motor for driving
+Parameters:
+	list of parameters
+Return:
+	Do we return any value?
+Notes:
+"""
+def set_motor_spd():
+	#Open control.xml read selected vals & write to ESC channel(s) via I2C bus close .xml
+
+	return
+
+
+
+"""
+Obtains temp, pressure, accelerometer, and gyroscope measurements
+Parameters:
+	list of parameters
+Return:
+	Do we return any value?
+Notes:
+"""
+def get_essential_meas():
+	#Open sensor.xml, obtain sensor measurements, write to sensor.xml and close
+
+	#write_xml()	#writes to sensor.xml value of obtained sensor meas
+	return
+
+
+
+"""
+Obtains essential measurements(temp, pres., and accel/gyro) and
+Dissolved Oxy, pH, and Salinity
+Parameters:
+	list of parameters
+Return:
+	Do we return any value?
+Notes:
+"""
+def get_all_meas():
+	#Open sensor.xml, obtain all sensor meas, write to sensor.xml and close 
+	#get_essential_meas()
+
+	#write_xml()	#writes to sensor.xml value of obtained sensor meas
+	return
+
+
+
+"""
+Attempts to stabilize rov via accelerometer and gyro if user sends to mvmt cmds
+Parameters:
+	list of parameters
+Return:
+	Do we return any value?
+Notes:
+"""
+def stabilize_rov():
+	#This one is gonna be a beach
+
+	return
 
 
 #get each sensor data
-#calculate motor spd
-#set motor spd choose based on selected ESC channel
-#get all meas
-#get essential meas
-#stabilize ROV???
-
 #parse input cmd or is this write_xml??
