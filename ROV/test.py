@@ -6,20 +6,21 @@
 # /etc/rc.local which runs after everython boots
 from decimal import Decimal #Module provides converting a string to decimal
 
-capstone_grade = 0
 
 #Program function definitions
 def main():
+	capstone_grade = 10	
 	while True:
 		# Test output
 		#for i in range(10):
 		#	print("Hello, World! %d \n" %(i + 1))
 
 		#get usr input
-		capstone_grade1 = input("What grade do you want in capstone? ")
-		capstone_grade = Decimal(capstone_grade1) #convert str to double
+		#capstone_grade1 = input("What grade do you want in capstone? ")
+		#capstone_grade = Decimal(capstone_grade1) #convert str to double
 
 		print_grade(capstone_grade)
+		capstone_grade += 10
 
 		"""Main loop terminator must have "return" if used "break" we return
 		operation back to where it left off ie we only get out of loop and 
@@ -38,7 +39,18 @@ def print_finalgrade(capstone_grade):
 
 
 
+class test_class:
+	attribute_thing = 90
+
+	"""We can get at the attribute attribute_thing
+	within our main while loop by simply calling classOjectInstance.attribute_thing
+	or classObjectInstance.get_attribute() both work
+	"""
+	def get_attribute(self):
+		return self.attribute_thing
+
 ##########################################################################
 #program execution of all functions etc
-main()
+if __name__ == '__main__':
+	main()
 #if we want more fns to execute after main then we put them here
