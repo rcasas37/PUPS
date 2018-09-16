@@ -35,7 +35,7 @@ def print_grade(capstone_grade):
 
 #fn definition
 def print_finalgrade(capstone_grade):
-	print("Goodbye. Your capstone grade: %d" %capstone_grade )
+	print("Goodbye. Your capstone grade: %d \n" %capstone_grade )
 
 
 
