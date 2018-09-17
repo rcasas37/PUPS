@@ -40,7 +40,7 @@ def read_lines():
 		return lines
 	
 	except SerialException as e:
-		print ("Error, %s", %e)
+		print ("Error, ",  e)
 		return None	
 
 def send_cmd(cmd):
@@ -52,14 +52,15 @@ def send_cmd(cmd):
 	"""
 	buf = cmd + "\r"     	# add carriage return
 	try:
+		print("Here 6")
 		ser.write(buf)
 		return True
 	except SerialException as e:
-		print ("Error, %s", %e)
+		print ("Error, ",  e)
 		return None
 			
 if __name__ == "__main__":
-	
+
 	print("\nWelcome to the Atlas Scientific Raspberry Pi UART example.\n")
 	print("    Any commands entered are passed to the board via UART except:")
 	print("    Poll,xx.x command continuously polls the board every xx.x seconds")
@@ -69,19 +70,18 @@ if __name__ == "__main__":
 	# to get a list of ports use the command: 
 	# python -m serial.tools.list_ports
 	# in the terminal
-	usbport = '/dev/ttyAMA0' # change to match your pi's setup 
+	usbport = '/dev/ttyAMA0' # change to match your pi's setup
 
-	print("Opening serial port now...")
+       	print("Opening serial port now...")
 
 	try:
 		ser = serial.Serial(usbport, 9600, timeout=0)
 	except serial.SerialException as e:
-		print ("Error, %s", %e)
+		print ("Error, ",  e)
 		sys.exit(0)
 
 	while True:
-		input_val = raw_input("Enter command: ")
-
+		input_val = input("Enter command: ")
 		# continuous polling command automatically polls the board
 		if input_val.upper().startswith("POLL"):
 			delaytime = float(string.split(input_val, ',')[1])
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 					for i in range(len(lines)):
 						# print lines[i]
 						if lines[i][0] != '*':
-							print("Response: %s" , %lines[i])
+							print("Response: " , lines[i])
 					time.sleep(delaytime)
 
 			except KeyboardInterrupt: 		# catches the ctrl-c command, which breaks the loop above
