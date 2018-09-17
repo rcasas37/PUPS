@@ -12,9 +12,11 @@ movement, sensor readings, and communication to SEAL's cmd center.
 
 #Import code modules
 import rov_skeleton #Module provides access to all of the fns with our class 'rov'
+#import sensors	#Module provides all of the sensor classes 
+#import test  #NOT A real import. Delete after done
 
 #Global variables
-#global my_var = 100 """Example if absolutely needed ONLY"""
+#global my_var = 100 
 
 
 
@@ -31,16 +33,18 @@ def main():
 	#Define some variables used within main
 	end_expedition = 0 	#variable to end program's main
 
-	"""write my comments here for a
-	multiple line comment"""
-	#Or here both work
-	"""This is the main python program for the ROV"""
-
 	#Initialize I2C bus slave addresses explicitly to default values
-	###Set parameters that hold the slave addresses in Hex
+	###Set parameters that hold the slave addresses in Hex or decimal??
 
 	#Initialize rov class/module instance
 	rov = rov_skeleton.rov()
+
+	#Initialize sensor class/module instance
+	test_parameter = rov_skeleton.sensors.dis_oxy_class() #####This is how you get at attribute within the import list
+	#test_parameter = rov_skeleton.test.test_class() #####This is how you get at attribute within the import list
+
+	#Set up dissolved Oxygen sensor parameters
+		
 
 	"""
 	Description While Loop:
@@ -49,6 +53,7 @@ def main():
 	while end_expedition != 100:
 		#Everything goes here
 		rov.test_function()		#Show that a function can be called through the class/module we imported
+		#print("This is the default_address from the DO sensor: %d" %test_parameter.attribute_thing)
 		#end_expedition = input("End expedition(y=1, n=0)? ")
 		#end_expedition = 1 #Exits the while loop when we get specific cmd from user
 		#break; #This also exits the while loop if some condition is met

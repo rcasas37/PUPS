@@ -11,13 +11,13 @@ take sensor readings within the ROV
 """
 
 import io         # used to create file streams
-import fcntl      # used to access I2C parameters like addresses
+#import fcntl      # used to access I2C parameters like addresses
 
 import time       # used for sleep delay and timestamps
 import string     # helps parse strings
 
 
-class AtlasI2C:
+class dis_oxy_class:
 	long_timeout = 1.5         	# the timeout needed to query readings and calibrations
 	short_timeout = .5         	# timeout for regular commands
 	default_bus = 1         	# the default bus for I2C on the newer Raspberry Pis, certain older boards use bus 0
@@ -93,41 +93,44 @@ class AtlasI2C:
 		self.set_i2c_address(prev_addr) # restore the address we were using
 		return i2c_devices
 
-		
+	def get_address(self):
+		return self.default_address
+
+
 def main():
-	device = AtlasI2C() 	# creates the I2C port object, specify the address or bus if necessary
+	device = dis_oxy_class() 	# creates the I2C port object, specify the address or bus if necessary
 
 	print(">> Atlas Scientific sample code")
 	print(">> Any commands entered are passed to the board via I2C except:")
 	print(">>   List_addr lists the available I2C addresses.")
 	print(">>   Address,xx changes the I2C address the Raspberry Pi communicates with.")
 	print(">>   Poll,xx.x command continuously polls the board every xx.x seconds")
-	print(" where xx.x is longer than the %0.2f second timeout." % AtlasI2C.long_timeout)
+	print(" where xx.x is longer than the %0.2f second timeout." % dis_oxy_class.long_timeout)
 	print(">> Pressing ctrl-c will stop the polling")
 	
 	# main loop
 	while True:
-		input = input("Enter command: ")
+		usr_input = input("Enter command: ")
 
-		if input.upper().startswith("LIST_ADDR"):
+		if usr_input.upper().startswith("LIST_ADDR"):
 			devices = device.list_i2c_devices()
 			for i in range(len (devices)):
 				print (devices[i])
 
 		# address command lets you change which address the Raspberry Pi will poll
-		elif input.upper().startswith("ADDRESS"):
-			addr = int(string.split(input, ',')[1])
+		elif usr_input.upper().startswith("ADDRESS"):
+			addr = int(string.split(usr_input, ',')[1])
 			device.set_i2c_address(addr)
 			print("I2C address set to " + str(addr))
 
 		# continuous polling command automatically polls the board
-		elif input.upper().startswith("POLL"):
-			delaytime = float(string.split(input, ',')[1])
+		elif usr_input.upper().startswith("POLL"):
+			delaytime = float(string.split(usr_input, ',')[1])
 
 			# check for polling time being too short, change it to the minimum timeout if too short
-			if delaytime < AtlasI2C.long_timeout:
-				print("Polling time is shorter than timeout, setting polling time to %0.2f" % AtlasI2C.long_timeout)
-				delaytime = AtlasI2C.long_timeout
+			if delaytime < dis_oxy_class.long_timeout:
+				print("Polling time is shorter than timeout, setting polling time to %0.2f" % dis_oxy_class.long_timeout)
+				delaytime = dis_oxy_class.long_timeout
 
 			# get the information of the board you're polling
 			info = string.split(device.query("I"), ",")[1]
@@ -136,24 +139,24 @@ def main():
 			try:
 				while True:
 					print(device.query("R"))
-					time.sleep(delaytime - AtlasI2C.long_timeout)
+					time.sleep(delaytime - dis_oxy_class.long_timeout)
 			except KeyboardInterrupt: 		# catches the ctrl-c command, which breaks the loop above
 				print("Continuous polling stopped")
 
 		# if not a special keyword, pass commands straight to board
 		else:
-			if len(input) == 0:
+			if len(usr_input) == 0:
 				print ("Please input valid command.")
 			else:
 				try:
-					print(device.query(input))
+					print(device.query(usr_input))
 				except IOError:
 					print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
 
 """
 This code (ie main loop) will only execute if we run this file as a program and it
 will not execute when someone wants to just import it as a module and call
-the functions available within the class AtlasI2C
+the functions available within the class dis_oxy_class
 """
 if __name__ == '__main__':
 	main()
