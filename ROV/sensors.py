@@ -21,7 +21,7 @@ class dis_oxy_class:
 	long_timeout = 1.5         	# the timeout needed to query readings and calibrations
 	short_timeout = .5         	# timeout for regular commands
 	default_bus = 1         	# the default bus for I2C on the newer Raspberry Pis, certain older boards use bus 0
-	default_address = 98     	# the default address for the sensor
+	default_address = 97     	# the default address for the sensor
 	current_addr = default_address
 
 	def __init__(self, address=default_address, bus=default_bus):
