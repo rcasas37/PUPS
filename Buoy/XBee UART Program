@@ -1,0 +1,27 @@
+
+// what's the name of the hardware serial port?
+#define GPSSerial Serial1
+
+
+void setup() {
+  // wait for hardware serial to appear
+  while (!Serial);
+
+  Serial.begin(9600);
+
+  // 9600 baud is the default rate for the Ultimate GPS
+  GPSSerial.begin(9600);
+}
+
+     
+void loop() {
+  if (Serial.available()) {
+    char c = Serial.read();
+    Serial.println(c);
+    GPSSerial.write("A");
+  }
+  if (GPSSerial.available()) {
+    char c = GPSSerial.read();
+    Serial.write(c);
+  }
+}
