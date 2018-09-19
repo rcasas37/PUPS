@@ -40,8 +40,14 @@ def main():
 	rov = rov_skeleton.rov()
 
 	#Initialize sensor class/module instance
-	test_parameter = rov_skeleton.sensors.dis_oxy_class() #####This is how you get at attribute within the import list
+	atlas_sensor = rov_skeleton.sensors.atlas_sensors() #####This is how you get at attribute within the import list
 	#test_parameter = rov_skeleton.test.test_class() #####This is how you get at attribute within the import list
+
+	#Create atlas sensor thread
+	atlas_sensor_thread = Thread(target=atlas_sensor.run)
+
+	#Start Sensor thread
+	atlas_sensor_thread.start()
 
 	#Set up dissolved Oxygen sensor parameters
 		
@@ -50,14 +56,15 @@ def main():
 	Description While Loop:
 	The while loop does what?? Oh that is right, EVERYTHING!
 	"""
-	while end_expedition != 100:
+	while True:
 		#Everything goes here
 		rov.test_function()		#Show that a function can be called through the class/module we imported
-		#print("This is the default_address from the DO sensor: %d" %test_parameter.attribute_thing)
+		#print("This is the default_address from the DO sensor: %d" %atlas_sensor.attribute_thing)
 		#end_expedition = input("End expedition(y=1, n=0)? ")
 		#end_expedition = 1 #Exits the while loop when we get specific cmd from user
 		#break; #This also exits the while loop if some condition is met
-		end_expedition += 10
+		
+		
 
 		"""End While Loop"""
 

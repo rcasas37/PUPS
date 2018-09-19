@@ -11,13 +11,13 @@ take sensor readings within the ROV
 """
 
 import io         # used to create file streams
-import fcntl      # used to access I2C parameters like addresses
+#import fcntl      # used to access I2C parameters like addresses
 
 import time       # used for sleep delay and timestamps
 import string     # helps parse strings
 
 
-class dis_oxy_class:
+class atlas_sensors:
 	long_timeout = 1.5         	# the timeout needed to query readings and calibrations
 	short_timeout = .5         	# timeout for regular commands
 	default_bus = 1         	# the default bus for I2C on the newer Raspberry Pis, certain older boards use bus 0
@@ -34,6 +34,15 @@ class dis_oxy_class:
 
 		# initializes I2C to either a user specified or default address
 		self.set_i2c_address(address)
+
+		self.running = True 
+
+	def terminate_thread(self):
+		self.running = False
+
+	def run(self):
+		while self.running:
+			main()
 
 	def set_i2c_address(self, addr):
 		# set the I2C communications to the slave specified by the address
@@ -96,67 +105,67 @@ class dis_oxy_class:
 	def get_address(self):
 		return self.default_address
 
-
 def main():
-	device = dis_oxy_class() 	# creates the I2C port object, specify the address or bus if necessary
+	device = atlas_sensors() 	# creates the I2C port object, specify the address or bus if necessary
 
 	print(">> Atlas Scientific sample code")
 	print(">> Any commands entered are passed to the board via I2C except:")
 	print(">>   List_addr lists the available I2C addresses.")
 	print(">>   Address,xx changes the I2C address the Raspberry Pi communicates with.")
 	print(">>   Poll,xx.x command continuously polls the board every xx.x seconds")
-	print(" where xx.x is longer than the %0.2f second timeout." % dis_oxy_class.long_timeout)
+	print(" where xx.x is longer than the %0.2f second timeout." % atlas_sensors.long_timeout)
 	print(">> Pressing ctrl-c will stop the polling")
 	
 	# main loop
-	while True:
-		usr_input = input("Enter command: ")
+	#while True:
+	#usr_input = input("Enter command: ")
+	usr_input = "poll,3"
 
-		if usr_input.upper().startswith("LIST_ADDR"):
-			devices = device.list_i2c_devices()
-			for i in range(len (devices)):
-				print (devices[i])
+	if usr_input.upper().startswith("LIST_ADDR"):
+		devices = device.list_i2c_devices()
+		for i in range(len (devices)):
+			print (devices[i])
 
-		# address command lets you change which address the Raspberry Pi will poll
-		elif usr_input.upper().startswith("ADDRESS"):
-			addr = int(string.split(usr_input, ',')[1])
-			device.set_i2c_address(addr)
-			print("I2C address set to " + str(addr))
+	# address command lets you change which address the Raspberry Pi will poll
+	elif usr_input.upper().startswith("ADDRESS"):
+		addr = int(string.split(usr_input, ',')[1])
+		device.set_i2c_address(addr)
+		print("I2C address set to " + str(addr))
 
-		# continuous polling command automatically polls the board
-		elif usr_input.upper().startswith("POLL"):
-			delaytime = float(string.split(usr_input, ',')[1])
+	# continuous polling command automatically polls the board
+	elif usr_input.upper().startswith("POLL"):
+		delaytime = float(string.split(usr_input, ',')[1])
 
-			# check for polling time being too short, change it to the minimum timeout if too short
-			if delaytime < dis_oxy_class.long_timeout:
-				print("Polling time is shorter than timeout, setting polling time to %0.2f" % dis_oxy_class.long_timeout)
-				delaytime = dis_oxy_class.long_timeout
+		# check for polling time being too short, change it to the minimum timeout if too short
+		if delaytime < atlas_sensors.long_timeout:
+			print("Polling time is shorter than timeout, setting polling time to %0.2f" % atlas_sensors.long_timeout)
+			delaytime = atlas_sensors.long_timeout
 
-			# get the information of the board you're polling
-			info = string.split(device.query("I"), ",")[1]
-			print("Polling %s sensor every %0.2f seconds, press ctrl-c to stop polling" % (info, delaytime))
+		# get the information of the board you're polling
+		info = string.split(device.query("I"), ",")[1]
+		print("Polling %s sensor every %0.2f seconds, press ctrl-c to stop polling" % (info, delaytime))
 
-			try:
-				while True:
-					print(device.query("R"))
-					time.sleep(delaytime - dis_oxy_class.long_timeout)
-			except KeyboardInterrupt: 		# catches the ctrl-c command, which breaks the loop above
-				print("Continuous polling stopped")
+		try:
+			while True:
+				print(device.query("R"))
+				time.sleep(delaytime - atlas_sensors.long_timeout)
+		except KeyboardInterrupt: 		# catches the ctrl-c command, which breaks the loop above
+			print("Continuous polling stopped")
 
-		# if not a special keyword, pass commands straight to board
+	# if not a special keyword, pass commands straight to board
+	else:
+		if len(usr_input) == 0:
+			print ("Please input valid command.")
 		else:
-			if len(usr_input) == 0:
-				print ("Please input valid command.")
-			else:
-				try:
-					print(device.query(usr_input))
-				except IOError:
-					print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
+			try:
+				print(device.query(usr_input))
+			except IOError:
+				print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
 
 """
 This code (ie main loop) will only execute if we run this file as a program and it
 will not execute when someone wants to just import it as a module and call
-the functions available within the class dis_oxy_class
+the functions available within the class atlas_sensors
 """
 if __name__ == '__main__':
 	main()
