@@ -1,0 +1,14 @@
+Pin maps for the launchpad
+https://energia.nu/pinmaps/msp-exp430f5529/
+
+code used to test/work on
+https://forum.43oh.com/topic/10062-spi-between-msp430432-and-mcp3911/
+
+other examples/research on spi, xbee, and launchpad
+http://www.electronicwings.com/ti-launchpad/basic-functions-related-to-serial-communication-in-energia
+https://www.arduino.cc/en/Reference/SPI
+https://github.com/energia/Energia/blob/master/hardware/msp430/libraries/SPI/examples/DigitalPotControl/DigitalPotControl.ino
+https://e2e.ti.com/support/microcontrollers/msp430/f/166/t/560054?Issue-with-SPI-between-MSP430-432-and-MCP3911
+https://github.com/mweintra/zigbee/wiki/Basic-Tutorial#receiving-data
+https://github.com/cjbearman/xbee-wifi-spi-arduino
+http://www.electronicwings.com/ti-launchpad/xbee-s2-zigbee-interfacing-with-msp-exp430g2-ti-launchpad
