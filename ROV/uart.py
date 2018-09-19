@@ -33,7 +33,7 @@ def read_lines():
 	try:
 		while True:
 			line = read_line()
-			if not line:
+			if not line.strip(): 	#Added the .strip() fn here other wise it would loop here forever
 				break
 				ser.flush_input()
 			lines.append(line)
@@ -52,7 +52,6 @@ def send_cmd(cmd):
 	"""
 	buf = cmd + "\r"     	# add carriage return
 	try:
-		print("Here 6")
 		ser.write(buf)
 		return True
 	except SerialException as e:
@@ -70,12 +69,12 @@ if __name__ == "__main__":
 	# to get a list of ports use the command: 
 	# python -m serial.tools.list_ports
 	# in the terminal
-	usbport = '/dev/ttyAMA0' # change to match your pi's setup
+	usbport = '/dev/ttyS0' # change to match your pi's setup #original: /dev/ttyAMA0
 
        	print("Opening serial port now...")
 
 	try:
-		ser = serial.Serial(usbport, 9600, timeout=0)
+		ser = serial.Serial(usbport, 9600, timeout=1)
 	except serial.SerialException as e:
 		print ("Error, ",  e)
 		sys.exit(0)
