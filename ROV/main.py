@@ -12,6 +12,7 @@ movement, sensor readings, and communication to SEAL's cmd center.
 
 #Import code modules
 import rov_skeleton #Module provides access to all of the fns with our class 'rov'
+from threading import Thread
 #import sensors	#Module provides all of the sensor classes 
 #import test  #NOT A real import. Delete after done
 
@@ -33,8 +34,7 @@ def main():
 	#Define some variables used within main
 	end_expedition = 0 	#variable to end program's main
 
-	#Initialize I2C bus slave addresses explicitly to default values
-	###Set parameters that hold the slave addresses in Hex or decimal??
+	#Initialize I2C bus slave addresses explicitly to default values ###Set parameters that hold the slave addresses in Hex or decimal??
 
 	#Initialize rov class/module instance
 	rov = rov_skeleton.rov()
