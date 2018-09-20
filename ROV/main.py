@@ -33,6 +33,7 @@ Notes:
 def main():
 	#Define some variables used within main
 	end_expedition = 0 	#variable to end program's main
+	usr_input = 0
 
 
 	#Initialize I2C bus slave addresses explicitly to default values ###Set parameters that hold the slave addresses in Hex or decimal??
@@ -48,7 +49,7 @@ def main():
 
 	#Other Essential variables
 	cmd_id = 0x00 	#Command ID stored as decimal number in python
-	get_essential meas = True #This guy should always be true might not even need var for him	
+	get_essential_meas = True #This guy should always be true might not even need var for him	
 
 
 	#Open serial port communication
@@ -70,7 +71,11 @@ def main():
 
 
 
-		get_all_meas = input("Would you like to get all measurements? ")
+		user_input = input("Would you like to get all measurements? ")
+		if user_input == 1:
+			get_essential_meas = True
+		else:
+			get_essential_meas = False
 
 
 		rov.test_function()		#Show that a function can be called through the class/module we imported
@@ -85,6 +90,7 @@ def main():
 			#get essential meas here
 		else: 	#Get only temp, pressure, accel, and gyro meas
 			#Get essential meas here
+			print("stuff")
 
 
 		#end_expedition = input("End expedition(y=1, n=0)? ")

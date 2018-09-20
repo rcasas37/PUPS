@@ -108,7 +108,7 @@ class atlas_sensors:
 def main():
 	device = atlas_sensors() 	# creates the I2C port object, specify the address or bus if necessary
 
-	"""
+	
 	print(">> Atlas Scientific sample code")
 	print(">> Any commands entered are passed to the board via I2C except:")
 	print(">>   List_addr lists the available I2C addresses.")
@@ -116,7 +116,7 @@ def main():
 	print(">>   Poll,xx.x command continuously polls the board every xx.x seconds")
 	print(" where xx.x is longer than the %0.2f second timeout." % atlas_sensors.long_timeout)
 	print(">> Pressing ctrl-c will stop the polling")
-	"""	
+		
 
 	# main loop
 	#while True:
@@ -179,11 +179,10 @@ def main():
 			except IOError:
 				print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
 
-"""
-This code (ie main loop) will only execute if we run this file as a program and it
-will not execute when someone wants to just import it as a module and call
-the functions available within the class atlas_sensors
-"""
+#This code (ie main loop) will only execute if we run this file as a program and it
+#will not execute when someone wants to just import it as a module and call
+#the functions available within the class atlas_sensors
+
 if __name__ == '__main__':
 	main()
 
