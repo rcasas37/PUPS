@@ -108,6 +108,7 @@ class atlas_sensors:
 def main():
 	device = atlas_sensors() 	# creates the I2C port object, specify the address or bus if necessary
 
+	"""
 	print(">> Atlas Scientific sample code")
 	print(">> Any commands entered are passed to the board via I2C except:")
 	print(">>   List_addr lists the available I2C addresses.")
@@ -115,50 +116,66 @@ def main():
 	print(">>   Poll,xx.x command continuously polls the board every xx.x seconds")
 	print(" where xx.x is longer than the %0.2f second timeout." % atlas_sensors.long_timeout)
 	print(">> Pressing ctrl-c will stop the polling")
-	
+	"""	
+
 	# main loop
 	#while True:
 	#usr_input = input("Enter command: ")
-	usr_input = "poll,3"
+	usr_input = "R"
+	num_sensors = 0		#Must do it once for each sensor
+	while num_sensors != 3:
 
-	if usr_input.upper().startswith("LIST_ADDR"):
-		devices = device.list_i2c_devices()
-		for i in range(len (devices)):
-			print (devices[i])
+		#Set i2c address to poll each sensor once: EC=100, DO=97, pH=99	
+		if num_sensors == 0:
+			set_i2c_address(100)
+			num_sensors += 1
+		elif num_sensors == 1:
+			set_i2c_address(97)
+			num_sensors += 1
+		else:
+			set_i2c_address(99)
+			num_sensors += 1
 
-	# address command lets you change which address the Raspberry Pi will poll
-	elif usr_input.upper().startswith("ADDRESS"):
-		addr = int(string.split(usr_input, ',')[1])
-		device.set_i2c_address(addr)
-		print("I2C address set to " + str(addr))
+		"""
+		if usr_input.upper().startswith("LIST_ADDR"):
+			devices = device.list_i2c_devices()
+			for i in range(len (devices)):
+				print (devices[i])
 
-	# continuous polling command automatically polls the board
-	elif usr_input.upper().startswith("POLL"):
-		delaytime = float(string.split(usr_input, ',')[1])
+		# address command lets you change which address the Raspberry Pi will poll
+		elif usr_input.upper().startswith("ADDRESS"):
+			addr = int(string.split(usr_input, ',')[1])
+			device.set_i2c_address(addr)
+			print("I2C address set to " + str(addr))
 
-		# check for polling time being too short, change it to the minimum timeout if too short
-		if delaytime < atlas_sensors.long_timeout:
-			print("Polling time is shorter than timeout, setting polling time to %0.2f" % atlas_sensors.long_timeout)
-			delaytime = atlas_sensors.long_timeout
+		# continuous polling command automatically polls the board
+		elif usr_input.upper().startswith("POLL"):
+			delaytime = float(string.split(usr_input, ',')[1])
 
-		# get the information of the board you're polling
-		info = string.split(device.query("I"), ",")[1]
-		print("Polling %s sensor every %0.2f seconds, press ctrl-c to stop polling" % (info, delaytime))
+			# check for polling time being too short, change it to the minimum timeout if too short
+			if delaytime < atlas_sensors.long_timeout:
+				print("Polling time is shorter than timeout, setting polling time to %0.2f" % atlas_sensors.long_timeout)
+				delaytime = atlas_sensors.long_timeout
 
-		try:
-			while True:
-				print(device.query("R"))
-				time.sleep(delaytime - atlas_sensors.long_timeout)
-		except KeyboardInterrupt: 		# catches the ctrl-c command, which breaks the loop above
-			print("Continuous polling stopped")
+			# get the information of the board you're polling
+			info = string.split(device.query("I"), ",")[1]
+			print("Polling %s sensor every %0.2f seconds, press ctrl-c to stop polling" % (info, delaytime))
 
-	# if not a special keyword, pass commands straight to board
-	else:
+			try:
+				while True:
+					print(device.query("R"))
+					time.sleep(delaytime - atlas_sensors.long_timeout)
+			except KeyboardInterrupt: 		# catches the ctrl-c command, which breaks the loop above
+				print("Continuous polling stopped")
+		"""
+		# if not a special keyword, pass commands straight to board
+		#else:
 		if len(usr_input) == 0:
 			print ("Please input valid command.")
 		else:
 			try:
 				print(device.query(usr_input))
+				print("Here boi")
 			except IOError:
 				print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
 

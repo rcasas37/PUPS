@@ -34,23 +34,29 @@ def main():
 	#Define some variables used within main
 	end_expedition = 0 	#variable to end program's main
 
+
 	#Initialize I2C bus slave addresses explicitly to default values ###Set parameters that hold the slave addresses in Hex or decimal??
 
-	#Initialize rov class/module instance
-	rov = rov_skeleton.rov()
+	#Initialize class objects and instances 
+	rov = rov_skeleton.rov()		#Init rov class/module instance
+	atlas_sensor = rov_skeleton.sensors.atlas_sensors()	 #Initialize atlas sensor class/module instance
 
-	#Initialize sensor class/module instance
-	atlas_sensor = rov_skeleton.sensors.atlas_sensors() #####This is how you get at attribute within the import list
-	#test_parameter = rov_skeleton.test.test_class() #####This is how you get at attribute within the import list
 
-	#Create atlas sensor thread
-	atlas_sensor_thread = Thread(target=atlas_sensor.run)
+	#Buttons that can be set via command center
+	stop_motors = False
+	get_all_meas = False
 
-	#Start Sensor thread
-	atlas_sensor_thread.start()
+	#Other Essential variables
+	cmd_id = 0x00 	#Command ID stored as decimal number in python
+	get_essential meas = True #This guy should always be true might not even need var for him	
 
-	#Set up dissolved Oxygen sensor parameters
-		
+
+	#Open serial port communication
+
+
+	#Create sensor and command .xml files for data storage
+
+
 
 	"""
 	Description While Loop:
@@ -58,8 +64,29 @@ def main():
 	"""
 	while True:
 		#Everything goes here
+
+
+
+
+
+
+		get_all_meas = input("Would you like to get all measurements? ")
+
+
 		rov.test_function()		#Show that a function can be called through the class/module we imported
-		#print("This is the default_address from the DO sensor: %d" %atlas_sensor.attribute_thing)
+
+		#Take all Sensor measurements
+		if get_all_meas == True:
+			#Create atlas sensor thread
+			atlas_sensor_thread = Thread(target=atlas_sensor.run)
+			#Start Sensor thread
+			atlas_sensor_thread.start()
+
+			#get essential meas here
+		else: 	#Get only temp, pressure, accel, and gyro meas
+			#Get essential meas here
+
+
 		#end_expedition = input("End expedition(y=1, n=0)? ")
 		#end_expedition = 1 #Exits the while loop when we get specific cmd from user
 		#break; #This also exits the while loop if some condition is met
@@ -70,8 +97,8 @@ def main():
 
 	#End Sensor thread
 	atlas_sensor_thread.terminate_thread()
-	
-	return #End main() Definition#
+
+	return 1 #End main() Definition#
 
 
 #Runs the main just defined above
