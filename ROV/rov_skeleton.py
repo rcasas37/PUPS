@@ -12,7 +12,7 @@ sensor readings, and communication to SEAL's cmd center.
 #Import python/sensor modules
 import sys	#Module provides access to fns maintained by the interpreter
 import os	#Module provides fns allowing one to use OS dependent functionality
-from threading import Thread 	#Module provides multiple thread functionality
+#from threading import Thread 	#Module provides multiple thread functionality
 import time	#Module provides SW delay functionality
 #import test #NOT real import. DELETE after use!!!!
 import sensors	#Module provides all of the sensor classes 
@@ -60,6 +60,7 @@ class rov:
 
 	"""TEST function"""
 	def test_function(default_arg):
+		time.sleep(5)
 		print("You are inside the test function available through the rov class.")
 		return
 
