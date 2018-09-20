@@ -68,7 +68,9 @@ def main():
 
 		"""End While Loop"""
 
-
+	#End Sensor thread
+	atlas_sensor_thread.terminate_thread()
+	
 	return #End main() Definition#
 
 
