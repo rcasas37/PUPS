@@ -13,6 +13,7 @@ movement, sensor readings, and communication to SEAL's cmd center.
 #Import code modules
 import rov_skeleton #Module provides access to all of the fns with our class 'rov'
 from threading import Thread
+import time
 #import sensors	#Module provides all of the sensor classes 
 #import test  #NOT A real import. Delete after done
 
@@ -42,6 +43,11 @@ def main():
 	rov = rov_skeleton.rov()		#Init rov class/module instance
 	atlas_sensor = rov_skeleton.sensors.atlas_sensors()	 #Initialize atlas sensor class/module instance
 
+	#Create atlas sensor thread
+	atlas_sensor_thread = Thread(target=atlas_sensor.run)
+
+        #Start Sensor thread
+        atlas_sensor_thread.start()
 
 	#Buttons that can be set via command center
 	stop_motors = False
@@ -57,52 +63,53 @@ def main():
 
 	#Create sensor and command .xml files for data storage
 
-
+	user_input = "y"
 
 	"""
 	Description While Loop:
 	The while loop does what?? Oh that is right, EVERYTHING!
 	"""
 	while True:
-		#Everything goes here
+            #Everything goes here
 
 
+            user_input = input("Would you like to get all measurements? (y,n) ")
+            if user_input == "y":
+                    get_all_meas = True
+                    print("get_all_meas pressed")
+                    user_input = "n"
+            else:
+                    get_all_meas = False
+                    print("get_all_meas NOT pressed")
 
 
+            rov.test_function()		#Show that a function can be called through the class/module we imported
 
+            #Take all Sensor measurements
+            if get_all_meas == True:
+                    #get essential meas here
 
-		user_input = input("Would you like to get all measurements? ")
-		if user_input == 1:
-			get_essential_meas = True
-		else:
-			get_essential_meas = False
+                    atlas_sensor.set_stop_flag(0) # 0 =go get sensor meas
+                    print("Here1\n")
 
+            else:   #Get only temp, pressure, accel, and gyro meas
+                    #Get essential meas here
+                    print("Here2\n")
+                    print("Just get essential meas here in separate thread.")
+                    atlas_sensor.set_stop_flag(1) # 0 =go get sensor meas
 
-		rov.test_function()		#Show that a function can be called through the class/module we imported
+            if atlas_sensor.get_stop_flag() == 1:
+                    atlas_sensor.terminate_thread()
 
-		#Take all Sensor measurements
-		if get_all_meas == True:
-			#Create atlas sensor thread
-			atlas_sensor_thread = Thread(target=atlas_sensor.run)
-			#Start Sensor thread
-			atlas_sensor_thread.start()
+            #end_expedition = input("End expedition(y=1, n=0)? ")
+            #end_expedition = 1 #Exits the while loop when we get specific cmd from user
+            #break; #This also exits the while loop if some condition is met
+            
+                    
+            """End While Loop"""
 
-			#get essential meas here
-		else: 	#Get only temp, pressure, accel, and gyro meas
-			#Get essential meas here
-			print("stuff")
-
-
-		#end_expedition = input("End expedition(y=1, n=0)? ")
-		#end_expedition = 1 #Exits the while loop when we get specific cmd from user
-		#break; #This also exits the while loop if some condition is met
-		
-		
-
-		"""End While Loop"""
-
-	#End Sensor thread
-	atlas_sensor_thread.terminate_thread()
+        atlas_sensor.terminate_thread()
+        print("GOODBYE!!!!!!!!!!!!!!!!!!!!!!")
 
 	return 1 #End main() Definition#
 

@@ -60,7 +60,6 @@ class rov:
 
 	"""TEST function"""
 	def test_function(default_arg):
-		time.sleep(5)
 		print("You are inside the test function available through the rov class.")
 		return
 

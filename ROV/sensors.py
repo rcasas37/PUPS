@@ -16,13 +16,17 @@ import fcntl      # used to access I2C parameters like addresses
 import time       # used for sleep delay and timestamps
 import string     # helps parse strings
 
+import threading
 
-class atlas_sensors:
+stop_flag = 1 
+
+class atlas_sensors(threading.Thread):
 	long_timeout = 1.5         	# the timeout needed to query readings and calibrations
 	short_timeout = .5         	# timeout for regular commands
 	default_bus = 1         	# the default bus for I2C on the newer Raspberry Pis, certain older boards use bus 0
 	default_address = 97     	# the default address for the sensor
 	current_addr = default_address
+	#stop_flag = 1			#stop=1, run=0
 
 	def __init__(self, address=default_address, bus=default_bus):
 		# open two file streams, one for reading and one for writing
@@ -36,13 +40,22 @@ class atlas_sensors:
 		self.set_i2c_address(address)
 
 		self.running = True 
+                global stop_flag
+                stop_flag = 1
+                super(atlas_sensors, self).__init__()
+                self._stop_event = threading.Event()
 
 	def terminate_thread(self):
-		self.running = False
+                self._stop_event.set()
+
+	def terminated(self):
+                return self._stop_event.is_set()
 
 	def run(self):
+                print("Thread self.running parameter: ", self.running)
 		while self.running:
-			main()
+                    program()
+                    self.running = False
 
 	def set_i2c_address(self, addr):
 		# set the I2C communications to the slave specified by the address
@@ -105,10 +118,19 @@ class atlas_sensors:
 	def get_address(self):
 		return self.default_address
 
-def main():
+	def get_stop_flag(self):
+		global stop_flag
+                return stop_flag
+
+	def set_stop_flag(self, flag):
+            global stop_flag 
+            stop_flag = flag
+            print("stop flag just set to........",  flag)
+
+def program():
 	device = atlas_sensors() 	# creates the I2C port object, specify the address or bus if necessary
 
-	
+        """	
 	print(">> Atlas Scientific sample code")
 	print(">> Any commands entered are passed to the board via I2C except:")
 	print(">>   List_addr lists the available I2C addresses.")
@@ -116,7 +138,8 @@ def main():
 	print(">>   Poll,xx.x command continuously polls the board every xx.x seconds")
 	print(" where xx.x is longer than the %0.2f second timeout." % atlas_sensors.long_timeout)
 	print(">> Pressing ctrl-c will stop the polling")
-		
+	"""	
+
 
 	# main loop
 	#while True:
@@ -124,19 +147,28 @@ def main():
 	usr_input = "R"
 	num_sensors = 0		#Must do it once for each sensor
 	while num_sensors != 3:
+                while device.get_stop_flag() == 1:
+                    # do nothing
+                    # If stop flag is 0 = go then do the below
+                    dummyline = "dummy input"
 
 		#Set i2c address to poll each sensor once: EC=100, DO=97, pH=99	
 		if num_sensors == 0:
-			set_i2c_address(100)
+			device.set_i2c_address(100)
 			num_sensors += 1
+			print("Testing EC probe...")
 		elif num_sensors == 1:
-			set_i2c_address(97)
+			device.set_i2c_address(97)
 			num_sensors += 1
+			print("Testing DO probe...")
 		else:
-			set_i2c_address(99)
+			device.set_i2c_address(99)
 			num_sensors += 1
+			print("Testing pH probe...")
 
-		"""
+		print("Number of sensors: ", num_sensors)
+
+
 		if usr_input.upper().startswith("LIST_ADDR"):
 			devices = device.list_i2c_devices()
 			for i in range(len (devices)):
@@ -167,22 +199,23 @@ def main():
 					time.sleep(delaytime - atlas_sensors.long_timeout)
 			except KeyboardInterrupt: 		# catches the ctrl-c command, which breaks the loop above
 				print("Continuous polling stopped")
-		"""
 		# if not a special keyword, pass commands straight to board
-		#else:
-		if len(usr_input) == 0:
-			print ("Please input valid command.")
 		else:
-			try:
-				print(device.query(usr_input))
-				print("Here boi")
-			except IOError:
-				print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
+			if len(usr_input) == 0:
+				print ("Please input valid command.")
+			else:
+				try:
+					print(device.query(usr_input))
+				except IOError:
+					print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
+		if num_sensors == 3:
+			device.set_stop_flag(1) 		#Thread should stop now now since stop_flag = 1 
+			print("Set stop flag to 1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! boi", device.get_stop_flag())
 
 #This code (ie main loop) will only execute if we run this file as a program and it
 #will not execute when someone wants to just import it as a module and call
 #the functions available within the class atlas_sensors
 
-if __name__ == '__main__':
-	main()
+#if __name__ == '__main__':
+#	main()
 
