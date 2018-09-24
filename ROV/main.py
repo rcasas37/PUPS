@@ -70,41 +70,40 @@ def main():
 	The while loop does what?? Oh that is right, EVERYTHING!
 	"""
 	while True:
-            #Everything goes here
+                #Everything goes here
+
+                #Get control data from serial port
+                        #get control data here 
 
 
-            user_input = input("Would you like to get all measurements? (y,n) ")
-            if user_input == "y":
-                    get_all_meas = True
-                    print("get_all_meas pressed")
-                    user_input = "n"
-            else:
-                    get_all_meas = False
-                    print("get_all_meas NOT pressed")
+                #Controls if all meas or essential measurments are taken this is the user input from the cmd center
+                user_input = input("Would you like to get all measurements? (y,n) ")
+                if user_input == "y":
+                        get_all_meas = True
+                        print("get_all_meas pressed")
+                        user_input = "n"
+                else:
+                        get_all_meas = False
+                        print("get_all_meas NOT pressed")
 
 
-            rov.test_function()		#Show that a function can be called through the class/module we imported
+                #Take Sensor Measurements
+                if get_all_meas == True:
+                        #get essential meas here
+                        atlas_sensor.set_stop_flag(0) # 0 =go get sensor meas
 
-            #Take all Sensor measurements
-            if get_all_meas == True:
-                    #get essential meas here
-                    atlas_sensor.set_stop_flag(0) # 0 =go get sensor meas
+                else:   #Get only temp, pressure, accel, and gyro meas
+                        #Get essential meas here
+                        atlas_sensor.set_stop_flag(1) # 0 =go get sensor meas
+                        print("Just get essential meas here in separate thread.")
 
-            else:   #Get only temp, pressure, accel, and gyro meas
-                    #Get essential meas here
-                    atlas_sensor.set_stop_flag(1) # 0 =go get sensor meas
-                    print("Just get essential meas here in separate thread.")
 
-            if atlas_sensor.get_stop_flag() == 1:
-                    print("Thread stopppppppppppped.")
-                    atlas_sensor.terminate_thread()
+                #end_expedition = input("End expedition(y=1, n=0)? ")
+                #end_expedition = 1 #Exits the while loop when we get specific cmd from user
+                #break; #This also exits the while loop if some condition is met
 
-            #end_expedition = input("End expedition(y=1, n=0)? ")
-            #end_expedition = 1 #Exits the while loop when we get specific cmd from user
-            #break; #This also exits the while loop if some condition is met
-            
-                    
-            """End While Loop"""
+                        
+                """End While Loop"""
 
         atlas_sensor.terminate_thread()
         print("GOODBYE!!!!!!!!!!!!!!!!!!!!!!")
