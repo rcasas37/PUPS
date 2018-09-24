@@ -125,7 +125,6 @@ class atlas_sensors(threading.Thread):
 	def set_stop_flag(self, flag):
                 global stop_flag 
                 stop_flag = flag 
-                print("stop flag just set to........",  flag)
 
 def program():
 	device = atlas_sensors() 	# creates the I2C port object, specify the address or bus if necessary
@@ -181,7 +180,7 @@ def program():
                         num_sensors = 0             #Reset this variable to restart upon new user input
 			device.set_stop_flag(1)     #Thread should stop now now since stop_flag = 1 
 
-###This stuff is group commented out since we will not be operating the atlas sensors from the cmd line
+###This stuff is block commented out since we will not be operating the atlas sensors from the cmd line
 """ 
 		if usr_input.upper().startswith("LIST_ADDR"):
 			devices = device.list_i2c_devices()
