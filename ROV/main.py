@@ -88,17 +88,15 @@ def main():
             #Take all Sensor measurements
             if get_all_meas == True:
                     #get essential meas here
-
                     atlas_sensor.set_stop_flag(0) # 0 =go get sensor meas
-                    print("Here1\n")
 
             else:   #Get only temp, pressure, accel, and gyro meas
                     #Get essential meas here
-                    print("Here2\n")
-                    print("Just get essential meas here in separate thread.")
                     atlas_sensor.set_stop_flag(1) # 0 =go get sensor meas
+                    print("Just get essential meas here in separate thread.")
 
             if atlas_sensor.get_stop_flag() == 1:
+                    print("Thread stopppppppppppped.")
                     atlas_sensor.terminate_thread()
 
             #end_expedition = input("End expedition(y=1, n=0)? ")

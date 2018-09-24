@@ -124,7 +124,7 @@ class atlas_sensors(threading.Thread):
 
 	def set_stop_flag(self, flag):
             global stop_flag 
-            stop_flag = flag
+            stop_flag = flag 
             print("stop flag just set to........",  flag)
 
 def program():
@@ -149,8 +149,9 @@ def program():
 	while num_sensors != 3:
                 while device.get_stop_flag() == 1:
                     # do nothing
+                    #print("stop flag issss: )", device.get_stop_flag())
                     # If stop flag is 0 = go then do the below
-                    dummyline = "dummy input"
+                    dummyinput = "dummy variable"
 
 		#Set i2c address to poll each sensor once: EC=100, DO=97, pH=99	
 		if num_sensors == 0:
@@ -209,6 +210,7 @@ def program():
 				except IOError:
 					print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
 		if num_sensors == 3:
+                        num_sensors = 0     #reset to restart
 			device.set_stop_flag(1) 		#Thread should stop now now since stop_flag = 1 
 			print("Set stop flag to 1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! boi", device.get_stop_flag())
 
