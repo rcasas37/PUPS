@@ -16,7 +16,7 @@ import os	#Module provides fns allowing one to use OS dependent functionality
 import time	#Module provides SW delay functionality
 #import test #NOT real import. DELETE after use!!!!
 import sensors	#Module provides all of the sensor classes 
-
+import ms5837   #Module provides all functions for the pressure sensor
 
 #Global variables
 #global my_var		"""Example if absolutely needed ONLY"""
@@ -187,16 +187,21 @@ class rov:
 	"""
 	Obtains temp, pressure, accelerometer, and gyroscope measurements
 	Parameters:
-		list of parameters
+                Water density chioce (salt/fresh watter) as string,
 	Return:
 		Do we return any value?
 	Notes:
 	"""
-	def get_essential_meas(default_arg):
+	def get_essential_meas(default_arg, water_choice):
 		#Open sensor.xml, obtain sensor measurements, write to sensor.xml and close
 
+                
+                #Get Pressure measurement
+                depth = get_pressure(water_choice)
+
+
 		#write_xml()	#writes to sensor.xml value of obtained sensor meas
-		return
+		return depth
 
 
 
@@ -233,4 +238,54 @@ class rov:
 
 
 	#get each sensor data
+
+	"""
+        Obtains a single pressure measurement from sensor
+	Parameters:
+                Water density chioce (salt/fresh watter) as string,
+	Return:
+		Returns Depth as float in meters, Returns Temp. as float in Celsius
+	Notes:
+	"""
+        def get_pressure(default_arg, water_choice):
+
+                sensor = ms5837.MS5837_30BA() # Default I2C bus is 1 (Raspberry Pi 3)
+
+                # Initialize the sensor before reading it
+                if not sensor.init():
+                        print "sensor could not be initialized"
+                        exit(1)
+
+                # Poll readings
+                #while True:
+            #   water_choice = '0'
+                #water_choice = input("Fresh/Saltwater (0/1)? ")
+
+                #Freshwater vs Saltwater depth measurements set via user input form cmd center
+                if water_choice == '0':
+                        #Freshwater
+                        sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
+                        freshwaterDepth = sensor.depth() # default is freshwater
+                        water_choice = '1'
+                elif water_choice == '1':
+                        #Saltwater
+                        sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
+                        freshwaterDepth = sensor.depth() # default is freshwater
+                        water_choice = '0'
+                else:
+                        print("Error on water density choice.")
+
+                if sensor.read():
+                        depth = sensor.depth()
+                        print("P: %0.4f m \t T: %0.2f C  %0.2f F\n") % (
+                        depth,      # Sensor depth, either fresh or salf water depending on above
+                        sensor.temperature(), # Default is degrees C (no arguments)
+                        sensor.temperature(ms5837.UNITS_Farenheit)) # Request Farenheit
+                else:
+                        print "Sensor read failed!"
+                        exit(1)
+                return depth
+
+
 	#parse input cmd or is this write_xml??
+

@@ -84,6 +84,7 @@ def main():
                         user_input = "n"
                 else:
                         get_all_meas = False
+                        rov.get_essential_meas("1")
                         print("get_all_meas NOT pressed")
 
 
