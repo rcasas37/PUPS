@@ -205,5 +205,6 @@ if __name__ == "__main__":
 
    except KeyboardInterrupt:
       pwm.set_pulse_width(channel,0)
+      pwm.set_pulse_width(channel2,0)
       pi.stop()
 
