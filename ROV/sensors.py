@@ -157,15 +157,12 @@ def program():
 		#Set i2c address to poll each sensor once: EC=100, DO=97, pH=99	
 		if num_sensors == 0:
 			device.set_i2c_address(100)
-			num_sensors += 1
 			print("Testing EC probe...")
 		elif num_sensors == 1:
 			device.set_i2c_address(97)
-			num_sensors += 1
 			print("Testing DO probe...")
 		else:
 			device.set_i2c_address(99)
-			num_sensors += 1
 			print("Testing pH probe...")
 
                 if len(usr_input) == 0:
@@ -175,6 +172,9 @@ def program():
                                 print(device.query(usr_input))
                         except IOError:
                                 print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
+                
+                #Increment to test the next sensor
+                num_sensors += 1
 
 		if num_sensors == 3:
                         num_sensors = 0             #Reset this variable to restart upon new user input
