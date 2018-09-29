@@ -10,282 +10,283 @@ sensor readings, and communication to SEAL's cmd center.
 """
 
 #Import python/sensor modules
-import sys	#Module provides access to fns maintained by the interpreter
-import os	#Module provides fns allowing one to use OS dependent functionality
-#from threading import Thread 	#Module provides multiple thread functionality
-import time	#Module provides SW delay functionality
+import sys        #Module provides access to fns maintained by the interpreter
+import os        #Module provides fns allowing one to use OS dependent functionality
+#from threading import Thread         #Module provides multiple thread functionality
+import time        #Module provides SW delay functionality
 #import test #NOT real import. DELETE after use!!!!
-import sensors	#Module provides all of the sensor classes 
+import sensors        #Module provides all of the sensor classes 
 import ms5837   #Module provides all functions for the pressure sensor
 
 #Global variables
-#global my_var		"""Example if absolutely needed ONLY"""
+#global my_var                """Example if absolutely needed ONLY"""
 #my_var = 34 
 
 class rov:
-	#########################################################################3
-	"""
-	The main loop will control all of the operations of the ROV
-	Parameters:
+        #########################################################################3
+        """
+        The main loop will control all of the operations of the ROV
+        Parameters:
 
-	Return:
-		0 on success, error code on failure
-	Notes:
-		Initialized all sensor address data before main while loop 
-	def main():
-		#Define some variables used within main
-		end_expedition = 0
+        Return:
+                0 on success, error code on failure
+        Notes:
+                Initialized all sensor address data before main while loop 
+        def main():
+                #Define some variables used within main
+                end_expedition = 0
 
-		#Or here both work
+                #Or here both work
 
-		#Initialize I2C bus slave addresses explicitly to default values
-		###Set parameters that hold the slave addresses in Hex
+                #Initialize I2C bus slave addresses explicitly to default values
+                ###Set parameters that hold the slave addresses in Hex
 
-		Description While Loop:
-		The while loop does what?? Oh that is right, EVERYTHING!
-		""
-		while end_expedition != 1:
-			#Everything goes here
-
-
-			#end_expedition = 1 #Exits the while loop when we get specific cmd from user
-			#break; #This also exits the while loop if some condition is met
-
-			###End While Loop###
+                Description While Loop:
+                The while loop does what?? Oh that is right, EVERYTHING!
+                ""
+                while end_expedition != 1:
+                        #Everything goes here
 
 
-		return #End main() Definition#
-	"""
-	#########################################################################3
+                        #end_expedition = 1 #Exits the while loop when we get specific cmd from user
+                        #break; #This also exits the while loop if some condition is met
 
-	"""TEST function"""
-	def test_function(default_arg):
-		print("You are inside the test function available through the rov class.")
-		return
+                        ###End While Loop###
 
 
+                return #End main() Definition#
+        """
+        #########################################################################3
+
+        """TEST function"""
+        def test_function(default_arg):
+                print("You are inside the test function available through the rov class.")
+                return
 
 
 
-	"""
-	Obtain string commands from cmd center.
-	Parameters:
-		list of parameters
-	Return:
-		Do we return any value?
-	Notes:
-	"""
-	def read_serial_port(default_arg):
-
-		return
 
 
+        """
+        Obtain string commands from cmd center.
+        Parameters:
+                list of parameters
+        Return:
+                Do we return any value?
+        Notes:
+        """
+        def read_serial_port(default_arg):
 
-	"""
-	Obtain string commands from cmd center.
-	Parameters:
-		list of parameters
-	Return:
-		Do we return any value?
-	Notes:
-	"""
-	def write_serial_port(default_arg):
-
-		return
-
-
-	"""
-	Opens .xml and reads from it
-	Parameters:
-		list of parameters
-	Return:
-		Do we return any value?
-	Notes:
-	"""
-	def read_xml(default_arg):
-		#open .xml read what i want and close .xml
-		return
+                return
 
 
 
-	"""
-	Opens .xml and writes to it
-	Parameters:
-		list of parameters
-	Return:
-		Do we return any value?
-	Notes:
-	"""
-	def write_xml(default_arg):
-		#open.xml write to it and close .xml
-		return
+        """
+        Obtain string commands from cmd center.
+        Parameters:
+                list of parameters
+        Return:
+                Do we return any value?
+        Notes:
+        """
+        def write_serial_port(default_arg):
+
+                return
+
+
+        """
+        Opens .xml and reads from it
+        Parameters:
+                list of parameters
+        Return:
+                Do we return any value?
+        Notes:
+        """
+        def read_xml(default_arg):
+                #open .xml read what i want and close .xml
+                return
 
 
 
-	"""
-	Parses data received from serial port and writes it to .xml
-	Parameters:
-		list of parameters
-	Return:
-		Do we return any value?
-	Notes:
-	"""
-	def parse_control_data(default_arg):
-		#parse the data string from buffer then write each piece to .xml
-
-		#write_xml()	#writes to control.xml values of each control data pt.
-		return
+        """
+        Opens .xml and writes to it
+        Parameters:
+                list of parameters
+        Return:
+                Do we return any value?
+        Notes:
+        """
+        def write_xml(default_arg):
+                #open.xml write to it and close .xml
+                return
 
 
 
-	"""
-	Sends sensor data. Opens sensor.xml and combines into a string packet and sends through serial port
-	Parameters:
-		list of parameters
-	Return:
-		Do we return any value?
-	Notes:
-	"""
-	def send_sensor_data(default_arg):
-		#Open sensor.xml concatenate all sensor data into string close sensor.xml
+        """
+        Parses data received from serial port and writes it to .xml
+        Parameters:
+                list of parameters
+        Return:
+                Do we return any value?
+        Notes:
+        """
+        def parse_control_data(default_arg):
+                #parse the data string from buffer then write each piece to .xml
 
-		#write_serial_port() #Write the string we just created to serial port
-		return
-
-
-
-	"""
-	Uses control.xml values to calculate PWM (dir & spd) of selected motor
-	Parameters:
-		list of parameters
-	Return:
-		Do we return any value?
-	Notes:
-	"""
-	def calc_motor_spd(default_arg):
-		#Open control.xml read selected value, calc PWM write it into .xml and close xml
-
-		return
+                #write_xml()        #writes to control.xml values of each control data pt.
+                return
 
 
 
-	"""
-	Uses control.xml values to send PWM value to motor for driving
-	Parameters:
-		list of parameters
-	Return:
-		Do we return any value?
-	Notes:
-	"""
-	def set_motor_spd(default_arg):
-		#Open control.xml read selected vals & write to ESC channel(s) via I2C bus close .xml
+        """
+        Sends sensor data. Opens sensor.xml and combines into a string packet and sends through serial port
+        Parameters:
+                list of parameters
+        Return:
+                Do we return any value?
+        Notes:
+        """
+        def send_sensor_data(default_arg):
+                #Open sensor.xml concatenate all sensor data into string close sensor.xml
 
-		return
+                #write_serial_port() #Write the string we just created to serial port
+                return
 
 
 
-	"""
-	Obtains temp, pressure, accelerometer, and gyroscope measurements
-	Parameters:
+        """
+        Uses control.xml values to calculate PWM (dir & spd) of selected motor
+        Parameters:
+                list of parameters
+        Return:
+                Do we return any value?
+        Notes:
+        """
+        def calc_motor_spd(default_arg):
+                #Open control.xml read selected value, calc PWM write it into .xml and close xml
+
+                return
+
+
+
+        """
+        Uses control.xml values to send PWM value to motor for driving
+        Parameters:
+                list of parameters
+        Return:
+                Do we return any value?
+        Notes:
+        """
+        def set_motor_spd(default_arg):
+                #Open control.xml read selected vals & write to ESC channel(s) via I2C bus close .xml
+
+                return
+
+
+
+        """
+        Obtains temp, pressure, accelerometer, and gyroscope measurements
+        Parameters:
                 Water density chioce (salt/fresh watter) as string,
-	Return:
-		Do we return any value?
-	Notes:
-	"""
-	def get_essential_meas(default_arg, water_choice):
-		#Open sensor.xml, obtain sensor measurements, write to sensor.xml and close
+        Return:
+                Do we return any value?
+        Notes:
+        """
+        def get_essential_meas(default_arg, water_choice):
+                #Open sensor.xml, obtain sensor measurements, write to sensor.xml and close
 
                 
                 #Get Pressure measurement
                 depth = get_pressure(water_choice)
 
 
-		#write_xml()	#writes to sensor.xml value of obtained sensor meas
-		return depth
-
-
-
-	"""
-	Obtains essential measurements(temp, pres., and accel/gyro) and
-	Dissolved Oxy, pH, and Salinity
-	Parameters:
-		list of parameters
-	Return:
-		Do we return any value?
-	Notes:
-	"""
-	def get_all_meas(default_arg):
-		#Open sensor.xml, obtain all sensor meas, write to sensor.xml and close 
-		#get_essential_meas()
-
-		#write_xml()	#writes to sensor.xml value of obtained sensor meas
-		return
-
-
-
-	"""
-	Attempts to stabilize rov via accelerometer and gyro if user sends to mvmt cmds
-	Parameters:
-		list of parameters
-	Return:
-		Do we return any value?
-	Notes:
-	"""
-	def stabilize_rov(default_arg):
-		#This one is gonna be a beach
-
-		return
-
-
-	#get each sensor data
-
-	"""
-        Obtains a single pressure measurement from sensor
-	Parameters:
-                Water density chioce (salt/fresh watter) as string,
-	Return:
-		Returns Depth as float in meters, Returns Temp. as float in Celsius
-	Notes:
-	"""
-        def get_pressure(default_arg, water_choice):
-
-                sensor = ms5837.MS5837_30BA() # Default I2C bus is 1 (Raspberry Pi 3)
-
-                # Initialize the sensor before reading it
-                if not sensor.init():
-                        print "sensor could not be initialized"
-                        exit(1)
-
-                # Poll readings
-                #while True:
-            #   water_choice = '0'
-                #water_choice = input("Fresh/Saltwater (0/1)? ")
-
-                #Freshwater vs Saltwater depth measurements set via user input form cmd center
-                if water_choice == '0':
-                        #Freshwater
-                        sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
-                        freshwaterDepth = sensor.depth() # default is freshwater
-                        water_choice = '1'
-                elif water_choice == '1':
-                        #Saltwater
-                        sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
-                        freshwaterDepth = sensor.depth() # default is freshwater
-                        water_choice = '0'
-                else:
-                        print("Error on water density choice.")
-
-                if sensor.read():
-                        depth = sensor.depth()
-                        print("P: %0.4f m \t T: %0.2f C  %0.2f F\n") % (
-                        depth,      # Sensor depth, either fresh or salf water depending on above
-                        sensor.temperature(), # Default is degrees C (no arguments)
-                        sensor.temperature(ms5837.UNITS_Farenheit)) # Request Farenheit
-                else:
-                        print "Sensor read failed!"
-                        exit(1)
+                #write_xml()        #writes to sensor.xml value of obtained sensor meas
                 return depth
 
 
-	#parse input cmd or is this write_xml??
+
+        """
+        Obtains essential measurements(temp, pres., and accel/gyro) and
+        Dissolved Oxy, pH, and Salinity
+        Parameters:
+                list of parameters
+        Return:
+                Do we return any value?
+        Notes:
+        """
+        def get_all_meas(default_arg):
+                #Open sensor.xml, obtain all sensor meas, write to sensor.xml and close 
+                #get_essential_meas()
+
+                #write_xml()        #writes to sensor.xml value of obtained sensor meas
+                return
+
+
+
+        """
+        Attempts to stabilize rov via accelerometer and gyro if user sends to mvmt cmds
+        Parameters:
+                list of parameters
+        Return:
+                Do we return any value?
+        Notes:
+        """
+        def stabilize_rov(default_arg):
+                #This one is gonna be a beach
+
+                return
+
+
+        #get each sensor data
+################ ROV Class Helper functions#################
+
+"""
+Obtains a single pressure measurement from sensor
+Parameters:
+        Water density chioce (salt/fresh watter) as string,
+Return:
+        Returns Depth as float in meters, Returns Temp. as float in Celsius
+Notes:
+"""
+def get_pressure(water_choice):
+
+        sensor = ms5837.MS5837_30BA() # Default I2C bus is 1 (Raspberry Pi 3)
+
+        # Initialize the sensor before reading it
+        if not sensor.init():
+                print ("sensor could not be initialized")
+                exit(1)
+
+        # Poll readings
+        #while True:
+    #   water_choice = '0'
+        #water_choice = input("Fresh/Saltwater (0/1)? ")
+
+        #Freshwater vs Saltwater depth measurements set via user input form cmd center
+        if water_choice == '0':
+                #Freshwater
+                sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
+                freshwaterDepth = sensor.depth() # default is freshwater
+                water_choice = '1'
+        elif water_choice == '1':
+                #Saltwater
+                sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
+                freshwaterDepth = sensor.depth() # default is freshwater
+                water_choice = '0'
+        else:
+                print("Error on water density choice.")
+
+        if sensor.read():
+                depth = sensor.depth()
+                print("P: %0.4f m \t T: %0.2f C  %0.2f F\n" % (
+                depth,      # Sensor depth, either fresh or salf water depending on above
+                sensor.temperature(), # Default is degrees C (no arguments)
+                sensor.temperature(ms5837.UNITS_Farenheit))) # Request Farenheit
+        else:
+                print ("Sensor read failed!")
+                exit(1)
+        return depth
+
+
+        #parse input cmd or is this write_xml??
 

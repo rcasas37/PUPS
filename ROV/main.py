@@ -10,15 +10,16 @@ movement, sensor readings, and communication to SEAL's cmd center.
 """
 
 
-#Import code modules
-import rov_skeleton #Module provides access to all of the fns with our class 'rov'
+# Import code modules
+import rov_skeleton # Module provides access to all of the fns with our class 'rov'
 from threading import Thread
 import time
-#import sensors	#Module provides all of the sensor classes 
-#import test  #NOT A real import. Delete after done
+#import sensors	# Module provides all of the sensor classes 
+#import test  # NOT A real import. Delete after done
 
-#Global variables
-#global my_var = 100 
+
+# Global variables
+# global my_var = 100 
 
 
 
@@ -32,51 +33,51 @@ Notes:
 	Initialized all sensor address data before main while loop 
 """
 def main():
-	#Define some variables used within main
-	end_expedition = 0 	#variable to end program's main
-	usr_input = 0
+        # Define some variables used within main
+        end_expedition = 0 	# Variable to end program's main
+        usr_input = 0
 
 
-	#Initialize I2C bus slave addresses explicitly to default values ###Set parameters that hold the slave addresses in Hex or decimal??
+        # Initialize I2C bus slave addresses explicitly to default values ### Set parameters that hold the slave addresses in Hex or decimal??
 
-	#Initialize class objects and instances 
-	rov = rov_skeleton.rov()		#Init rov class/module instance
-	atlas_sensor = rov_skeleton.sensors.atlas_sensors()	 #Initialize atlas sensor class/module instance
+        # Initialize class objects and instances 
+        rov = rov_skeleton.rov()		# Init rov class/module instance
+        atlas_sensor = rov_skeleton.sensors.atlas_sensors()     # Initialize atlas sensor class/module instance
 
-	#Create atlas sensor thread
-	atlas_sensor_thread = Thread(target=atlas_sensor.run)
+        # Create atlas sensor thread
+        atlas_sensor_thread = Thread(target=atlas_sensor.run)
 
-        #Start Sensor thread
+        # Start Sensor thread
         atlas_sensor_thread.start()
 
-	#Buttons that can be set via command center
-	stop_motors = False
-	get_all_meas = False
+        # Buttons that can be set via command center
+        stop_motors = False
+        get_all_meas = False
 
-	#Other Essential variables
-	cmd_id = 0x00 	#Command ID stored as decimal number in python
-	get_essential_meas = True #This guy should always be true might not even need var for him	
-
-
-	#Open serial port communication
+        # Other Essential variables
+        cmd_id = 0x00 	# Command ID stored as decimal number in python
+        get_essential_meas = True # This guy should always be true might not even need var for him	
 
 
-	#Create sensor and command .xml files for data storage
-
-	user_input = "y"
-
-	"""
-	Description While Loop:
-	The while loop does what?? Oh that is right, EVERYTHING!
-	"""
-	while True:
-                #Everything goes here
-
-                #Get control data from serial port
-                        #get control data here 
+        # Open serial port communication
 
 
-                #Controls if all meas or essential measurments are taken this is the user input from the cmd center
+        # Create sensor and command .xml files for data storage
+
+        user_input = "y"
+
+        """
+        Description While Loop:
+        The while loop does what?? Oh that is right, EVERYTHING!
+        """
+        while True:
+                # Everything goes here
+
+                # Get control data from serial port
+                        # get control data here 
+
+
+                # Controls if all meas or essential measurments are taken this is the user input from the cmd center
                 user_input = input("Would you like to get all measurements? (y,n) ")
                 if user_input == "y":
                         get_all_meas = True
@@ -84,24 +85,28 @@ def main():
                         user_input = "n"
                 else:
                         get_all_meas = False
-                        rov.get_essential_meas("1")
                         print("get_all_meas NOT pressed")
 
 
-                #Take Sensor Measurements
+                # Take Sensor Measurements
                 if get_all_meas == True:
-                        #get essential meas here
+                        # Get essential meas here
+                        rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+
+                        # Get pH, DO, and salinity measurments
                         atlas_sensor.set_stop_flag(0) # 0 =go get sensor meas
 
-                else:   #Get only temp, pressure, accel, and gyro meas
-                        #Get essential meas here
-                        atlas_sensor.set_stop_flag(1) # 0 =go get sensor meas
+                else:   # Get only temp, pressure, accel, and gyro meas
+                        # Get essential meas here
+                        atlas_sensor.set_stop_flag(1) # 1 = do NOT get sensor meas
                         print("Just get essential meas here in separate thread.")
+                        rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+
 
 
                 #end_expedition = input("End expedition(y=1, n=0)? ")
-                #end_expedition = 1 #Exits the while loop when we get specific cmd from user
-                #break; #This also exits the while loop if some condition is met
+                #end_expedition = 1 # Exits the while loop when we get specific cmd from user
+                #break; # This also exits the while loop if some condition is met
 
                         
                 """End While Loop"""
@@ -109,8 +114,8 @@ def main():
         atlas_sensor.terminate_thread()
         print("GOODBYE!!!!!!!!!!!!!!!!!!!!!!")
 
-	return 1 #End main() Definition#
+        return 1 # End main() Definition # 
 
 
-#Runs the main just defined above
+# Runs the main just defined above
 main()
