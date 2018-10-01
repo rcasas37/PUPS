@@ -91,7 +91,7 @@ def main():
                 # Take Sensor Measurements
                 if get_all_meas == True:
                         # Get essential meas here
-                        rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                        #####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
                         # Get pH, DO, and salinity measurments
                         atlas_sensor.set_stop_flag(0) # 0 =go get sensor meas
@@ -99,9 +99,12 @@ def main():
                 else:   # Get only temp, pressure, accel, and gyro meas
                         # Get essential meas here
                         atlas_sensor.set_stop_flag(1) # 1 = do NOT get sensor meas
-                        print("Just get essential meas here in separate thread.")
-                        rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                        ####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
+                # Always get essential meas 
+                essential_meas = rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
+                depth, c_temp = essential_meas      # Unpack tuple 
+                print("These are the tuples: %.4f m and %.2f C" % (depth, c_temp))      # Print tuple to verify we get it
 
 
                 #end_expedition = input("End expedition(y=1, n=0)? ")

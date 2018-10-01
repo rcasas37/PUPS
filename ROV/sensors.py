@@ -18,6 +18,7 @@ import string     # helps parse strings
 
 import threading
 
+# Controls when the atlas sensor thread gets a measurement
 stop_flag = 1 
 
 class atlas_sensors(threading.Thread):
@@ -52,7 +53,6 @@ class atlas_sensors(threading.Thread):
                 return self._stop_event.is_set()
 
         def run(self):
-                print("Thread self.running parameter: ", self.running)
                 while self.running:
                         program()
                         self.running = False
@@ -129,19 +129,6 @@ class atlas_sensors(threading.Thread):
 def program():
         device = atlas_sensors()         # creates the I2C port object, specify the address or bus if necessary
 
-        """        
-        print(">> Atlas Scientific sample code")
-        print(">> Any commands entered are passed to the board via I2C except:")
-        print(">>   List_addr lists the available I2C addresses.")
-        print(">>   Address,xx changes the I2C address the Raspberry Pi communicates with.")
-        print(">>   Poll,xx.x command continuously polls the board every xx.x seconds")
-        print(" where xx.x is longer than the %0.2f second timeout." % atlas_sensors.long_timeout)
-        print(">> Pressing ctrl-c will stop the polling")
-        """        
-
-
-        # main loop
-        #while True:
         #usr_input = input("Enter command: ")
         usr_input = "R"
         num_sensors = 0                #Must do it once for each sensor
@@ -152,6 +139,7 @@ def program():
                         # do nothing
                         #print("stop flag issss: )", device.get_stop_flag())
                         # If stop flag is 0 = go then do the below
+                        time.sleep(1)
                         dummyinput = "dummy variable"
 
                 #Set i2c address to poll each sensor once: EC=100, DO=97, pH=99        
