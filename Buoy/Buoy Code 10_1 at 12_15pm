@@ -1,0 +1,108 @@
+// what's the name of the hardware serial port?
+#define XBeeSerial Serial1
+
+#define LED RED_LED
+
+char PacketRxCC[100];
+char PacketRxROV[100];
+
+void setup() {
+  // wait for hardware serial to appear
+  while (!Serial);
+
+  //initialize the digital pin as an output.
+  pinMode(LED, OUTPUT);
+
+  //Begin UART serial comm with pc at 9600 baud rate (may be used for backchannel UART later)
+  Serial.begin(9600);
+  
+  //Begin UART serial comm with xbee at 9600 baud rate
+  XBeeSerial.begin(9600);
+
+}
+     
+void loop() {
+  //BLINK LED FOR HEARTBEAT
+  digitalWrite(LED, HIGH);
+  delay(200);
+  digitalWrite(LED, LOW);
+  delay(200);
+
+  //BACKCHANNEL UART
+  if (Serial.available()) {
+    
+    //receive each char and add to an array
+    char x;
+    int count = 0;
+    
+    for(count; x != ';';count++){
+      x = Serial.read();
+      PacketRxCC[count] = x;
+    }
+    //add one to count for size of array
+    count = count+1;
+
+    char PacketTxCC[count];
+
+    for(int i=0; i<count; i++){
+      PacketTxCC[count] = PacketRxCC[count];
+    }
+
+    //iterate through the array and send each char
+    for(int i=0; i<count; i++){
+      XBeeSerial.write(PacketTxCC[i]);
+    }
+  }
+  
+  //REGULAR UART
+  if (XBeeSerial.available()) {
+
+    //receive each char and add to an array
+    for(int i=0; i<100; i++){
+      char x = XBeeSerial.read();
+      PacketRxROV[i] = x;
+    }
+
+    //iterate through the array and send each char
+    for(int i=0; i<100; i++){
+      Serial.write(PacketRxROV[i]);
+    }
+  }
+  Serial.flush();
+  XBeeSerial.flush();
+}
+    
+/*
+// RECEIVE CHAR, CHECK FOR ;, AND CREATE STRING/ARRAY
+//    for (i=0; 'x' != ";"; i++){
+//      received += 'x';
+//      Serial.println ('received');
+//    }
+
+    
+    //delay(100);
+    Serial.write(x);
+    //XBeeSerial.write("Hello ");
+    //delay(100);
+    //Serial.write(x);
+    //Serial.println(x);
+    //received += c;
+  }
+/*    if (c == ';') {
+      Serial.print("\nStopped Received Message: \n");
+      Serial.println(received);
+      received = newreceived; //should set received message to default blank/empty string
+     //end of received message; some form of null character, can use something else 
+     //print and then reset/delete saved received message so new one can be made
+    } 
+    //else if (c == ",") {
+//     //possibly separate parts of message based on comma, dont think this is neccessary for buoy except maybe with ID
+//      Serial.write(received); //first time should be id otherwise it is message up to that point
+//    }
+//    received += c;  //should concatenate the received character onto received message
+    //Serial.print("\nReceived Message: \n");
+    //Serial.println(received);
+
+//  }
+
+}*/
