@@ -1,0 +1,157 @@
+
+//-----CUSTOM NAME FOR SERIAL PORT, SERIAL IS "BACKCHANNEL UART" AND SERIAL1 IS "REGULAR UART"-----//
+
+//#define XBeeSerial Serial1
+
+
+#define LED RED_LED
+
+//-----INITIATE CHAR ARRAYS FOR MESSAGE RECEIVING-----//
+
+char PacketRxCC[100];
+char PacketRxROV[100];
+
+//-----SETUP FOR PINS AND SERIAL COMMUNICATION-----//
+
+void setup() {
+  
+  //-----WAIT FOR HARDWARE SERIAL TO APPEAR-----//
+  while (!Serial);
+
+  //-----INITIALIZE DIGITAL PIN AS OUTPUT-----//
+  pinMode(LED, OUTPUT);
+
+  //-----BEGIN BACKCHANNEL UART AT 9600 BAUD RATE-----//
+  Serial.begin(9600);
+  
+  //-----BEGIN REGULAR UART AT 9600 BAUD RATE-----//
+  Serial1.begin(9600);
+
+}
+     
+void loop() {
+  //-----BLINK LED FOR HEARTBEAT-----//
+  
+  digitalWrite(LED, HIGH);
+  delay(200);
+  digitalWrite(LED, LOW);
+  delay(200);
+
+
+  //-----REGULAR UART-----//
+  
+  if (Serial1.available()) {
+
+    //-----INITIALIZE CHAR X VARIABLE TO CHECK
+    char x;
+    //-----INITIALIZE COUNT FOR ARRAY SIZE/PLACEMENT-----//
+    int count = 0;
+    
+    //-----RECEIVE EACH CHAR AND ADD TO ARRAY, STOP WHEN CHAR EQUALS STOPPING BYTE OR SEMICOLON-----//    
+    for(count; x != ';';count++) {
+      x = Serial1.read();
+      PacketRxCC[count] = x;
+    }
+    
+    //-----ADD ONE TO COUNT TO DETERMINE SIZE OF ARRAY-----//
+    count = count++;
+
+    //-----PRINT SIZE OF MESSAGE (OR COUNT) FOR DEBUG-----//
+    Serial.print("\nSize of Message: ");
+    Serial.println(count);
+
+    //-----INITIALIZE AN ARRAY WITH ACCURATE SIZE OF MESSAGE-----//
+    char PacketTxCC[count];
+
+    //-----TRANSFER EACH CHAR FROM RECEIVED ARRAY TO ACCURATE SIZE ARRAY-----//
+    for(int i = 0; i < count; i++) {
+      PacketTxCC[i] = PacketRxCC[i];
+    }
+
+    //-----ITERATE THROUGH THE ARRAY AND SEND EACH CHAR-----//
+    for(int i=0; i<count; i++) {
+      Serial1.write(PacketTxCC[i]);
+    }
+
+    //-----CLEAR REGULAR UART TX BUFFER-----//
+    Serial1.flush();
+    //-----CLEAR REGULAR UART RX BUFFER-----//
+    Serial1.read();
+
+  }
+
+
+  //-----BACKCHANNEL UART-----//
+  
+  if (Serial.available()) {
+      
+/*    //receive each char and add to an array
+    for(int i=0; i<100; i++){
+      char x = Serial.read();
+      PacketRxROV[i] = x;
+    }a
+
+    //iterate through the array and send each char
+    for(int i=0; i<100; i++){
+      Serial.write(PacketRxROV[i]);
+    }
+*/
+    for(int i = 0; i < 10; i++) {
+      PacketRxROV[i] = Serial.read();
+    }
+
+    Serial.write(PacketRxROV);
+    
+  }
+
+
+  //-----CHECK FOR 0x42 AND END-----//
+ 
+  char* command = strchr(PacketRxROV, '0x42');
+     if (command != 0) {
+       Serial.println("End");
+     }
+
+    
+  //-----CLEAR BACKCHANNEL UART TX BUFFER-----//
+  Serial.flush();
+  //-----CLEAR BACKCHANNEL UART RX BUFFER-----//
+  Serial.read();
+
+    
+}  
+    
+/*
+// RECEIVE CHAR, CHECK FOR ;, AND CREATE STRING/ARRAY
+//    for (i=0; 'x' != ";"; i++){
+//      received += 'x';
+//      Serial.println ('received');
+//    }
+
+    
+    //delay(100);
+    Serial.write(x);
+    //Serial1.write("Hello ");
+    //delay(100);
+    //Serial.write(x);
+    //Serial.println(x);
+    //received += c;
+  }
+/*    if (c == ';') {
+      Serial.print("\nStopped Received Message: \n");
+      Serial.println(received);
+      received = newreceived; //should set received message to default blank/empty string
+     //end of received message; some form of null character, can use something else 
+     //print and then reset/delete saved received message so new one can be made
+    } 
+    //else if (c == ",") {
+//     //possibly separate parts of message based on comma, dont think this is neccessary for buoy except maybe with ID
+//      Serial.write(received); //first time should be id otherwise it is message up to that point
+//    }
+//    received += c;  //should concatenate the received character onto received message
+    //Serial.print("\nReceived Message: \n");
+    //Serial.println(received);
+
+//  }
+
+}*/
