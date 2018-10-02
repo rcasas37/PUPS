@@ -202,11 +202,11 @@ class rov:
                 c_temp = get_temperature()
 
                 # Create tuple to hold all the values that will be passed back to main
-                essential_meas = (depth, c_temp)
+                #essential_meas = (depth, c_temp)
 
 
                 # write_xml()        # writes to sensor.xml value of obtained sensor meas
-                return essential_meas
+                return depth #essential_meas
 
 
 
@@ -259,7 +259,6 @@ Parameters:
 Return:
         Returns pH, DO, and Salinity as 
 Notes:
-"""
 def get_ph_do_sal(pressure, temp, k_val="10"):
 
         device = sensors.atlas_sensors()         # creates the I2C port object, specify the address or bus if necessary
@@ -317,6 +316,7 @@ def get_ph_do_sal(pressure, temp, k_val="10"):
                         num_sensors = 0             #Reset this variable to restart upon new user input
                         device.set_stop_flag(1)     #Thread should stop now now since stop_flag = 1 
 
+"""
 
 """
 Obtains a single pressure measurement from sensor

@@ -78,7 +78,7 @@ def main():
 
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
-                user_input = input("Would you like to get all measurements? (y,n) ")
+                user_input = raw_input("Would you like to get all measurements? (y,n) ")
                 if user_input == "y":
                         get_all_meas = True
                         print("get_all_meas pressed")
@@ -100,11 +100,13 @@ def main():
                         # Get essential meas here
                         atlas_sensor.set_stop_flag(1) # 1 = do NOT get sensor meas
                         ####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                        rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
 
                 # Always get essential meas 
-                essential_meas = rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-                depth, c_temp = essential_meas      # Unpack tuple 
-                print("These are the tuples: %.4f m and %.2f C" % (depth, c_temp))      # Print tuple to verify we get it
+                #essential_meas = rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
+                #rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
+                #depth, c_temp = essential_meas      # Unpack tuple 
+                #print("These are the tuples: %.4f m and %.2f C" % (depth, c_temp))      # Print tuple to verify we get it
 
 
                 #end_expedition = input("End expedition(y=1, n=0)? ")

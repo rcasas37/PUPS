@@ -69,8 +69,61 @@ class atlas_sensors(threading.Thread):
         def write(self, cmd):
                 # appends the null character and sends the string over I2C
                 cmd += "\00"
-                self.file_write.write(cmd)
+                unicode_cmd = cmd.encode()      # Added for python3 since .write does not take a string only a unicode byte
+                self.file_write.write(unicode_cmd)
 
+        """
+        # NEW
+        def read(self, num_of_bytes=31):
+                # reads a specified number of bytes from I2C, then parses and displays the result
+                res = self.file_read.read(num_of_bytes)         # read from the board
+                print("here is string res: " , res)
+                #response1 = filter(lambda x: x != '\x00', res)     # remove the null characters to get the response
+                #while res.endswith('\x00'.encode()):                         #remove the null characters to get the respones only
+                res.strip('\x00'.encode())
+                print("The NEW res: ", res)
+                print("response1: ", response1)
+                i = 0
+                response = [] 
+                for element in response1:
+                    print("%d. " % i, element)
+                    #response[i] = element
+                    response.append(str(element))
+                    i += 1
+                if ord(response[0]) == 1:             # if the response isn't an error
+                        # change MSB to 0 for all received characters except the first and get a list of characters
+                        char_list = map(lambda x: chr(ord(x) & ~0x80), list(response[1:]))
+                        # NOTE: having to change the MSB to 0 is a glitch in the raspberry pi, and you shouldn't have to do this!
+                        return "Command succeeded " + ''.join(char_list)     # convert the char list to a string and returns it
+                else:
+                        return "Error " + str(ord(response[0]))
+
+        # New2
+        def read(self, num_of_bytes=31):
+                # reads a specified number of bytes from I2C, then parses and displays the result
+                res = self.file_read.read(num_of_bytes)         # read from the board
+                print("here is string res: " , res)
+                response1 = filter(lambda x: x != '\x00', res)     # remove the null characters to get the response
+                print("response1: ", response1)
+                i = 0
+                response = [] 
+                for element in response1:
+                    print("%d. " % i, element)
+                    #response[i] = element
+                    response.append(str(element))
+                    i += 1
+                print ("response[0]: ", response[0])
+                if response[0] == "1":             # if the response isn't an error
+                        # change MSB to 0 for all received characters except the first and get a list of characters
+                        char_list = map(lambda x: chr(ord(x) & ~0x80), list(response[1:]))
+                        print("Char_list var: ", char_list)
+                        # NOTE: having to change the MSB to 0 is a glitch in the raspberry pi, and you shouldn't have to do this!
+                        return "Command succeeded " + ''.join(char_list)     # convert the char list to a string and returns it
+                else:
+                        return "Error " + str(ord(response[0]))
+        """
+
+        # Original
         def read(self, num_of_bytes=31):
                 # reads a specified number of bytes from I2C, then parses and displays the result
                 res = self.file_read.read(num_of_bytes)         # read from the board
@@ -82,7 +135,7 @@ class atlas_sensors(threading.Thread):
                         return "Command succeeded " + ''.join(char_list)     # convert the char list to a string and returns it
                 else:
                         return "Error " + str(ord(response[0]))
-
+                        
         def query(self, string):
                 # write a command to the board, wait the correct timeout, and read the response
                 self.write(string)
