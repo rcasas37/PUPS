@@ -27,6 +27,18 @@ void setup() {
   //-----BEGIN REGULAR UART AT 9600 BAUD RATE-----//
   Serial1.begin(9600);
 
+
+  //-----CLEAR TX AND RX BUFFERS-----//
+
+  //-----CLEAR REGULAR UART TX BUFFER-----//
+  Serial1.flush();
+  //-----CLEAR REGULAR UART RX BUFFER-----//
+  Serial1.read();
+  //-----CLEAR BACKCHANNEL UART TX BUFFER-----//
+  Serial.flush();
+  //-----CLEAR BACKCHANNEL UART RX BUFFER-----//
+  Serial.read();
+
 }
      
 void loop() {
@@ -73,6 +85,7 @@ void loop() {
       Serial1.write(PacketTxCC[i]);
     }
 
+
     //-----CLEAR REGULAR UART TX BUFFER-----//
     Serial1.flush();
     //-----CLEAR REGULAR UART RX BUFFER-----//
@@ -85,15 +98,36 @@ void loop() {
   
   if (Serial.available()) {
       
-/*    //receive each char and add to an array
-    for(int i=0; i<100; i++){
-      char x = Serial.read();
-      PacketRxROV[i] = x;
-    }a
+/*         
+    //-----INITIALIZE CHAR X VARIABLE TO CHECK
+    char a;
+    //-----INITIALIZE COUNT FOR ARRAY SIZE/PLACEMENT-----//
+    int count = 0;
+    
+    //-----RECEIVE EACH CHAR AND ADD TO ARRAY, STOP WHEN CHAR EQUALS STOPPING BYTE OR SEMICOLON-----//    
+    for(count; a != ';';count++) {
+      a = Serial.read();
+      PacketRxROV[count] = a;
+    }
+    
+    //-----ADD ONE TO COUNT TO DETERMINE SIZE OF ARRAY-----//
+    count = count++;
 
-    //iterate through the array and send each char
-    for(int i=0; i<100; i++){
-      Serial.write(PacketRxROV[i]);
+    //-----PRINT SIZE OF MESSAGE (OR COUNT) FOR DEBUG-----//
+    Serial.print("\nSize of Message: ");
+    Serial.println(count);
+
+    //-----INITIALIZE AN ARRAY WITH ACCURATE SIZE OF MESSAGE-----//
+    char PacketTxROV[count];
+
+    //-----TRANSFER EACH CHAR FROM RECEIVED ARRAY TO ACCURATE SIZE ARRAY-----//
+    for(int i = 0; i < count; i++) {
+      PacketTxROV[i] = PacketRxROV[i];
+    }
+
+    //-----ITERATE THROUGH THE ARRAY AND SEND EACH CHAR-----//
+    for(int i=0; i<count; i++) {
+      Serial.write(PacketTxROV[i]);
     }
 */
     for(int i = 0; i < 10; i++) {
