@@ -78,7 +78,7 @@ def main():
 
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
-                user_input = raw_input("Would you like to get all measurements? (y,n) ")
+                user_input = input("Would you like to get all measurements? (y,n) ")
                 if user_input == "y":
                         get_all_meas = True
                         print("get_all_meas pressed")
