@@ -34,7 +34,7 @@ Notes:
 """
 def main():
         # Define some variables used within main
-        end_expedition = 0 	# Variable to end program's main
+        end_expedition = False 	# Variable to end program's main
         usr_input = 0
 
 
@@ -46,6 +46,7 @@ def main():
 
         # Create atlas sensor thread
         atlas_sensor_thread = Thread(target=atlas_sensor.run)
+        atlas_sensor_thread.daemon = True       # Used to stop the thread once main finishes
 
         # Start Sensor thread
         atlas_sensor_thread.start()
@@ -70,7 +71,7 @@ def main():
         Description While Loop:
         The while loop does what?? Oh that is right, EVERYTHING!
         """
-        while True:
+        while end_expedition != True:
                 # Everything goes here
 
                 # Get control data from serial port
@@ -79,47 +80,53 @@ def main():
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
                 user_input = input("Would you like to get all measurements? (y,n) ")
-                if user_input == "y":
-                        get_all_meas = True
-                        print("get_all_meas pressed")
-                        user_input = "n"
+                
+                # End of expedition user input (need to change it to an interupt kind of function)
+                if user_input == "quit": 
+                        end_expedition = True
                 else:
-                        get_all_meas = False
-                        print("get_all_meas NOT pressed")
+                        if user_input == "y":
+                                get_all_meas = True
+                                print("get_all_meas pressed")
+                                user_input = "n"
+                        else:
+                                get_all_meas = False
+                                print("get_all_meas NOT pressed")
 
 
-                # Take Sensor Measurements
-                if get_all_meas == True:
-                        # Get essential meas here
-                        #####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                        # Take Sensor Measurements
+                        if get_all_meas == True:
+                                # Get essential meas here
+                                rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
+                                #####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
-                        # Get pH, DO, and salinity measurments
-                        atlas_sensor.set_stop_flag(0) # 0 =go get sensor meas
+                                # Get pH, DO, and salinity measurments
+                                atlas_sensor.set_stop_flag(0) # 0 =go get sensor meas
 
-                else:   # Get only temp, pressure, accel, and gyro meas
-                        # Get essential meas here
-                        atlas_sensor.set_stop_flag(1) # 1 = do NOT get sensor meas
-                        ####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
-                        rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
+                        else:   # Get only temp, pressure, accel, and gyro meas
+                                # Get essential meas here
+                                atlas_sensor.set_stop_flag(1) # 1 = do NOT get sensor meas
+                                ####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                                rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
 
-                # Always get essential meas 
-                #essential_meas = rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-                #rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-                #depth, c_temp = essential_meas      # Unpack tuple 
-                #print("These are the tuples: %.4f m and %.2f C" % (depth, c_temp))      # Print tuple to verify we get it
+                        # Always get essential meas 
+                        #essential_meas = rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
+                        #rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
+                        #depth, c_temp = essential_meas      # Unpack tuple 
+                        #print("These are the tuples: %.4f m and %.2f C" % (depth, c_temp))      # Print tuple to verify we get it
 
 
-                #end_expedition = input("End expedition(y=1, n=0)? ")
-                #end_expedition = 1 # Exits the while loop when we get specific cmd from user
-                #break; # This also exits the while loop if some condition is met
+                        #end_expedition = input("End expedition(y=1, n=0)? ")
+                        #end_expedition = 1 # Exits the while loop when we get specific cmd from user
+                        #break; # This also exits the while loop if some condition is met
 
-                        
-                """End While Loop"""
-
+                                
+                        """End While Loop"""
+        # Shut down sensor thread before terminating the program
         atlas_sensor.terminate_thread()
-        print("GOODBYE!!!!!!!!!!!!!!!!!!!!!!")
+        print("GOODBYE!")
 
-        return 1 # End main() Definition # 
+        # return 0 # End main() Definition # 
 
 
 # Runs the main just defined above

@@ -10,13 +10,14 @@ from decimal import Decimal #Module provides converting a string to decimal
 #Program function definitions
 def main():
 	capstone_grade = 10	
-	while True:
+        capstone_grade1 = 0
+	while capstone_grade1 != 66:
 		# Test output
 		#for i in range(10):
 		#	print("Hello, World! %d \n" %(i + 1))
 
 		#get usr input
-		#capstone_grade1 = input("What grade do you want in capstone? ")
+		capstone_grade1 = input("What grade do you want in capstone? ")
 		#capstone_grade = Decimal(capstone_grade1) #convert str to double
 
 		print_grade(capstone_grade)
