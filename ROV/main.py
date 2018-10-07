@@ -77,9 +77,13 @@ def main():
                 # Get control data from serial port
                         # get control data here 
 
+                # Write sensor data to serial port 
+                ########    write_serial_port()
+                rov.send_sensor_data()
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
                 user_input = input("Would you like to get all measurements? (y,n) ")
+
                 
                 # End of expedition user input (need to change it to an interupt kind of function)
                 if user_input == "quit": 

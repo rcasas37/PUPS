@@ -1,0 +1,14 @@
+<command_array title="ROV Sensors">
+	<Temperature>999</Temperature>
+	<Pressure>9999</Pressure>
+	<pH>99999</pH>
+	<Salinity>Jessica</Salinity>
+	<Dissolved_Oxygen>999</Dissolved_Oxygen>
+	<Gyroscope1>999</Gyroscope1>
+	<Gyroscope2>999</Gyroscope2>
+	<Gyroscope3>999</Gyroscope3>
+	<Accelerometer1>999</Accelerometer1>
+	<Accelerometer2>9</Accelerometer2>
+	<Accelerometer3>999</Accelerometer3>
+	
+</command_array>
