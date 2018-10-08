@@ -41,8 +41,9 @@ def main():
         # Initialize I2C bus slave addresses explicitly to default values ### Set parameters that hold the slave addresses in Hex or decimal??
 
         # Initialize class objects and instances 
-        rov = rov_skeleton.rov()		# Init rov class/module instance
-        atlas_sensor = rov_skeleton.sensors.atlas_sensors()     # Initialize atlas sensor class/module instance
+        # This also initializes two xml files with default values
+        rov = rov_skeleton.rov()		            # init rov class/module instance
+        atlas_sensor = rov_skeleton.sensors.atlas_sensors() # Initialize atlas sensor class/module instance
 
         # Create atlas sensor thread
         atlas_sensor_thread = Thread(target=atlas_sensor.run)
@@ -55,17 +56,19 @@ def main():
         stop_motors = False
         get_all_meas = False
 
-        # Other Essential variables
-        cmd_id = 0x00 	# Command ID stored as decimal number in python
-        get_essential_meas = True # This guy should always be true might not even need var for him	
+        # Initalize use of commands.xml
+        base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+        xml_file = os.path.join(base_path, "xml_commands.xml")  # Join base_path with actual .xml file name
+        tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
+        root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
 
+        # Other Essential variables
+        cmd_id = "0" 	            # Command ID stored as decimal number in python
 
         # Open serial port communication
 
-
-        # Create sensor and command .xml files for data storage
-
-        user_input = "y"
+        cmd_input = "y"
+        test_input = "C,LTx1200,LTy1000,RTx0,RTy-800,Aval0,Xval0"   # Sample input from cmd center
 
         """
         Description While Loop:
@@ -82,17 +85,17 @@ def main():
                 rov.send_sensor_data()
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
-                user_input = input("Would you like to get all measurements? (y,n) ")
+                cmd_input = input("Would you like to get all measurements? (y,n) ")
 
                 
                 # End of expedition user input (need to change it to an interupt kind of function)
-                if user_input == "quit": 
+                if cmd_input == "quit": 
                         end_expedition = True
                 else:
-                        if user_input == "y":
+                        if cmd_input == "y":
                                 get_all_meas = True
                                 print("get_all_meas pressed")
-                                user_input = "n"
+                                cmd_input = "n"
                         else:
                                 get_all_meas = False
                                 print("get_all_meas NOT pressed")

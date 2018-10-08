@@ -74,7 +74,7 @@ class TSYS01(object):
     # default degrees C
     def temperature(self, conversion=UNITS_Centigrade):
         if conversion == UNITS_Farenheit:
-            return (9/5) * self._temperature + 32
+            return (1.8 * self._temperature) + 32
         elif conversion == UNITS_Kelvin:
             return self._temperature - 273
         return self._temperature
