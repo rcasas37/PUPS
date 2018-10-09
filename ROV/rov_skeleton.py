@@ -111,11 +111,11 @@ class rov:
 
         """
         Sends sensor data. Opens sensor.xml and combines all data into a comma delineated string 
-        and sends through serial port by calling write_serial_port()
+        and returns string ready to send over serial port 
         Parameters:
                None 
         Return:
-               None 
+               Returns the sensor string in format: "S,pH,DO,Sal,Temp,Presure,Gyro1,Accel1,Error_addr:" 
         Notes:
         """
         def send_sensor_data(default_arg):
@@ -130,9 +130,7 @@ class rov:
                             root.find("Salinity").text + "," + root.find("Temperature").text + "," + root.find("Pressure").text + "," +
                             root.find("Gyroscope1").text + "," + root.find("Accelerometer1").text + "," + root.find("Errored_Sensor").text + ":") 
 
-                # Write the string we just created to serial port
-                write_serial_port(sensor_str) 
-                return
+                return sensor_str
 
 
 
@@ -155,8 +153,6 @@ class rov:
                 # Create sensor string from sensor.xml 
                 sensor_str= (root.find("Temperature").text + root.find("Pressure").text + root.find("pH").text + 
                         root.find("Salinity").text + root.find("Dissolved_Oxygen").text + root.find("Errored_Sensor").text + ":") 
-                # Write the string we just created to serial port
-                write_serial_port(sensor_str) 
                 return
 
 
@@ -270,50 +266,55 @@ class rov:
                 return
 
 
-        # get each sensor data
-        # parse input cmd or is this write_xml??
+        """
+        Obtain string commands from cmd center.
+        Parameters:
+                None
+        Return:
+                Returns full message from cmd center as a string with a terminating ':' 
+        Notes:
+        """
+        def read_serial_port(default_arg, ser, size=None, eol=';'):
+                # Open and read from serial port and save in cmd_message variable
+                len_eol = len(eol)
+                line_str = bytearray() 
+                while True:
+                        char = ser.read(1)      # Read 1 byte or 1 char
+                        if char:
+                                line_str += char     # Append a single char string to the line_str 
+                                #line_str = line_str + str(char)     # Append a single char string to the line_str
+                                if line_str[-len_eol:] == eol:                                 # Check if char is terminating character
+                                        break
+                                if size is not None and len(line_str) >= size:  # Check if message is even in the buffer
+                                        break
+                        else:
+                                break
+                return bytes(line_str) 
 
+
+        """
+        Sends sensor array data to the command center terminated by a ':' 
+        Called only by send_sensor_string() a part of the rov class. 
+        Parameters:
+                Sensor array string terminated by ':'  
+        Return:
+                None
+        Notes:
+        """
+        def write_serial_port(default_arg, ser, sensor_str):
+                # Open and write sensor_str to serial port
+                sensor_encoded = sensor_str.encode()
+                ser.write(sensor_encoded)
+
+                # This is the sensor string I am getting
+                print("This is the sensor string I have to send: ", sensor_str)
+
+                return
 
 
 ############################################################
 ################ ROV Class Helper functions#################
 ############################################################
-
-
-"""
-Obtain string commands from cmd center.
-Parameters:
-        None
-Return:
-        Returns full message from cmd center as a string with a terminating ':' 
-Notes:
-"""
-def read_serial_port():
-        # Open and read from serial port and save in cmd_message variable
-        #cmd_message = readUART_LINE_SOMETHING_like_this()
-        
-        return cmd_message
-
-
-
-"""
-Sends sensor array data to the command center terminated by a ':' 
-Called only by send_sensor_string() a part of the rov class. 
-Parameters:
-        Sensor array string terminated by ':'  
-Return:
-        None
-Notes:
-"""
-def write_serial_port(sensor_str):
-        # Open and write sensor_str to serial port
-
-        # This is the sensor string I am getting
-        print("This is the sensor string I am getting: ", sensor_str)
-
-        return
-
-
 
 """
 Writes individual string data to a single element in the chosen xml file.

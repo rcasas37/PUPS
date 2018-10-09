@@ -14,13 +14,13 @@ movement, sensor readings, and communication to SEAL's cmd center.
 import rov_skeleton # Module provides access to all of the fns with our class 'rov'
 from threading import Thread
 import time
+import serial
+import os 
+import xml.etree.ElementTree as et
 #import sensors	# Module provides all of the sensor classes 
-#import test  # NOT A real import. Delete after done
-
 
 # Global variables
 # global my_var = 100 
-
 
 
 """
@@ -35,13 +35,12 @@ Notes:
 def main():
         # Define some variables used within main
         end_expedition = False 	# Variable to end program's main
-        usr_input = 0
+        cmd_id = "0" 	            # Command ID stored as decimal number in python
+        cmd_input = "y"
+        test_input = "C,LTx1200,LTy1000,RTx0,RTy-800,Aval0,Xval0:"   # Sample input from cmd center
+        test_init_input = "z,kval10,H2oSalt:"                        # Sample init input from cmd center
 
-
-        # Initialize I2C bus slave addresses explicitly to default values ### Set parameters that hold the slave addresses in Hex or decimal??
-
-        # Initialize class objects and instances 
-        # This also initializes two xml files with default values
+        # Initialize class objects and instances. (Also inits 2 xml files with default vals)
         rov = rov_skeleton.rov()		            # init rov class/module instance
         atlas_sensor = rov_skeleton.sensors.atlas_sensors() # Initialize atlas sensor class/module instance
 
@@ -62,13 +61,11 @@ def main():
         tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
         root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
 
-        # Other Essential variables
-        cmd_id = "0" 	            # Command ID stored as decimal number in python
-
         # Open serial port communication
+        ser = serial.Serial(port='/dev/ttyS0', baudrate=9600, parity=serial.PARITY_NONE,
+                            stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)        # (physical port, baudrate, timeout interval)
 
-        cmd_input = "y"
-        test_input = "C,LTx1200,LTy1000,RTx0,RTy-800,Aval0,Xval0"   # Sample input from cmd center
+        rov.write_serial_port(ser, test_init_input)     # Write to serial port
 
         """
         Description While Loop:
@@ -79,10 +76,14 @@ def main():
 
                 # Get control data from serial port
                         # get control data here 
+                cmd_message = rov.read_serial_port(ser)         # Read from serial port
+
+                # Print read results
+                print("This is the control_message: ", cmd_message)
 
                 # Write sensor data to serial port 
                 ########    write_serial_port()
-                rov.send_sensor_data()
+                rov.write_serial_port(ser, rov.send_sensor_data())
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
                 cmd_input = input("Would you like to get all measurements? (y,n) ")
@@ -108,20 +109,13 @@ def main():
                                 #####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
                                 # Get pH, DO, and salinity measurments
-                                atlas_sensor.set_stop_flag(0) # 0 =go get sensor meas
+                                atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
 
                         else:   # Get only temp, pressure, accel, and gyro meas
                                 # Get essential meas here
-                                atlas_sensor.set_stop_flag(1) # 1 = do NOT get sensor meas
+                                atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
                                 ####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
                                 rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-
-                        # Always get essential meas 
-                        #essential_meas = rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-                        #rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-                        #depth, c_temp = essential_meas      # Unpack tuple 
-                        #print("These are the tuples: %.4f m and %.2f C" % (depth, c_temp))      # Print tuple to verify we get it
-
 
                         #end_expedition = input("End expedition(y=1, n=0)? ")
                         #end_expedition = 1 # Exits the while loop when we get specific cmd from user
@@ -133,7 +127,7 @@ def main():
         atlas_sensor.terminate_thread()
         print("GOODBYE!")
 
-        # return 0 # End main() Definition # 
+        return 0 # End main() Definition # 
 
 
 # Runs the main just defined above
