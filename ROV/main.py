@@ -37,8 +37,8 @@ def main():
         end_expedition = False 	# Variable to end program's main
         cmd_id = "0" 	            # Command ID stored as decimal number in python
         cmd_input = "y"
-        test_input = "C,LTx1200,LTy1000,RTx0,RTy-800,Aval0,Xval0:"   # Sample input from cmd center
-        test_init_input = "z,kval10,H2oSalt:"                        # Sample init input from cmd center
+        test_input = "C,LTx1200,LTy1000,RTx0,RTy-800,Aval0,Xval0;"   # Sample input from cmd center
+        test_init_input = "z,kval10,H2oSalt;"                        # Sample init input from cmd center
 
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
         rov = rov_skeleton.rov()		            # init rov class/module instance
@@ -65,7 +65,6 @@ def main():
         ser = serial.Serial(port='/dev/ttyS0', baudrate=9600, parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)        # (physical port, baudrate, timeout interval)
 
-        rov.write_serial_port(ser, test_init_input)     # Write to serial port
 
         """
         Description While Loop:
@@ -76,6 +75,7 @@ def main():
 
                 # Get control data from serial port
                         # get control data here 
+                rov.write_serial_port(ser, test_init_input)     # Write to serial port
                 cmd_message = rov.read_serial_port(ser)         # Read from serial port
 
                 # Print read results

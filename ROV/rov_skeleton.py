@@ -152,7 +152,7 @@ class rov:
 
                 # Create sensor string from sensor.xml 
                 sensor_str= (root.find("Temperature").text + root.find("Pressure").text + root.find("pH").text + 
-                        root.find("Salinity").text + root.find("Dissolved_Oxygen").text + root.find("Errored_Sensor").text + ":") 
+                        root.find("Salinity").text + root.find("Dissolved_Oxygen").text + root.find("Errored_Sensor").text + ";") 
                 return
 
 
@@ -271,7 +271,7 @@ class rov:
         Parameters:
                 None
         Return:
-                Returns full message from cmd center as a string with a terminating ':' 
+                Returns full message from cmd center as a string with a terminating ';' 
         Notes:
         """
         def read_serial_port(default_arg, ser, size=None, eol=';'):
@@ -293,10 +293,10 @@ class rov:
 
 
         """
-        Sends sensor array data to the command center terminated by a ':' 
+        Sends sensor array data to the command center terminated by a ';' 
         Called only by send_sensor_string() a part of the rov class. 
         Parameters:
-                Sensor array string terminated by ':'  
+                Sensor array string terminated by ';'  
         Return:
                 None
         Notes:
