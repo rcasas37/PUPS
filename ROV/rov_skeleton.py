@@ -28,6 +28,7 @@ import xml.etree.ElementTree as et  # Module provides .xml file manipulation and
 class rov:
         default_sensor_xml = "xml_sensors.xml"   
         default_command_xml = "xml_commands.xml"   
+        cmd_xml_elem = ["id_char", "lt_xaxis", "lt_yaxis", "rt_xaxis", "rt_yaxis", "a_button", "x_button", "k_value", "water_type"]
 
         
         """
@@ -40,7 +41,7 @@ class rov:
         Notes:
                 ROV class initilization function called upon when ROV object is created.
         """
-        def __init__(default_arg, sensor_xml_file=default_sensor_xml, command_xml_file=default_command_xml):
+        def __init__(self, sensor_xml_file=default_sensor_xml, command_xml_file=default_command_xml):
                 # Initilize all values in commands.xml to defaults (0)
                 base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
                 xml_file = os.path.join(base_path, command_xml_file)     # Join base_path with actual .xml file name
@@ -92,7 +93,7 @@ class rov:
                 Returns string to use for ROV control 
         Notes:
         """
-        def read_command_xml(default_arg, cmd_element):
+        def read_command_xml(self, cmd_element):
                 # Read from command xml at specific point so I
                 #may need more function input parameters
 
@@ -118,7 +119,7 @@ class rov:
                Returns the sensor string in format: "S,pH,DO,Sal,Temp,Presure,Gyro1,Accel1,Error_addr:" 
         Notes:
         """
-        def send_sensor_data(default_arg):
+        def send_sensor_data(self):
                 # Open sensor.xml read from and concatenate all sensor data into string close sensor.xml
                 base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
                 xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
@@ -143,7 +144,7 @@ class rov:
                 Do i return anything at all or just re-write to sensor.xml???
         Notes:
         """
-        def sig_fig_sensor_data(default_arg):
+        def sig_fig_sensor_data(self):
                 # Open sensor.xml read from and concatenate all sensor data into string close sensor.xml
                 base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
                 xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
@@ -165,7 +166,7 @@ class rov:
                 Do we return any value?
         Notes:
         """
-        def parse_control_data(default_arg):
+        def parse_control_data(self):
                 # parse the data string from buffer then write each piece to .xml
 
                 # write_xml()        # writes to control.xml values of each control data pt.
@@ -180,7 +181,7 @@ class rov:
                 Do we return any value?
         Notes:
         """
-        def calc_motor_spd(default_arg):
+        def calc_motor_spd(self):
                 # Open control.xml read selected value, calc PWM write it into .xml and close xml
                 return
 
@@ -194,7 +195,7 @@ class rov:
                 Do we return any value?
         Notes:
         """
-        def set_motor_spd(default_arg):
+        def set_motor_spd(self):
                 # Open control.xml read selected vals & write to ESC channel(s) via I2C bus close .xml
 
                 return
@@ -209,7 +210,7 @@ class rov:
                 Do we return any value?
         Notes:
         """
-        def get_essential_meas(default_arg, water_choice):
+        def get_essential_meas(self, water_choice):
                 # Get Pressure measurement and write it to sensors.xml
                 depth = get_pressure(water_choice)
                 write_xml("0", "Pressure", str(depth))
@@ -240,7 +241,7 @@ class rov:
                 Do we return any value?
         Notes:
         """
-        def get_all_meas(default_arg):
+        def get_all_meas(self):
                 # Open sensor.xml, obtain all sensor meas, write to sensor.xml and close 
                 # get_essential_meas()
                 
@@ -260,7 +261,7 @@ class rov:
                 Do we return any value?
         Notes:
         """
-        def stabilize_rov(default_arg):
+        def stabilize_rov(self):
                 # This one is gonna be a beach
 
                 return
@@ -274,14 +275,15 @@ class rov:
                 Returns full message from cmd center as a string with a terminating ';' 
         Notes:
         """
-        def read_serial_port(default_arg, ser, size=None, eol=';'):
+        def read_serial_port(self, ser, size=None, eol=';'):
                 # Open and read from serial port and save in cmd_message variable
                 len_eol = len(eol)
                 line_str = bytearray() 
                 while True:
                         char = ser.read(1)      # Read 1 byte or 1 char
                         if char:
-                                line_str += char     # Append a single char string to the line_str 
+                                if char.decode() != ";":    # If the current char the terminating char? No then append it.
+                                        line_str += char    # Append a single char string to the line_str 
                                 #line_str = line_str + str(char)     # Append a single char string to the line_str
                                 if line_str[-len_eol:] == eol:                                 # Check if char is terminating character
                                         break
@@ -301,7 +303,7 @@ class rov:
                 None
         Notes:
         """
-        def write_serial_port(default_arg, ser, sensor_str):
+        def write_serial_port(self, ser, sensor_str):
                 # Open and write sensor_str to serial port
                 sensor_encoded = sensor_str.encode()
                 ser.write(sensor_encoded)
@@ -309,6 +311,23 @@ class rov:
                 # This is the sensor string I am getting
                 print("This is the sensor string I have to send: ", sensor_str)
 
+                return
+
+
+        """
+        Writes each command data to the command.xml for motor use
+        Parameters:
+                None
+        Return:
+                None
+        Notes:
+        """
+        def write_cmd_xml(self, cmd_str):
+                cmd_list = cmd_str.split(",")           # Get list of each individual cmd from cmd center
+                i = 0
+                for cmd in cmd_list:                    # Write each individual element at a time to the command.xml
+                        write_xml("1", self.cmd_xml_elem[i], cmd)
+                        i += 1
                 return
 
 

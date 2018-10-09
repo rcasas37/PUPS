@@ -37,8 +37,8 @@ def main():
         end_expedition = False 	# Variable to end program's main
         cmd_id = "0" 	            # Command ID stored as decimal number in python
         cmd_input = "y"
-        test_input = "C,LTx1200,LTy1000,RTx0,RTy-800,Aval0,Xval0;"   # Sample input from cmd center
         test_init_input = "z,kval10,H2oSalt;"                        # Sample init input from cmd center
+        cmd_message = ""            # Init to zero 
 
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
         rov = rov_skeleton.rov()		            # init rov class/module instance
@@ -77,6 +77,7 @@ def main():
                         # get control data here 
                 rov.write_serial_port(ser, test_init_input)     # Write to serial port
                 cmd_message = rov.read_serial_port(ser)         # Read from serial port
+                rov.write_cmd_xml(cmd_message)             # Write the cmd data to the cmd.xml
 
                 # Print read results
                 print("This is the control_message: ", cmd_message)
@@ -90,7 +91,7 @@ def main():
 
                 
                 # End of expedition user input (need to change it to an interupt kind of function)
-                if cmd_input == "quit": 
+                if cmd_input == "quit" or cmd_input == "q": 
                         end_expedition = True
                 else:
                         if cmd_input == "y":
@@ -120,9 +121,8 @@ def main():
                         #end_expedition = input("End expedition(y=1, n=0)? ")
                         #end_expedition = 1 # Exits the while loop when we get specific cmd from user
                         #break; # This also exits the while loop if some condition is met
-
                                 
-                        """End While Loop"""
+                """End While Loop"""
         # Shut down sensor thread before terminating the program
         atlas_sensor.terminate_thread()
         print("GOODBYE!")
