@@ -5,52 +5,53 @@
 # /etc/init.d/boot_py_script  OR beause of the line I added in:
 # /etc/rc.local which runs after everython boots
 from decimal import Decimal #Module provides converting a string to decimal
+import os
+import xml.etree.ElementTree as et      #et == ElementTree
+
+# Returns the directory name as string of current dir and pass it the file __file__ that is being run in python
+base_path = os.path.dirname(os.path.realpath(__file__))
+
+#join base_path with ROV folder to actual .xml file name
+xml_file = os.path.join(base_path, "xml_sensors.xml")
+
+# Save file above into memory so we can work with it
+tree = et.parse(xml_file)
+
+# Returns the root of the .xml file to get access to every other element underneeth that root
+root = tree.getroot()
+
+# Gets the sensor childs(child.tag) and their names(child.attrib) printed
+#for child in root:
+#    print(child.tag, child.attrib)
+
+sensor_array = ["100", "10", "Friends", "99", "7", "1", "2", "3", "10", "9", "8"]
+
+#writes an individual element to the sensor.xml file
+temp_reading = "Landon"
+root.find("Temperature").text = temp_reading 
+
+#writes an individual element to the sensor.xml file
+# prints the element in string form of pH
+stringme = (root.find("Temperature").text + root.find("Pressure").text + root.find("pH").text + 
+            root.find("Salinity").text + root.find("Dissolved_Oxygen").text) 
+
+print(stringme)
+root.find("pH").text = sensor_array[2] 
+
+# Saves all changes to the sensor.xml file
+tree.write(xml_file)
 
 
-#Program function definitions
-def main():
-	capstone_grade = 10	
-	while True:
-		# Test output
-		#for i in range(10):
-		#	print("Hello, World! %d \n" %(i + 1))
+print(root.find("pH").text)      # prints the element in string form of pH
 
-		#get usr input
-		#capstone_grade1 = input("What grade do you want in capstone? ")
-		#capstone_grade = Decimal(capstone_grade1) #convert str to double
+# Writes everyhting in the sensor_array above to the sensor.xml
+"""
+i = 0
+for child in root:
+#    for element in child:
+    child.text = sensor_array[i]
+    #print(child.tag, ":", child.text)
+    i = i + 1
+tree.write(xml_file)
+"""
 
-		print_grade(capstone_grade)
-		capstone_grade += 10
-
-		"""Main loop terminator must have "return" if used "break" we return
-		operation back to where it left off ie we only get out of loop and 
-		continue with main definition execution"""
-		if capstone_grade == 100:
-			print_finalgrade(capstone_grade)
-			return;
-
-#fn definition
-def print_grade(capstone_grade):
-	print("Your capstone grade: %d" %capstone_grade)
-
-#fn definition
-def print_finalgrade(capstone_grade):
-	print("Goodbye. Your capstone grade: %d \n" %capstone_grade )
-
-
-
-class test_class:
-	attribute_thing = 90
-
-	"""We can get at the attribute attribute_thing
-	within our main while loop by simply calling classOjectInstance.attribute_thing
-	or classObjectInstance.get_attribute() both work
-	"""
-	def get_attribute(self):
-		return self.attribute_thing
-
-##########################################################################
-#program execution of all functions etc
-if __name__ == '__main__':
-	main()
-#if we want more fns to execute after main then we put them here
