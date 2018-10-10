@@ -6,8 +6,8 @@
 # Modification made by Rogelio Casas Jr. for use with T200 Motors
 
 import time
-
 import pigpio
+import motors
 
 class PWM:
 
@@ -149,6 +149,86 @@ class PWM:
    def _read_reg(self, reg):
       return self.pi.i2c_read_byte_data(self.h, reg)
 
+class control:
+
+   """
+   Class that handles controlling the motors, lights, and water pump. It also
+   passes the PWM and pi object to the class to be used later.
+
+   When creating the object, initialize the motors using the parameters
+   where m# is motors, l# is lights, and w# is water pump.
+
+   Initializes channels from channels 0 to 8
+   """
+
+   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, l2=7, w1=8):
+      self.pi = pigpio.pi()
+      self.pwm = motors.PWM(self.pi)
+      self.pi = pi
+      self.m1 = m1
+      self.m2 = m2
+      self.m3 = m3
+      self.m4 = m4
+      self.m5 = m5
+      self.m6 = m6
+      self.l1 = l1
+      self.l2 = l2
+      self.w1 = w1
+
+   """
+   Sends the initialization signal to all motors.
+   """
+   def arm(self):
+      self.pwm.set_pulse_width(self.m1, 1530)
+      self.pwm.set_pulse_width(self.m2, 1530)
+      self.pwm.set_pulse_width(self.m3, 1530)
+      self.pwm.set_pulse_width(self.m4, 1530)
+      self.pwm.set_pulse_width(self.m5, 1530)
+      self.pwm.set_pulse_width(self.m6, 1530)
+      time.sleep(1)
+
+   def disarm(self):
+      self.pwm.set_pulse_width(self.m1, 0)
+      self.pwm.set_pulse_width(self.m2, 0)
+      self.pwm.set_pulse_width(self.m3, 0)
+      self.pwm.set_pulse_width(self.m4, 0)
+      self.pwm.set_pulse_width(self.m5, 0)
+      self.pwm.set_pulse_width(self.m6, 0)
+
+   def norm_values(analog_value):
+      return (analog_value // 137) + 30
+
+   def tilt_control(self, left_x, left_y):
+      #Check to see what direction it is going in the y axis
+      if left_y > 4000:
+          self.tilt_n(self.norm_values(left_y))
+      elif left_y < -4000:
+          self.tilt_s(self.norm_values(left_y))
+
+      #Check to see what direction it is going in the x axis
+      if left_x > 4000:
+          self.tilt_e(self.norm_values(left_x))
+      elif left_x < -4000:
+          self.tilt_w(self.norm_values(left_x))
+
+
+   def tilt_n(self, left_y):
+      self.pwm.set_pulse_width(self.m1, left_y)
+      #self.pwm.set_pulse_width(self.m3, -left_y)
+
+   def tilt_e(self, left_x):
+      self.pwm.set_pulse_width(self.m2, left_x)
+      #self.pwm.set_pulse_width(self.m4, -left_x)
+
+   def tilt_s(self, left_y):
+      self.pwm.set_pulse_width(self.m3, left_y)
+      #self.pwm.set_pulse_width(self.m1, -left_y)
+
+   def tilt_w(self, left_x):
+      self.pwm.set_pulse_width(self.m4, left_x)
+      #self.pwm.set_pulse_width(self.m2, -left_x)
+
+
 if __name__ == "__main__":
 
    import time
@@ -156,55 +236,59 @@ if __name__ == "__main__":
    import motors
    import pigpio
 
-   pi = pigpio.pi()
+   rov_cont = motors.control()
 
-   if not pi.connected:
-      exit(0)
+   #pi = pigpio.pi()
 
-   pwm = motors.PWM(pi) # defaults to bus 1, address 0x40
+   #if not pi.connected:
+   #   exit(0)
 
-   channel_array = list()
-
-   pwm.set_frequency(200) # changed to match default RPi frequency
+   #pwm = motors.PWM(pi) # defaults to bus 1, address 0x40
 
    try:
 
-      print("Test program for T200 thrusters")
+      print("Test program for Tilt")
 
-      channel = int(input("What channel are you going to use? "))
-      channel2 = int(input("What other channel are you going to use? "))
+      #channel = int(input("What channel are you going to use? "))
+      #channel2 = int(input("What other channel are you going to use? "))
 
       print("Sending initialization signal...")
-      pwm.set_pulse_width(channel,1530)  #Add 30 as using o-scope, it was off by .2ms and 30 offsets it to the correct value
-      pwm.set_pulse_width(channel2,1530)
-      time.sleep(5)
+      rov_cont.arm()
+      #pwm.set_pulse_width(channel,1530)  #Add 30 as using o-scope, it was off by .2ms and 30 offsets it to the correct value
+      #pwm.set_pulse_width(channel2,1530)
+      #time.sleep(5)
 
 
       while(1):
-         speed = int(input("Speed of the motor? (1270-1730 with 1270 being forward and 1730 being reverse): "))
-         speed2 = int(input("Speed of second motor? "))
+         x_axis_left = int(input("X-axis of left stick? "))
+         y_axis_left = int(input("Y-axis of left stick? "))
 
+         #speed = int(input())
+         #speed2 = int(input())
+
+         rov_cont.tilt_control(x_axis_left, y_axis_left)
          #Keeping the speed between 1230-1730
-         if speed < 1270:
-            print("Speed below threshold. Setting it to 1270...")
-            speed = 1270
-         if speed > 1730:
-            print("Speed above threshold. Setting it to 1730...")
-            speed = 1730
+         #if speed < 1270:
+         #   print("Speed below threshold. Setting it to 1270...")
+         #   speed = 1270
+         #if speed > 1730:
+         #   print("Speed above threshold. Setting it to 1730...")
+         #   speed = 1730
 
-         if speed2 < 1270:
-            print("Speed below threshold. Setting it to 1270...")
-            speed2 = 1270
-         if speed2 > 1730:
-            print("Speed above threshold. Setting it to 1730...")
-            speed2 = 1730
+         #if speed2 < 1270:
+         #   print("Speed below threshold. Setting it to 1270...")
+         #   speed2 = 1270
+         #if speed2 > 1730:
+         #   print("Speed above threshold. Setting it to 1730...")
+         #   speed2 = 1730
 
-         pwm.set_pulse_width(channel,speed+30)
-         pwm.set_pulse_width(channel2,speed2+30)
-         time.sleep(1)
+         #pwm.set_pulse_width(channel,speed+30)
+         #pwm.set_pulse_width(channel2,speed2+30)
+         #time.sleep(1)
 
    except KeyboardInterrupt:
-      pwm.set_pulse_width(channel,0)
-      pwm.set_pulse_width(channel2,0)
-      pi.stop()
+      #pwm.set_pulse_width(channel,0)
+      #pwm.set_pulse_width(channel2,0)
+      #pi.stop()
+      rov_cont.disarm()
 
