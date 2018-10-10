@@ -18,6 +18,7 @@ import sensors        # Module provides all functions for the atlas sensor
 import ms5837   # Module provides all functions for the pressure sensor
 import tsys01   # Module provides all functions for the temperature sensor
 
+import serial
 import os   # Module used to find the file directory path for reading and writing to .xml
 import xml.etree.ElementTree as et  # Module provides .xml file manipulation and functions
 
@@ -116,7 +117,7 @@ class rov:
         Parameters:
                None 
         Return:
-               Returns the sensor string in format: "S,pH,DO,Sal,Temp,Presure,Gyro1,Accel1,Error_addr:" 
+               Returns the sensor string in format: "S,pH,DO,Sal,Temp,Presure,Gyro1,Accel1,Error_addr;" 
         Notes:
         """
         def send_sensor_data(self):
@@ -129,7 +130,7 @@ class rov:
                 # create sensor string from sensors.xml 
                 sensor_str= (root.find("id_char").text + "," + root.find("pH").text + "," + root.find("Dissolved_Oxygen").text + "," +
                             root.find("Salinity").text + "," + root.find("Temperature").text + "," + root.find("Pressure").text + "," +
-                            root.find("Gyroscope1").text + "," + root.find("Accelerometer1").text + "," + root.find("Errored_Sensor").text + ":") 
+                            root.find("Gyroscope1").text + "," + root.find("Accelerometer1").text + "," + root.find("Errored_Sensor").text + ";") 
 
                 return sensor_str
 
@@ -280,18 +281,41 @@ class rov:
                 len_eol = len(eol)
                 line_str = bytearray() 
                 while True:
+                        #ser.flushInput()        # Flush serial port
                         char = ser.read(1)      # Read 1 byte or 1 char
                         if char:
-                                if char.decode() != ";":    # If the current char the terminating char? No then append it.
+                                if char.decode() != ";":    # Is the current char the terminating char? No then append it.
                                         line_str += char    # Append a single char string to the line_str 
-                                #line_str = line_str + str(char)     # Append a single char string to the line_str
-                                if line_str[-len_eol:] == eol:                                 # Check if char is terminating character
+                                if line_str[-len_eol:] == eol:                  # Check if char is terminating character
                                         break
                                 if size is not None and len(line_str) >= size:  # Check if message is even in the buffer
                                         break
                         else:
                                 break
                 return bytes(line_str) 
+
+        ################################################
+        """
+        Thread function to read the serial port
+        Parameters:
+                None
+        Return:
+                None
+        Notes:
+        """
+        def get_control_data(self):
+                ser = serial.Serial(port='/dev/ttyS0', baudrate=9600, parity=serial.PARITY_NONE,
+                                    stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)        # (physical port, baudrate, timeout interval)
+                print("Here")
+                ser.flushInput()
+                while 1:
+                        cmd_msg = self.read_serial_port(ser)
+                        self.write_cmd_xml(cmd_msg)
+                        # Print read results
+                        print("This is the control_message: ", cmd_msg)
+                
+                return
+        ################################################
 
 
         """
@@ -304,8 +328,10 @@ class rov:
         Notes:
         """
         def write_serial_port(self, ser, sensor_str):
+                time.sleep(.1)
                 # Open and write sensor_str to serial port
                 sensor_encoded = sensor_str.encode()
+                #ser.flushInput()        # Flush serial port
                 ser.write(sensor_encoded)
 
                 # This is the sensor string I am getting
@@ -325,9 +351,14 @@ class rov:
         def write_cmd_xml(self, cmd_str):
                 cmd_list = cmd_str.split(",")           # Get list of each individual cmd from cmd center
                 i = 0
-                for cmd in cmd_list:                    # Write each individual element at a time to the command.xml
-                        write_xml("1", self.cmd_xml_elem[i], cmd)
-                        i += 1
+                length = len(cmd_list)
+                print("Length of cmd_list: %d" % len(cmd_list))
+                if (length != 0 and length <= 9):
+                        for cmd in cmd_list:                    # Write each individual element at a time to the command.xml
+                                write_xml("1", self.cmd_xml_elem[i], cmd)
+                                i += 1
+                else:
+                        print("command message is not greater than 1 or larger than 9")
                 return
 
 
