@@ -195,37 +195,41 @@ class control:
       self.pwm.set_pulse_width(self.m5, 0)
       self.pwm.set_pulse_width(self.m6, 0)
 
-   def norm_values(analog_value):
-      return (analog_value // 137) + 30
+   def norm_values(self, analog_value):
+      return (analog_value // 137)
 
    def tilt_control(self, left_x, left_y):
       #Check to see what direction it is going in the y axis
       if left_y > 4000:
-          self.tilt_n(self.norm_values(left_y))
+          self.tilt_n(self.norm_values(left_y-3999))
       elif left_y < -4000:
-          self.tilt_s(self.norm_values(left_y))
+          self.tilt_s(self.norm_values(left_y+3999))
 
       #Check to see what direction it is going in the x axis
       if left_x > 4000:
-          self.tilt_e(self.norm_values(left_x))
+          self.tilt_e(self.norm_values(left_x-3999))
       elif left_x < -4000:
-          self.tilt_w(self.norm_values(left_x))
+          self.tilt_w(self.norm_values(left_x+3999))
 
 
    def tilt_n(self, left_y):
-      self.pwm.set_pulse_width(self.m1, left_y)
+      self.pwm.set_pulse_width(self.m1, 1525 + left_y + 30)
+      self.pwm.set_pulse_width(self.m3, 1530)
       #self.pwm.set_pulse_width(self.m3, -left_y)
 
    def tilt_e(self, left_x):
-      self.pwm.set_pulse_width(self.m2, left_x)
+      self.pwm.set_pulse_width(self.m2, 1525 + left_x + 30)
+      self.pwm.set_pulse_width(self.m4, 1530)
       #self.pwm.set_pulse_width(self.m4, -left_x)
 
    def tilt_s(self, left_y):
-      self.pwm.set_pulse_width(self.m3, left_y)
+      self.pwm.set_pulse_width(self.m3, 1475 + left_y + 30)
+      self.pwm.set_pulse_width(self.m1, 1530)
       #self.pwm.set_pulse_width(self.m1, -left_y)
 
    def tilt_w(self, left_x):
-      self.pwm.set_pulse_width(self.m4, left_x)
+      self.pwm.set_pulse_width(self.m4, 1475 + left_x + 30)
+      self.pwm.set_pulse_width(self.m2, 1530)
       #self.pwm.set_pulse_width(self.m2, -left_x)
 
 
@@ -267,6 +271,7 @@ if __name__ == "__main__":
          #speed2 = int(input())
 
          rov_cont.tilt_control(x_axis_left, y_axis_left)
+         time.sleep(2)
          #Keeping the speed between 1230-1730
          #if speed < 1270:
          #   print("Speed below threshold. Setting it to 1270...")
