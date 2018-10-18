@@ -294,29 +294,6 @@ class rov:
                                 break
                 return bytes(line_str) 
 
-        ################################################
-        """
-        Thread function to read the serial port
-        Parameters:
-                None
-        Return:
-                None
-        Notes:
-        """
-        def get_control_data(self):
-                ser = serial.Serial(port='/dev/ttyS0', baudrate=9600, parity=serial.PARITY_NONE,
-                                    stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)        # (physical port, baudrate, timeout interval)
-                print("Here")
-                ser.flushInput()
-                while 1:
-                        cmd_msg = self.read_serial_port(ser)
-                        self.write_cmd_xml(cmd_msg)
-                        # Print read results
-                        print("This is the control_message: ", cmd_msg)
-                
-                return
-        ################################################
-
 
         """
         Sends sensor array data to the command center terminated by a ';' 
@@ -440,10 +417,10 @@ def get_pressure(water_choice):
 
         if sensor.read():
                 depth = sensor.pressure(ms5837.UNITS_psi)           # Get presure in psi
-                print("P: %0.4f m \t T: %0.2f C  %0.2f F\n" % (         # Print not needed in final version
-                depth,      # Sensor depth, either fresh or salf water depending on above
-                sensor.temperature(), # Default is degrees C (no arguments)
-                sensor.temperature(ms5837.UNITS_Farenheit))) # Request Farenheit
+                #####print("P: %0.4f m \t T: %0.2f C  %0.2f F\n" % (         # Print not needed in final version
+                ###depth,      # Sensor depth, either fresh or salf water depending on above
+                ###sensor.temperature(), # Default is degrees C (no arguments)
+                ###sensor.temperature(ms5837.UNITS_Farenheit))) # Request Farenheit
         else:
                 print ("Error reading pressure sensor.")            # Print not needed in final version
                 exit(1)
@@ -474,8 +451,8 @@ def get_temperature():
             print("Error reading temperature sensor.")          # Print not needed in final version
             exit(1)
         c_temp = sensor.temperature()                           # Get celcius temp
-        f_temp = sensor.temperature(tsys01.UNITS_Farenheit)     # Get farenheit temp
-        print("T: %.2f C\t%.2f F" % (c_temp, f_temp))           # Print not needed in final version
+        #####f_temp = sensor.temperature(tsys01.UNITS_Farenheit)     # Get farenheit temp
+        ######print("T: %.2f C\t%.2f F" % (c_temp, f_temp))           # Print not needed in final version
         
         return c_temp 
 

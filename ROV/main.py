@@ -54,7 +54,7 @@ def main():
         root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
 
         # Open serial port communication
-        ser = serial.Serial(port='/dev/ttyS0', baudrate=9600, parity=serial.PARITY_NONE,
+        ser = serial.Serial(port='/dev/ttyS0', baudrate=57600, parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)        # (physical port, baudrate, timeout interval)
 
         """
@@ -67,21 +67,21 @@ def main():
                 ser.flushInput() # Flush serial port
 
                 # Get control data from serial port
-                ####cmd_message = rov.read_serial_port(ser)          # Read from serial port
-                #####rov.write_cmd_xml(cmd_message)                  # Write the cmd data to the cmd.xml
+                cmd_message = rov.read_serial_port(ser)          # Read from serial port
+                ####rov.write_cmd_xml(cmd_message)                  # Write the cmd data to the cmd.xml
                 cmd_id = root.find("id_char").text              # Save the ID char for program flow
 
                 # Print read results
-                ####print("This is the control_message: ", cmd_message)
+                print("This is the control_message: ", cmd_message)
 
                 ######ser.flushInput() # Flush serial port
                 #time.sleep(.1)
                 # Write sensor data to serial port 
-                #rov.write_serial_port(ser, rov.send_sensor_data())
+                rov.write_serial_port(ser, rov.send_sensor_data())
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
-                #cmd_input = input("Would you like to get all measurements? (y,n) ")
-                cmd_input = "n"
+                cmd_input = input("Would you like to get all measurements? (y,n) ")
+                ###cmd_input = "n"
 
                 
                 # End of expedition user input (need to change it to an interupt kind of function)
@@ -100,7 +100,7 @@ def main():
                         # Take Sensor Measurements
                         if get_all_meas == True:
                                 # Get essential meas here
-                                rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
+                                rov.get_essential_meas("1")     # get pressure and temp. tuple 1st input = salt/fresh water (1/0)
                                 #####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
                                 # Get pH, DO, and salinity measurments
@@ -109,7 +109,7 @@ def main():
                         else:   # Get only temp, pressure, accel, and gyro meas
                                 # Get essential meas here
                                 atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
-                ############                rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
+                                rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
 
                         #end_expedition = input("End expedition(y=1, n=0)? ")
                         #end_expedition = 1 # Exits the while loop when we get specific cmd from user
