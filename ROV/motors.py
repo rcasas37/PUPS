@@ -276,13 +276,13 @@ class control:
       #If off is set, then it will not check to see what setting it is on
       if power == 1:
          if set1 == 1:
-            self.pwm.set_pulse_width(self.l1, 1300)
+            self.pwm.set_pulse_width(self.l1, 1330)
          if set2 == 1:
-            self.pwm.set_pulse_width(self.l1, 1500)
+            self.pwm.set_pulse_width(self.l1, 1530)
          if set3 == 1:
-            self.pwm.set_pulse_width(self.l1, 1700)
+            self.pwm.set_pulse_width(self.l1, 1730)
          if set4 == 1:
-            self.pwm.set_pulse_width(self.l1, 1900)
+            self.pwm.set_pulse_width(self.l1, 1930)
 
 if __name__ == "__main__":
 

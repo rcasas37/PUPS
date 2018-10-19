@@ -93,7 +93,7 @@ class rov:
                 Returns string to use for ROV control 
         Notes:
         """
-        def read_command_xml(self, cmd_element):
+        def read_cmd_xml(self, cmd_element):
                 # Read from command xml at specific point so I
                 #may need more function input parameters
 

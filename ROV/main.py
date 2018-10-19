@@ -74,10 +74,9 @@ def main():
                 # Everything goes here
 
                 # Get control data from serial port
-                        # get control data here 
                 rov.write_serial_port(ser, test_init_input)     # Write to serial port
                 cmd_message = rov.read_serial_port(ser)         # Read from serial port
-                rov.write_cmd_xml(cmd_message)             # Write the cmd data to the cmd.xml
+                rov.write_cmd_xml(cmd_message)                  # Write the cmd data to the cmd.xml
 
                 # Print read results
                 print("This is the control_message: ", cmd_message)
@@ -107,7 +106,6 @@ def main():
                         if get_all_meas == True:
                                 # Get essential meas here
                                 rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-                                #####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
                                 # Get pH, DO, and salinity measurments
                                 atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
@@ -115,7 +113,6 @@ def main():
                         else:   # Get only temp, pressure, accel, and gyro meas
                                 # Get essential meas here
                                 atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
-                                ####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
                                 rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
 
                         #end_expedition = input("End expedition(y=1, n=0)? ")
