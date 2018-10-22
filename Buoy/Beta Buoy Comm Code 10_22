@@ -60,7 +60,7 @@ void loop() {
   digitalWrite(LED, LOW);
   delay(100);
 
-  //-----REGULAR UART-----//
+  //-----REGULAR UART (USED FOR XBEE WIRELESS COMMS)-----//
   if (Serial1.available()) {
 
     //-----INITIALIZE CHAR X VARIABLE TO CHECK
@@ -85,7 +85,7 @@ void loop() {
     //-----TRANSFER EACH CHAR FROM RECEIVED ARRAY TO ACCURATE SIZE ARRAY-----//
     for(int i = 0; i < count; i++) {
       PacketTxCC[i] = PacketRxCC[i];
-      Serial.write(PacketTxCC[i]);
+      //Serial.write(PacketTxCC[i]);
     }
 
     //Serial.print("\nTx Message\n");
@@ -103,15 +103,15 @@ void loop() {
       //Serial.print("Correct Size Message to Send: \n");
       //Serial.write("\nControl\n");
 
-      Serial.print("\nTx Message\n");
-      Serial.write(PacketTxCC);
+      //Serial.print("\nTx Message\n");
+      //Serial.write(PacketTxCC);
       
       //-----ITERATE THROUGH THE ARRAY AND SEND EACH CHAR-----//
-      //for(int i=0; i<count; i++) {
+      for(int i=0; i<count; i++) {
         //Serial1.write(PacketTxCC[i]);
         //-----PRINT TO CONSOLE FOR DEBUG/TEST-----//
-        //Serial.write(PacketTxCC[i]);
-      //}
+        Serial.write(PacketTxCC[i]);
+      }
       
     }
     //-----ID: PAUSE-----//
@@ -120,15 +120,15 @@ void loop() {
       //Serial.print("Correct Size Message to Send: \n");
       //Serial.write("\nPause\n");
 
-      Serial.print("\nTx Message\n");
-      Serial.write(PacketTxCC);
+      //Serial.print("\nTx Message\n");
+      //Serial.write(PacketTxCC);
       
       //-----ITERATE THROUGH THE ARRAY AND SEND EACH CHAR-----//
-      //for(int i=0; i<count; i++) {
+      for(int i=0; i<count; i++) {
         //Serial1.write(PacketTxCC[i]);
         //-----PRINT TO CONSOLE FOR DEBUG/TEST-----//
-        //Serial.write(PacketTxCC[i]);
-      //}
+        Serial.write(PacketTxCC[i]);
+      }
      
     }
     //-----ID: SENSOR INITIALIZATION PACKET-----//
@@ -138,15 +138,15 @@ void loop() {
       //Serial.print("Correct Size Message to Send: \n");
       //Serial.write("\nInitialize\n");    
 
-      Serial.print("\nTx Message\n");
-      Serial.write(PacketTxCC);
+      //Serial.print("\nTx Message\n");
+      //Serial.write(PacketTxCC);
       
       //-----ITERATE THROUGH THE ARRAY AND SEND EACH CHAR-----//
-      //for(int i=0; i<count; i++) {
+      for(int i=0; i<count; i++) {
         //Serial1.write(PacketTxCC[i]);
         //-----PRINT TO CONSOLE FOR DEBUG/TEST-----//
-        //Serial.write(PacketTxCC[i]);
-      //}
+        Serial.write(PacketTxCC[i]);
+      }
 
     }
       //-----ID: ORDER 66-----//
@@ -155,15 +155,15 @@ void loop() {
       //Serial.print("Correct Size Message to Send: \n");
       //Serial.write("\nEND\n");    
 
-      Serial.print("\nTx Message\n");
-      Serial.write(PacketTxCC);
+      //Serial.print("\nTx Message\n");
+      //Serial.write(PacketTxCC);
       
       //-----ITERATE THROUGH THE ARRAY AND SEND EACH CHAR-----//
-      //for(int i=0; i<count; i++) {
+      for(int i=0; i<count; i++) {
         //Serial1.write(PacketTxCC[i]);
         //-----PRINT TO CONSOLE FOR DEBUG/TEST-----//
-        //Serial.write(PacketTxCC[i]);
-      //}
+        Serial.write(PacketTxCC[i]);
+      }
 
     }
     //-----ID: BUOY SHUTDOWN-----//
@@ -182,14 +182,14 @@ void loop() {
 //    Serial1.flush();
 //    //-----CLEAR REGULAR UART RX BUFFER-----//
 //    Serial1.read();
-//    //-----CLEAR BACKCHANNEL UART TX BUFFER-----//
-//    Serial.flush();
-//    //-----CLEAR BACKCHANNEL UART RX BUFFER-----//
+    //-----CLEAR BACKCHANNEL UART TX BUFFER-----//
+    Serial.flush();
+    //-----CLEAR BACKCHANNEL UART RX BUFFER-----//
 //    Serial.read();
 
   }
 
-  //-----BACKCHANNEL UART-----//
+  //-----BACKCHANNEL UART (USED FOR TETHER COMMS)-----//
   
   if (Serial.available()) {
       
@@ -246,11 +246,11 @@ void loop() {
     //-----CLEAR REGULAR UART TX BUFFER-----//
     Serial1.flush();
     //-----CLEAR REGULAR UART RX BUFFER-----//
-    Serial1.read();
+    //Serial1.read();
     //-----CLEAR BACKCHANNEL UART TX BUFFER-----//
-    Serial.flush();
+    //Serial.flush();
     //-----CLEAR BACKCHANNEL UART RX BUFFER-----//
-    Serial.read();
-
+    //Serial.read();
+    
   }
 }
