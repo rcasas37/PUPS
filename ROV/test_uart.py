@@ -7,27 +7,20 @@ import test_uart
 
 #def main():
 # Open serial port communication
-ser = serial.Serial(port='/dev/ttyS0', baudrate=115200, parity=serial.PARITY_NONE,
+ser = serial.Serial(port='/dev/ttyS0', baudrate=57600, parity=serial.PARITY_NONE,
                     stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)        # (physical port, baudrate, timeout interval)
 
-
-str_input = "Hey man;"
 ser.flushInput()
-while 1:
-        line = ser.read(1)
-        #time.sleep(.1)
-        ser.write(str_input)
 
-        print("This is the received char: ", line)
-
-"""
 def write_ser(user):
         strr = user.encode() 
         ser.write(strr)
 
-        
-        
-def read_serial_port(ser, size=None, eol='1'):
+def read_ser():
+        line = ser.read(1)
+        return line
+
+def read_ser_port(size=None, eol=';'):
         # Open and read from serial port and save in cmd_message variable
         len_eol = len(eol)
         line_str = bytearray() 
@@ -45,5 +38,15 @@ def read_serial_port(ser, size=None, eol='1'):
                         break
         return bytes(line_str) 
 
-main()
-"""
+while 1:
+        str_input = "Hey man;"
+        line = read_ser_port()
+        write_ser(str_input)
+        time.sleep(.15)
+
+        print("This is the received char: ", line)
+
+        
+        
+
+#main()
