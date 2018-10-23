@@ -1,7 +1,7 @@
 #include <Wire.h>
 
 // most launchpads have a red LED
-#define LED RED_LED
+#define LED P4_7
 int count = 0;
 
 void setup()
@@ -28,13 +28,13 @@ void loop()
 {  
   //Heartbeat of the board to ensure it is working
   digitalWrite(LED, HIGH);         // turn the LED on (HIGH is the voltage level)
-  delay(50);                     // wait
+  delay(5);                     // wait
   digitalWrite(LED, LOW);         // turn the LED off by making the voltage LOW
-  delay(50);                     // wait
+  delay(5);                     // wait
   
 
   digitalWrite(P2_4, HIGH);    //allow the GPS Sensor to start running
-  Wire.requestFrom(16, 4);    // request 8 bytes from slave device #16
+  Wire.requestFrom(16, 8);    // request 8 bytes from slave device #16
  
   char GPSArray[75];                //GPS Array
   
@@ -45,39 +45,34 @@ void loop()
   
   char c = Wire.read();
   delay(2);
+  
   if(c == '$')
   {
-    Wire.requestFrom(16, 1);
     c = Wire.read();
     delay(2);
     //Serial.print(c);
     if(c == 'G')
     {
-      Wire.requestFrom(16, 1);
       c = Wire.read();
       delay(2);
       //Serial.print(c);
       if(c == 'N')
       {
-        Wire.requestFrom(16, 1);
         c = Wire.read();
         delay(2);
         //Serial.print(c);
         if(c == 'G')
         {
-          Wire.requestFrom(16, 1);
           c = Wire.read();
           delay(2);
           //Serial.print(c);
           if(c == 'G')
           {
-            Wire.requestFrom(16, 1);
             c = Wire.read();
             delay(2);
             //Serial.print(c);
             if(c == 'A')
             {
-              Wire.requestFrom(16, 1);
               c = Wire.read();
               delay(2);
               GPSArray[0] = 'L';
@@ -109,6 +104,7 @@ void loop()
         Serial.print(GPSArray[i]);
     }
   }
+  
 }
 
 
