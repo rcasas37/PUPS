@@ -64,10 +64,12 @@ def main():
         while end_expedition != True:
                 # Everything goes here
                 
-                ser.flushInput() # Flush serial port
+                #ser.flushInput() # Flush serial port
 
+                print("here")
                 # Get control data from serial port
                 cmd_message = rov.read_serial_port(ser)         # Read from serial port
+                print("here1")
                 ####rov.write_cmd_xml(cmd_message)              # Write the cmd data to the cmd.xml
                 cmd_id = root.find("id_char").text              # Save the ID char for program flow
 
@@ -77,10 +79,11 @@ def main():
                 # Print read results
                 print("This is the control_message: ", cmd_message)
 
+
                 ######ser.flushInput() # Flush serial port
                 #time.sleep(.1)
                 # Write sensor data to serial port 
-                rov.write_serial_port(ser, rov.send_sensor_data())
+                #rov.write_serial_port(ser, rov.send_sensor_data())
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
                 cmd_input = input("Would you like to get all measurements? (y,n) ")
@@ -151,6 +154,7 @@ def main():
 
 
                 """End While Loop"""
+        print("end")
         # Shut down sensor thread before terminating the program
         atlas_sensor.terminate_thread()
         print("GOODBYE!")

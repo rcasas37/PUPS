@@ -280,18 +280,25 @@ class rov:
                 # Open and read from serial port and save in cmd_message variable
                 len_eol = len(eol)
                 line_str = bytearray() 
+                print("read_serial_port1")
                 while True:
                         #ser.flushInput()        # Flush serial port
                         char = ser.read(1)      # Read 1 byte or 1 char
                         if char:
+                                print("read_serial_port2")
+                                print("charrrr::::::::::: ", char)
                                 if char.decode() != ";":    # Is the current char the terminating char? No then append it.
+                                        print("read_serial_port2333")
                                         line_str += char    # Append a single char string to the line_str 
                                 if line_str[-len_eol:] == eol:                  # Check if char is terminating character
+                                        print("read_serial_port3")
                                         break
                                 if size is not None and len(line_str) >= size:  # Check if message is even in the buffer
+                                        print("read_serial_port4")
                                         break
                         else:
                                 break
+                        print("read_serial_port5")
                 return bytes(line_str) 
 
 
