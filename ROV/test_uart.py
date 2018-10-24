@@ -38,10 +38,10 @@ def read_ser_port(size=None, eol=';'):
         return bytes(line_str) 
 
 while 1:
-        str_input = "Hey man;"
-        line = read_ser_port()
+        str_input = "S,1,2,3,4,5,6,7;"
+        line = read_ser()
         write_ser(str_input)
-        time.sleep(.15)
+        #time.sleep(.16)
 
         print("This is the received char: ", line)
 
