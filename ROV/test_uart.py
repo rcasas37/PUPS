@@ -27,8 +27,8 @@ def read_ser_port(size=None, eol=';'):
                 #ser.flushInput()        # Flush serial port
                 char = ser.read(1)      # Read 1 byte or 1 char
                 if char:
-                        if char != "1":    # Is the current char the terminating char? No then append it.
-                                line_str += char    # Append a single char string to the line_str 
+                        #if char != ';':    # Is the current char the terminating char? No then append it.
+                        line_str += char    # Append a single char string to the line_str 
                         if line_str[-len_eol:] == eol:                  # Check if char is terminating character
                                 break
                         if size is not None and len(line_str) >= size:  # Check if message is even in the buffer
@@ -39,7 +39,7 @@ def read_ser_port(size=None, eol=';'):
 
 while 1:
         str_input = "S,1,2,3,4,5,6,7;"
-        line = read_ser()
+        line = read_ser_port()
         write_ser(str_input)
         #time.sleep(.16)
 
