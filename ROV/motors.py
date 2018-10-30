@@ -161,7 +161,7 @@ class control:
    Initializes channels from channels 0 to 8
    """
 
-   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=7):
+   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12):
       self.pi = pigpio.pi()
       self.pwm = motors.PWM(self.pi)
       self.pi = pi
