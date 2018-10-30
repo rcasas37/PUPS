@@ -1,0 +1,51 @@
+
+// what's the name of the hardware serial port?
+#define XBeeSerial Serial1
+
+//String newreceived;
+//String received;
+
+void setup() {
+  // wait for hardware serial to appear
+  while (!Serial);
+
+//  received = String("");
+
+  //Begin UART serial comm with pc at 9600 baud rate (may be used for backchannel UART later)
+  Serial.begin(9600);
+
+  //Begin UART serial comm with xbee at 9600 baud rate
+  XBeeSerial.begin(9600);
+}
+     
+void loop() {
+
+  if (XBeeSerial.available()) {
+    XBeeSerial.write("Hullo");
+    char c = XBeeSerial.read();
+    Serial.write(c);
+    Serial.println(c);
+//    received += c;
+/*    if (c == ';') {
+      Serial.print("\nStopped Received Message: \n");
+      Serial.println(received);
+      received = newreceived; //should set received message to default blank/empty string
+     //end of received message; some form of null character, can use something else 
+     //print and then reset/delete saved received message so new one can be made
+    } */
+    //else if (c == ",") {
+//     //possibly separate parts of message based on comma, dont think this is neccessary for buoy except maybe with ID
+//      Serial.write(received); //first time should be id otherwise it is message up to that point
+//    }
+//    received += c;  //should concatenate the received character onto received message
+//    Serial.print("\nReceived Message: \n");
+//    Serial.println(received);
+
+    }/*
+  if (Serial.available()) {
+    char x = Serial.read();
+    Serial.println(x);
+    Serial.println(":o");
+  }*/
+
+}
