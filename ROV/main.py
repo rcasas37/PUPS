@@ -36,7 +36,8 @@ def main():
         end_expedition = False 	# Variable to end program's main
         cmd_id = "0" 	            # Command ID stored as decimal number in python
         cmd_input = "n"
-        cmd_message = ""            # Init to none 
+        cmd_message = "p,0,0,0,0,0,0,0"            # Init to none 
+        cmd_list = [0,0,0,0,0,0,0]  # Init cmd_list
 
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
         rov = rov_skeleton.rov()		            # init rov class/module instance
@@ -65,93 +66,67 @@ def main():
         while end_expedition != True:
                 # Everything goes here
                 
-                #ser.flushInput() # Flush serial port
-
                 # Get control data from serial port
                 cmd_message = rov.read_serial_port(ser)         # Read from serial port
                 #rov.write_cmd_xml(cmd_message)              # Write the cmd data to the cmd.xml
                 #cmd_id = root.find("id_char").text              # Save the ID char for program flow
 
+                # CRC Check here before we use the message
+
+
                 # Alternative to writing the cmd message string to xml (IDK why I am trying to do that)
-                ##cmd_list = cmd_message.split(",")               # Save each individual srting cmd into list cmd_list 
+                cmd_list = cmd_message.split(",")               # Save each individual srting cmd into list cmd_list 
+
+
+                # Check if data is recieved
+                ####if len(cmd_list) != 1:
+
 
                 # Print read results
                 print("This is the control_message: ", cmd_message)
 
-
-                ######ser.flushInput() # Flush serial port
-                #time.sleep(.1)
                 # Write sensor data to serial port 
-                #rov.write_serial_port(ser, rov.send_sensor_data())
-                rov.write_serial_port(ser, "S,pH,DO,Sal,Temp,Press,Orientation,Accel,Error_sensor;")
+                rov.write_serial_port(ser, rov.send_sensor_data())
+                ###rov.write_serial_port(ser, "S,pH,DO,Sal,Temp,Press,Orientation,Accel,Error_sensor;")
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
                 #####cmd_input = input("Would you like to get all measurements? (y,n) ")
 
                 
-                """
-                # End of expedition user input (need to change it to an interupt kind of function)
-                if cmd_input == "quit" or cmd_input == "q": 
-                        end_expedition = True
+                # No data was received stabalize ROV and get essential measurements
+                if len(cmd_list) == 1:
+                        rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+
+                # Control Data is recieved
                 else:
-                        if cmd_input == "y":
-                                get_all_meas = True
-                                print("get_all_meas pressed")
-                                cmd_input = "n"
+                        # End of expedition user input (need to change it to an interupt kind of function)
+                        if cmd_list[0] == "b" or cmd_input == "q":  # End Mission 
+                                end_expedition = True
                         else:
-                                get_all_meas = False
-                                #####print("get_all_meas NOT pressed")
+                                """
+                                if cmd_input == "y":
+                                        get_all_meas = True
+                                        print("get_all_meas pressed")
+                                        cmd_input = "n"
+                                else:
+                                        get_all_meas = False
+                                        #####print("get_all_meas NOT pressed")
+                                """
+
+                                #####print("This is the x Button value: ", cmd_list[6])
+                                # Take Sensor Measurements
+                                if cmd_list[6] == "1":    # Get all measurments?
+                                        # Get essential meas here
+                                        rov.get_essential_meas("1")     # get pressure and temp. 1st input = salt/fresh water (1/0)
+
+                                        # Get pH, DO, and salinity measurments
+                                        atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
+
+                                else:   # Get essential measurements only 
+                                        atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
+                                        rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
 
-                        # Take Sensor Measurements
-                        if get_all_meas == True:
-                                # Get essential meas here
-                                rov.get_essential_meas("1")     # get pressure and temp. 1st input = salt/fresh water (1/0)
-
-                                # Get pH, DO, and salinity measurments
-                                atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
-
-                        else:   # Get only temp, pressure, accel, and gyro meas
-                                # Get essential meas here
-                                atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
-                                rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
-
-
-                #####""
-                # End of expedition user input (need to change it to an interupt kind of function)
-                if cmd_id == "quit" or cmd_id == "f": 
-                        end_expedition = True
-                        # Go to an End Expedition function
-
-                elif cmd_id == "C":
-                        # Motor control here
-                        dummy = "dummy"
-
-                elif cmd_id == "p":
-                        # Stop motors here
-                        dummy = "dummy"
-
-                else:
-                        print("Error. Not Recognized cmd_id.")
-
-                # Take Sensor Measurements either all or just essential
-                if root.find("x_button").text == "1":
-                        print("get_all_meas pressed")
-
-                        # Get pH, DO, and salinity measurments
-                        atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
-
-                else:
-                        ####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
-                        rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-
-                # Get essential meas every time
-                print("get_essential_meas here: ")
-                rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-
-
-
-                """
 
 
                 """End While Loop"""
@@ -184,3 +159,39 @@ def get_control_data(self):
         else:
                 print("command message is not greater than 1 or larger than 9")
         return
+
+
+
+"""
+# End of expedition user input (need to change it to an interupt kind of function)
+if cmd_id == "quit" or cmd_id == "f": 
+        end_expedition = True
+        # Go to an End Expedition function
+
+elif cmd_id == "C":
+        # Motor control here
+        dummy = "dummy"
+
+elif cmd_id == "p":
+        # Stop motors here
+        dummy = "dummy"
+
+else:
+        print("Error. Not Recognized cmd_id.")
+
+# Take Sensor Measurements either all or just essential
+if root.find("x_button").text == "1":
+        print("get_all_meas pressed")
+
+        # Get pH, DO, and salinity measurments
+        atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
+
+else:
+        ####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+        rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
+
+# Get essential meas every time
+print("get_essential_meas here: ")
+rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
+
+"""

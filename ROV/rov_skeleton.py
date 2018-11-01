@@ -285,8 +285,8 @@ class rov:
                         char = ser.read(1)      # Read 1 byte or 1 char
                         if char:
                                 #print("charrrr::::::::::: ", char)
-                                if char.decode() != ";":    # Is the current char the terminating char? No then append it.
-                                        line_str += char    # Append a single char string to the line_str 
+                                #if char.decode() != ";":    # Is the current char the terminating char? No then append it.
+                                line_str += char    # Append a single char string to the line_str 
                                 if line_str[-len_eol:] == eol:                  # Check if char is terminating character
                                         break
                                 if size is not None and len(line_str) >= size:  # Check if message is even in the buffer
