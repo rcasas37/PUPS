@@ -35,7 +35,7 @@ def main():
         # Define some variables used within main
         end_expedition = False 	# Variable to end program's main
         cmd_id = "0" 	            # Command ID stored as decimal number in python
-        cmd_input = "n"
+        cmd_input = "y"
         cmd_message = "p,0,0,0,0,0,0,0"            # Init to none 
         cmd_list = [0,0,0,0,0,0,0]  # Init cmd_list
 
@@ -90,27 +90,42 @@ def main():
                 ###rov.write_serial_port(ser, "S,pH,DO,Sal,Temp,Press,Orientation,Accel,Error_sensor;")
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
-                #####cmd_input = input("Would you like to get all measurements? (y,n) ")
+                cmd_input = input("Would you like to get all measurements? (y,n) ")
 
-                
+                """ 
                 # No data was received stabalize ROV and get essential measurements
                 if len(cmd_list) == 1:
                         rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                                    #The '1' in the function parameter above should be changed based on what the user selects
 
                 # Control Data is recieved
                 else:
-                        # End of expedition user input (need to change it to an interupt kind of function)
-                        if cmd_list[0] == "b" or cmd_input == "q":  # End Mission 
-                                end_expedition = True
+                """ 
+                # End of expedition user input (need to change it to an interupt kind of function)
+                if cmd_list[0] == "b" or cmd_input == "q":  # End Mission 
+                        end_expedition = True
+                else:
+                        #####"""
+                        if cmd_input == "y":
+                                get_all_meas = True
+                                print("get_all_meas pressed")
+                                cmd_input = "y"
                         else:
-                                """
-                                if cmd_input == "y":
-                                        get_all_meas = True
-                                        print("get_all_meas pressed")
-                                        cmd_input = "n"
-                                else:
-                                        get_all_meas = False
-                                        #####print("get_all_meas NOT pressed")
+                                get_all_meas = False
+                                #####cmd_input = "y"
+
+                        if cmd_input == "y":    # Get all measurments?
+                                # Get essential meas here
+                                rov.get_essential_meas("1")     # get pressure and temp. 1st input = salt/fresh water (1/0)
+
+                                # Get pH, DO, and salinity measurments
+                                atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
+
+                        else:   # Get essential measurements only 
+                                #### atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
+                                                    #### May not need to tell it explicitely to not go get atlas sensor measurements
+                                rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+
                                 """
 
                                 #####print("This is the x Button value: ", cmd_list[6])
@@ -123,9 +138,11 @@ def main():
                                         atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
 
                                 else:   # Get essential measurements only 
-                                        atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
+                                        ######atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
+                                                    #### May not need to tell it explicitely to not go get atlas sensor measurements
                                         rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
+                                """
 
 
 

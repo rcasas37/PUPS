@@ -173,6 +173,12 @@ class atlas_sensors(threading.Thread):
                 global temp_comp_val
                 return temp_comp_val
 
+
+
+"""
+This function runs all 3 of the atlas sensors within a separate thread.
+
+"""
 def program():
         device = atlas_sensors()         # Creates the I2C port object, specify the address or bus if necessary
 
@@ -215,12 +221,16 @@ def program():
         # For while loop
         usr_input = "R"
         num_sensors = 0             #Must do it once for each sensor
+        error = ""
+        do_error = 0
+        ph_error = 0
+        sal_error = 0
 
         # Get one DO, EC and pH sensor reading
         while num_sensors != 3:
                 while device.get_stop_flag() == 1:
                         # do nothing. If stop flag is 0 = go then do the below
-                        time.sleep(1)
+                        time.sleep(.5)
                         dummyinput = "dummy variable"
 
                 #Set i2c address to poll each sensor once: EC=100, DO=97, pH=99        
@@ -235,11 +245,10 @@ def program():
                                 print(ec_reading[2])
                                 ######Must save salinity temp value for use below save in "salinity" variable
                                 root.find("Salinity").text = ec_reading[2]
+                                sal_error = 0
                         except:
                                 # Add errored sensor to the xml sensor data
-                                error_addr_str = root.find("Errored_Sensor").text   # Get data already in xml
-                                full_error_str = error_addr_str + "_100"            # Append errored sensor to existing data
-                                root.find("Errored_Sensor").text = error + full_error_str   # Set the xml feild
+                                sal_error = 1
 
                 elif num_sensors == 1:
                         try:
@@ -252,11 +261,10 @@ def program():
                                 do_reading = (device.query("R")).split()       # Get DO measurement and split the command into a list to get the measurement as a string
                                 print(do_reading[2])
                                 root.find("Dissolved_Oxygen").text = do_reading[2]
+                                do_error = 0
                         except:
                                 # Add errored sensor to the xml sensor data
-                                error_addr_str = root.find("Errored_Sensor").text   # Get data already in xml
-                                full_error_str = error_addr_str + "_97"              # Append errored sensor to existing data
-                                root.find("Errored_Sensor").text = error + full_error_str   # Set the xml feild
+                                do_error = 1
                 else:
                         try:
                                 device.set_i2c_address(99)
@@ -266,30 +274,40 @@ def program():
                                 ph_reading = (device.query("R")).split()        # Get pH measurement
                                 print(ph_reading[2])
                                 root.find("pH").text = ph_reading[2]
+                                ph_error = 0
                         except:
                                 # Add errored sensor to the xml sensor data
-                                error_addr_str = root.find("Errored_Sensor").text   # Get data already in xml
-                                full_error_str = error_addr_str + "_99"             # Append errored sensor to existing data
-                                root.find("Errored_Sensor").text = error + full_error_str   # Set the xml feild
+                                ph_error = 1
+                
+                # Create the errored sensor string 
+                if (sal_error == 1 and do_error == 0 and ph_error == 0):
+                        error_addr_str = "Error: Salinity" 
+                elif(do_error == 1 and sal_error == 0 and ph_error == 0):
+                        error_addr_str = "Error: Dis Oxy" 
+                elif(ph_error == 1 and sal_error == 0 and do_error == 0):
+                        error_addr_str = "Error: pH"
+                elif(sal_error == 1 and do_error == 1 and ph_error == 1):
+                        error_addr_str = "Error: Salinity, Dis Oxy, pH"
+                elif(sal_error == 0 and do_error == 1 and ph_error == 1):
+                        error_addr_str = "Error: Dis Oxy, pH"
+                elif(sal_error == 1 and do_error == 0 and ph_error == 1):
+                        error_addr_str = "Error: Salinity, pH"
+                elif(sal_error == 1 and do_error == 1 and ph_error == 0):
+                        error_addr_str = "Error: Salinity, Dis Oxy"
+                else:
+                        error_addr_str = " "
+                
+                # Add errored sensor to xml or clear xml element
+                root.find("Errored_Sensor").text = error_addr_str 
 
                 tree.write(xml_file)         # Saves all changes to the sensors.xml on the SD card
 
-                """
-                if len(usr_input) == 0:
-                        print ("Please input valid command.")
-                else:
-                        try:
-                                print(device.query(usr_input))
-                        except IOError:
-                                print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
-                """
-                
                 #Increment to test the next sensor
                 num_sensors += 1
 
                 if num_sensors == 3:
                         num_sensors = 0             #Reset this variable to restart upon new user input
-                        device.set_stop_flag(1)     #Thread should stop now now since stop_flag = 1 
+                        device.set_stop_flag(1)     #Thread should stop now since stop_flag = 1 
 
 ###this stuff is block commented out since we will not be operating the atlas sensors from the cmd line
 """ 
