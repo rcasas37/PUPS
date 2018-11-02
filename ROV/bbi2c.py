@@ -42,7 +42,7 @@ class BitBangI2C(object):
       """
       Closes open bitbang handle
       """
-      self.handle = self.pi.bb_i2c_open(self.SDA, self.SCL, self.CF)
+      self.pi.bb_i2c_close(self.SDA)
 
    def read(self, address, pointer_reg, read_bytes):
       """
@@ -63,7 +63,7 @@ class BitBangI2C(object):
       Performs I2C write operation on a particular address. Requires the 7-bit
       I2C address, the pointer register and a data array of the data package to send
       """
-      read_bytes += 1
+      #read_bytes += 1
       arg_list = [self.BB_ADDRESS, address, self.BB_START, self.BB_WRITE,
                   len(data_array)+1, pointer_reg] + data_array + [self.BB_STOP, self.BB_END]
       count, data = self.pi.bb_i2c_zip(self.SDA, arg_list)
@@ -78,7 +78,7 @@ class BNO055(object):
 
    # Constants needed for BNO055
    # I2C addresses
-   BNOO55_ADDRESS_A                     = 0x28
+   BNO055_ADDRESS_A                     = 0x28
    BNO055_ADDRESS_B			             = 0x29
    BNO055_ID				                = 0xA0
 
@@ -180,11 +180,11 @@ class BNO055(object):
    BNO055_AXIS_MAP_SIGN_ADDR		       = 0x42
 
    # Axis remap values
-   BNO055_REMAP_X			                = 0x00
-   BNO055_REMAP_Y			                = 0x01
-   BNO055_REMAP_Z			                = 0x02
-   BNO055_REMAP_POSITIVE		          = 0x00
-   BNO055_REMAP_NEGATIVE		          = 0x01
+   AXIS_REMAP_X			                = 0x00
+   AXIS_REMAP_Y			                = 0x01
+   AXIS_REMAP_Z			                = 0x02
+   AXIS_REMAP_POSITIVE		          = 0x00
+   AXIS_REMAP_NEGATIVE		          = 0x01
 
    # SIC registers
    BNO055_SIC_MATRIX_0_LSB_ADDR		    = 0x43
@@ -268,30 +268,30 @@ class BNO055(object):
       time.sleep(0.65)
 
       # Use the bitbang I2C
-      self.i2c_channel = BitBangI2C()
+      self.i2c_channel = BitBangI2C(self.pi)
       self.i2c_channel.open_bus()
 
    def _write_bytes(self, address, data, ack=True):
       # Write a list of 8-bit values starting at the provided register address
-      self.i2c_channel.write(self.SDA, address, data)
+      self.i2c_channel.write(self.i2c_channel.SDA, address, data)
 
    def _write_byte(self, address, value,ack=True):
       # Write an 8-bit value to the provided register address.
-      self.i2c_channel.write(self.SDA, address, value)
+      self.i2c_channel.write(self.i2c_channel.SDA, address, value)
 
    def _read_bytes(self, address, length):
       # Read a number of unsigned byte values starting from the provided address
-      count, data = self.i2c_channel.read(self.SDA, address, length)
+      count, data = self.i2c_channel.read(self.i2c_channel.SDA, address, length)
       return data
 
    def _read_byte(self, address):
       # Read an 8-bit unsigned value from the provided register address
-      count, data = self.i2c_channel.read(self.SDA, address, 1)
+      count, data = self.i2c_channel.read(self.i2c_channel.SDA, address, 1)
       return data
 
    def _read_signed_byte(self, address):
       # read an 8-bit signed value from the provided register address
-      count, data = self.i2c_channel.read(self.SDA, address, 1)
+      count, data = self.i2c_channel.read(self.i2c_channel.SDA, address, 1)
       if data > 127:
          return data - 256
       else:
@@ -299,13 +299,13 @@ class BNO055(object):
 
    def _config_mode(self):
       # Enter configuration mode
-      self.set_mode(self.OPERATION_MODE_CONFIG)
+      self.set_mode(OPERATION_MODE_CONFIG)
 
    def _operation_mode(self):
       # Enter operation mode to read sensor data
       self.set_mode(self._mode)
 
-   def begin (self, mode=OPERATION_MODE_NDOF):
+   def begin (self, mode=self.OPERATION_MODE_NDOF):
       """
       Initialize the BNO055 sensor. Must be called once before any other BNO055
       library functions. Will return True if the BNO055 was successfully initialized
@@ -324,9 +324,9 @@ class BNO055(object):
 
       # Make sure we're in config mode and on page 0
       self._config_mode()
-      self._write_byte(BNO055_PAGE_ID_ADDR, 0)
+      self._write_byte(self.BNO055_PAGE_ID_ADDR, 0)
       # Check the chip ID
-      bno_id = self._read_byte(BNO055_CHIP_ID_ADDR)
+      bno_id = self._read_byte(self.BNO055_CHIP_ID_ADDR)
 
       if bno_id != self.BNO055_ID:
          return False
@@ -371,12 +371,12 @@ class BNO055(object):
         - Gyro ID
       """
       # Read revision values.
-      accel = self._read_byte(BNO055_ACCEL_REV_ID_ADDR)
-      mag = self._read_byte(BNO055_MAG_REV_ID_ADDR)
-      gyro = self._read_byte(BNO055_GYRO_REV_ID_ADDR)
-      bl = self._read_byte(BNO055_BL_REV_ID_ADDR)
-      sw_lsb = self._read_byte(BNO055_SW_REV_ID_LSB_ADDR)
-      sw_msb = self._read_byte(BNO055_SW_REV_ID_MSB_ADDR)
+      accel = self._read_byte(self.BNO055_ACCEL_REV_ID_ADDR)
+      mag = self._read_byte(self.BNO055_MAG_REV_ID_ADDR)
+      gyro = self._read_byte(self.BNO055_GYRO_REV_ID_ADDR)
+      bl = self._read_byte(self.BNO055_BL_REV_ID_ADDR)
+      sw_lsb = self._read_byte(self.BNO055_SW_REV_ID_LSB_ADDR)
+      sw_msb = self._read_byte(self.BNO055_SW_REV_ID_MSB_ADDR)
       sw = ((sw_msb << 8) | sw_lsb) & 0xFFFF
       # Return the results as a tuple of all 5 values.
       return (sw, bl, accel, mag, gyro)
@@ -420,17 +420,17 @@ class BNO055(object):
           # Switch to configuration mode if running self test.
           self._config_mode()
           # Perform a self test.
-          sys_trigger = self._read_byte(BNO055_SYS_TRIGGER_ADDR)
-          self._write_byte(BNO055_SYS_TRIGGER_ADDR, sys_trigger | 0x1)
+          sys_trigger = self._read_byte(self.BNO055_SYS_TRIGGER_ADDR)
+          self._write_byte(self.BNO055_SYS_TRIGGER_ADDR, sys_trigger | 0x1)
           # Wait for self test to finish.
           time.sleep(1.0)
           # Read test result.
-          self_test = self._read_byte(BNO055_SELFTEST_RESULT_ADDR)
+          self_test = self._read_byte(self.BNO055_SELFTEST_RESULT_ADDR)
           # Go back to operation mode.
           self._operation_mode()
       # Now read status and error registers.
-      status = self._read_byte(BNO055_SYS_STAT_ADDR)
-      error = self._read_byte(BNO055_SYS_ERR_ADDR)
+      status = self._read_byte(self.BNO055_SYS_STAT_ADDR)
+      error = self._read_byte(self.BNO055_SYS_ERR_ADDR)
       # Return the results as a tuple of all 3 values.
       return (status, self_test, error)
 
@@ -443,7 +443,7 @@ class BNO055(object):
         - Magnetometer, 3=fully calibrated, 0=not calibrated
       """
       # Return the calibration status register value.
-      cal_status = self._read_byte(BNO055_CALIB_STAT_ADDR)
+      cal_status = self._read_byte(self.BNO055_CALIB_STAT_ADDR)
       sys = (cal_status >> 6) & 0x03
       gyro = (cal_status >> 4) & 0x03
       accel = (cal_status >> 2) & 0x03
@@ -451,7 +451,7 @@ class BNO055(object):
       # Return the results as a tuple of all 3 values.
       return (sys, gyro, accel, mag)
 
-    def get_calibration(self):
+   def get_calibration(self):
       """Return the sensor's calibration data and return it as an array of
       22 bytes. Can be saved and then reloaded with the set_calibration function
       to quickly calibrate from a previously calculated set of calibration data.
@@ -461,12 +461,12 @@ class BNO055(object):
       # Read the 22 bytes of calibration data and convert it to a list (from
       # a bytearray) so it's more easily serialized should the caller want to
       # store it.
-      cal_data = list(self._read_bytes(ACCEL_OFFSET_X_LSB_ADDR, 22))
+      cal_data = list(self._read_bytes(self.ACCEL_OFFSET_X_LSB_ADDR, 22))
       # Go back to normal operation mode.
       self._operation_mode()
       return cal_data
 
-    def set_calibration(self, data):
+   def set_calibration(self, data):
       """Set the sensor's calibration data using a list of 22 bytes that
       represent the sensor offsets and calibration data.  This data should be
       a value that was previously retrieved with get_calibration (and then
@@ -478,11 +478,11 @@ class BNO055(object):
       # Switch to configuration mode, as mentioned in section 3.10.4 of datasheet.
       self._config_mode()
       # Set the 22 bytes of calibration data.
-      self._write_bytes(ACCEL_OFFSET_X_LSB_ADDR, data)
+      self._write_bytes(self.ACCEL_OFFSET_X_LSB_ADDR, data)
       # Go back to normal operation mode.
       self._operation_mode()
 
-    def get_axis_remap(self):
+   def get_axis_remap(self):
       """Return a tuple with the axis remap register values.  This will return
       6 values with the following meaning:
         - X axis remap (a value of AXIS_REMAP_X, AXIS_REMAP_Y, or AXIS_REMAP_Z.
@@ -508,21 +508,21 @@ class BNO055(object):
                 |____________|/
       """
       # Get the axis remap register value.
-      map_config = self._read_byte(BNO055_AXIS_MAP_CONFIG_ADDR)
+      map_config = self._read_byte(self.BNO055_AXIS_MAP_CONFIG_ADDR)
       z = (map_config >> 4) & 0x03
       y = (map_config >> 2) & 0x03
       x = map_config & 0x03
       # Get the axis remap sign register value.
-      sign_config = self._read_byte(BNO055_AXIS_MAP_SIGN_ADDR)
+      sign_config = self._read_byte(self.BNO055_AXIS_MAP_SIGN_ADDR)
       x_sign = (sign_config >> 2) & 0x01
       y_sign = (sign_config >> 1) & 0x01
       z_sign = sign_config & 0x01
       # Return the results as a tuple of all 3 values.
       return (x, y, z, x_sign, y_sign, z_sign)
 
-    def set_axis_remap(self, x, y, z,
-                       x_sign=AXIS_REMAP_POSITIVE, y_sign=AXIS_REMAP_POSITIVE,
-                       z_sign=AXIS_REMAP_POSITIVE):
+   def set_axis_remap(self, x, y, z,
+                       x_sign=self.AXIS_REMAP_POSITIVE, y_sign=self.AXIS_REMAP_POSITIVE,
+                       z_sign=self.AXIS_REMAP_POSITIVE):
       """Set axis remap for each axis.  The x, y, z parameter values should
       be set to one of AXIS_REMAP_X, AXIS_REMAP_Y, or AXIS_REMAP_Z and will
       change the BNO's axis to represent another axis.  Note that two axises
@@ -540,17 +540,17 @@ class BNO055(object):
       map_config |= (z & 0x03) << 4
       map_config |= (y & 0x03) << 2
       map_config |= x & 0x03
-      self._write_byte(BNO055_AXIS_MAP_CONFIG_ADDR, map_config)
+      self._write_byte(self.BNO055_AXIS_MAP_CONFIG_ADDR, map_config)
       # Set the axis remap sign register value.
       sign_config = 0x00
       sign_config |= (x_sign & 0x01) << 2
       sign_config |= (y_sign & 0x01) << 1
       sign_config |= z_sign & 0x01
-      self._write_byte(BNO055_AXIS_MAP_SIGN_ADDR, sign_config)
+      self._write_byte(self.BNO055_AXIS_MAP_SIGN_ADDR, sign_config)
       # Go back to normal operation mode.
       self._operation_mode()
 
-    def _read_vector(self, address, count=3):
+   def _read_vector(self, address, count=3):
       # Read count number of 16-bit signed values starting from the provided
       # address. Returns a tuple of the values that were read.
       data = self._read_bytes(address, count*2)
@@ -561,58 +561,58 @@ class BNO055(object):
               result[i] -= 65536
       return result
 
-    def read_euler(self):
+   def read_euler(self):
       """Return the current absolute orientation as a tuple of heading, roll,
       and pitch euler angles in degrees.
       """
-      heading, roll, pitch = self._read_vector(BNO055_EULER_H_LSB_ADDR)
+      heading, roll, pitch = self._read_vector(self.BNO055_EULER_H_LSB_ADDR)
       return (heading/16.0, roll/16.0, pitch/16.0)
 
-    def read_magnetometer(self):
+   def read_magnetometer(self):
       """Return the current magnetometer reading as a tuple of X, Y, Z values
       in micro-Teslas.
       """
-      x, y, z = self._read_vector(BNO055_MAG_DATA_X_LSB_ADDR)
+      x, y, z = self._read_vector(self.BNO055_MAG_DATA_X_LSB_ADDR)
       return (x/16.0, y/16.0, z/16.0)
 
-    def read_gyroscope(self):
+   def read_gyroscope(self):
       """Return the current gyroscope (angular velocity) reading as a tuple of
       X, Y, Z values in degrees per second.
       """
-      x, y, z = self._read_vector(BNO055_GYRO_DATA_X_LSB_ADDR)
+      x, y, z = self._read_vector(self.BNO055_GYRO_DATA_X_LSB_ADDR)
       return (x/900.0, y/900.0, z/900.0)
 
-    def read_accelerometer(self):
+   def read_accelerometer(self):
       """Return the current accelerometer reading as a tuple of X, Y, Z values
       in meters/second^2.
       """
-      x, y, z = self._read_vector(BNO055_ACCEL_DATA_X_LSB_ADDR)
+      x, y, z = self._read_vector(self.BNO055_ACCEL_DATA_X_LSB_ADDR)
       return (x/100.0, y/100.0, z/100.0)
 
-    def read_linear_acceleration(self):
+   def read_linear_acceleration(self):
       """Return the current linear acceleration (acceleration from movement,
       not from gravity) reading as a tuple of X, Y, Z values in meters/second^2.
       """
-      x, y, z = self._read_vector(BNO055_LINEAR_ACCEL_DATA_X_LSB_ADDR)
+      x, y, z = self._read_vector(self.BNO055_LINEAR_ACCEL_DATA_X_LSB_ADDR)
       return (x/100.0, y/100.0, z/100.0)
 
-    def read_gravity(self):
+   def read_gravity(self):
       """Return the current gravity acceleration reading as a tuple of X, Y, Z
       values in meters/second^2.
       """
-      x, y, z = self._read_vector(BNO055_GRAVITY_DATA_X_LSB_ADDR)
+      x, y, z = self._read_vector(self.BNO055_GRAVITY_DATA_X_LSB_ADDR)
       return (x/100.0, y/100.0, z/100.0)
 
-    def read_quaternion(self):
+   def read_quaternion(self):
       """Return the current orientation as a tuple of X, Y, Z, W quaternion
       values.
       """
-      w, x, y, z = self._read_vector(BNO055_QUATERNION_DATA_W_LSB_ADDR, 4)
+      w, x, y, z = self._read_vector(self.BNO055_QUATERNION_DATA_W_LSB_ADDR, 4)
       # Scale values, see 3.6.5.5 in the datasheet.
       scale = (1.0 / (1<<14))
       return (x*scale, y*scale, z*scale, w*scale)
 
-    def read_temp(self):
+   def read_temp(self):
       """Return the current temperature in Celsius."""
-      return self._read_signed_byte(BNO055_TEMP_ADDR)
+      return self._read_signed_byte(self.BNO055_TEMP_ADDR)
 
