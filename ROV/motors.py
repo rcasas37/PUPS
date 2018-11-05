@@ -156,7 +156,6 @@ class control:
    def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=25, w1_en2=8):
       self.pi = pigpio.pi()
       self.pwm = motors.PWM(self.pi)
-      self.pi = pi
       self.m1 = m1
       self.m2 = m2
       self.m3 = m3
@@ -165,6 +164,8 @@ class control:
       self.m6 = m6
       self.l1 = l1
       self.w1 = w1
+      self.w1_en1 = w1_en1
+      self.w1_en2 = w1_en2
 
    """
    Sends the initialization signal to all motors.
@@ -277,14 +278,14 @@ class control:
    def light_control(self, power):
       if power == 0:
          self.pwm.set_pulse_width(self.l1, 1100)
-      else
+      else:
          self.pwm.set_pulse_width(self.l1, 1100 + power*8)
 
    """
    Control for water pump. Needs speed (pwm variable) and enable variable since
    we are just turning it on or off
    """
-   def water_pump_control(self, pwm, en)
+   def water_pump_control(self, pwm, en):
       if en == 0:
          self.pwm.set_duty_cycle(self.w1, pwm)
          self.pi.write(self.w1_en1, 0)
@@ -331,11 +332,11 @@ if __name__ == "__main__":
          time.sleep(2)
       '''
 
-      '''
+      
       #Test program for water pump
       print("Test program for water pump")
 
-      rov_cont.arm() 
+      rov_cont.arm()
 
       while(1):
          pwm_check = int(input("Speed?: "))
@@ -343,7 +344,6 @@ if __name__ == "__main__":
 
          rov_cont.water_pump_control(pwm_check, en_check)
          time.sleep(2)
-      '''
       
    except KeyboardInterrupt:
       rov_cont.disarm()
