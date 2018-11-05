@@ -7,6 +7,7 @@
 	<a_button>0</a_button>
 	<x_button>0</x_button>
 	<k_value>10</k_value>
+	<headlights>0</headlights>
 	<water_type>salt</water_type>
 	
 </command_array>

@@ -38,6 +38,7 @@ def main():
         cmd_input = "y"
         cmd_message = "p,0,0,0,0,0,0,0"            # Init to none 
         cmd_list = [0,0,0,0,0,0,0]  # Init cmd_list
+        error_addr = 0x00
 
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
         rov = rov_skeleton.rov()		            # init rov class/module instance
@@ -53,6 +54,12 @@ def main():
         xml_file = os.path.join(base_path, "xml_commands.xml")  # Join base_path with actual .xml file name
         tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
         root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
+
+        # Initalize use of sensors.xml
+        base_path1 = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+        xml_file1 = os.path.join(base_path1, "xml_sensors.xml")  # Join base_path with actual .xml file name
+        tree1 = et.parse(xml_file1)                               # Save file into memory to work with its children/elements
+        root1 = tree1.getroot()                                   # Returns root of the xml file to get access to all elements 
 
         # Open serial port communication
         ser = serial.Serial(port='/dev/ttyS0', baudrate=9600, parity=serial.PARITY_NONE,
@@ -85,12 +92,23 @@ def main():
                 # Print read results
                 print("This is the control_message: ", cmd_message)
 
+                # Pass the sensor error addresses to the rov class for error detection
+                error_addr = int(root1.find("Errored_Sensor").text)
+                print("Here: ", error_addr)
+                rov.set_error_addr(error_addr)
+
                 # Write sensor data to serial port 
                 rov.write_serial_port(ser, rov.send_sensor_data())
                 ###rov.write_serial_port(ser, "S,pH,DO,Sal,Temp,Press,Orientation,Accel,Error_sensor;")
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
                 cmd_input = input("Would you like to get all measurements? (y,n) ")
+
+
+                # Pass the sensor error addresses to the rov class for error detection
+                error_addr = int(root1.find("Errored_Sensor").text)
+                print("Here1: ", error_addr)
+                rov.set_error_addr(error_addr)
 
                 """ 
                 # No data was received stabalize ROV and get essential measurements
@@ -119,7 +137,8 @@ def main():
                                 rov.get_essential_meas("1")     # get pressure and temp. 1st input = salt/fresh water (1/0)
 
                                 # Get pH, DO, and salinity measurments
-                                atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
+                                atlas_sensor.set_stop_flag(0)           # 0 =go get atlas sensor meas
+                                atlas_sensor.set_error_addr(error_addr) # Pass the sensor errors to the sensor class
 
                         else:   # Get essential measurements only 
                                 #### atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
@@ -143,6 +162,10 @@ def main():
                                         rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
                                 """
+                # Pass the sensor error addresses to the rov class for error detection
+                error_addr = int(root1.find("Errored_Sensor").text)
+                print("Here2: ", error_addr)
+                rov.set_error_addr(error_addr)
 
 
 

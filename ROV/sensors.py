@@ -27,6 +27,7 @@ stop_flag = 1           # stop=1 and run=0
 kval = "10"             # Our probe is k10
 pres_comp_val = "101"   # Pres. compensation value is in kpa
 temp_comp_val = "25"    # Temp. compensation value is in Celsius
+error_addr = 0x00
 
 class atlas_sensors(threading.Thread):
         long_timeout = 1.5                  # the timeout needed to query readings and calibrations
@@ -34,9 +35,6 @@ class atlas_sensors(threading.Thread):
         default_bus = 1                     # the default bus for I2C on the newer Raspberry Pis, certain older boards use bus 0
         default_address = 97                # the default address for the sensor
         current_addr = default_address
-        #kval = "10"
-        #pres_comp_val = ".3"
-        #temp_comp_val = "25"
 
         def __init__(self, address=default_address, bus=default_bus):
                 # open two file streams, one for reading and one for writing
@@ -59,6 +57,8 @@ class atlas_sensors(threading.Thread):
                 pres_comp_val = "101"
                 global temp_comp_val 
                 temp_comp_val = "25"
+                global error_addr
+                error_addr = 0x00
                 super(atlas_sensors, self).__init__()
                 self._stop_event = threading.Event()
 
@@ -144,6 +144,15 @@ class atlas_sensors(threading.Thread):
         def get_stop_flag(self):
                 global stop_flag
                 return stop_flag
+
+        # Error Sensor addresses 
+        def set_error_addr(self, addr):
+                global error_addr 
+                error_addr = addr 
+
+        def get_error_addr(self):
+                global error_addr
+                return error_addr
 
         # Kval (as string)
         def set_kval(self, usr_kval):
@@ -281,24 +290,25 @@ def program():
                 
                 # Create the errored sensor string 
                 if (sal_error == 1 and do_error == 0 and ph_error == 0):
-                        error_addr_str = "Error: Salinity" 
+                        device.set_error_addr(0x10) 
                 elif(do_error == 1 and sal_error == 0 and ph_error == 0):
-                        error_addr_str = "Error: Dis Oxy" 
+                        device.set_error_addr(0x04) 
                 elif(ph_error == 1 and sal_error == 0 and do_error == 0):
-                        error_addr_str = "Error: pH"
+                        device.set_error_addr(0x08) 
                 elif(sal_error == 1 and do_error == 1 and ph_error == 1):
-                        error_addr_str = "Error: Salinity, Dis Oxy, pH"
+                        device.set_error_addr(0x1C) 
                 elif(sal_error == 0 and do_error == 1 and ph_error == 1):
-                        error_addr_str = "Error: Dis Oxy, pH"
+                        device.set_error_addr(0x0C) 
                 elif(sal_error == 1 and do_error == 0 and ph_error == 1):
-                        error_addr_str = "Error: Salinity, pH"
+                        device.set_error_addr(0x18) 
                 elif(sal_error == 1 and do_error == 1 and ph_error == 0):
-                        error_addr_str = "Error: Salinity, Dis Oxy"
+                        device.set_error_addr(0x14) 
                 else:
-                        error_addr_str = " "
+                        device.set_error_addr(device.get_error_addr() & 0x03) 
+                print("Error in the sensors: ", device.get_error_addr())
                 
                 # Add errored sensor to xml or clear xml element
-                root.find("Errored_Sensor").text = error_addr_str 
+                root.find("Errored_Sensor").text = str(int(root.find("Errored_Sensor").text) | device.get_error_addr())
 
                 tree.write(xml_file)         # Saves all changes to the sensors.xml on the SD card
 

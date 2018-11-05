@@ -30,6 +30,7 @@ class rov:
         default_sensor_xml = "xml_sensors.xml"   
         default_command_xml = "xml_commands.xml"   
         cmd_xml_elem = ["id_char", "lt_xaxis", "lt_yaxis", "rt_xaxis", "rt_yaxis", "a_button", "x_button", "k_value", "water_type"]
+        error_addr = 0
 
         
         """
@@ -57,31 +58,32 @@ class rov:
                 root.find("a_button").text = "0"        # Pressed("1") or not pressed("0")
                 root.find("x_button").text = "0"        # Pressed("1") or not pressed("0")
                 root.find("k_value").text = "10"        # Our probe is 10
+                root.find("headlights").text = "0"      # Init headlights to off 
                 root.find("water_type").text = "salt"   # fresh or salt 
 
                 tree.write(xml_file)    # Saves all changes to the commands.xml on the SD card
 
                 # Initilize all values in sensors.xml to defaults (0)
                 base_path1 = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-                xml_file1 = os.path.join(base_path1, sensor_xml_file)     # Join base_path with actual .xml file name
-                tree1 = et.parse(xml_file1)                               # Save file into memory to work with its children/elements
-                root1 = tree1.getroot()                                   # Returns root of the xml file to get access to all elements 
+                self.xml_file1 = os.path.join(base_path1, sensor_xml_file)     # Join base_path with actual .xml file name
+                self.tree1 = et.parse(self.xml_file1)                               # Save file into memory to work with its children/elements
+                self.root1 = self.tree1.getroot()                                   # Returns root of the xml file to get access to all elements 
 
-                root1.find("id_char").text = "S"         # S=sensor packet 
-                root1.find("Temperature").text = "Temperature"
-                root1.find("Pressure").text = "Pressure"
-                root1.find("pH").text = "pHval"
-                root1.find("Salinity").text = "Salinity"
-                root1.find("Dissolved_Oxygen").text = "DOxy"
-                root1.find("Errored_Sensor").text = " "
-                root1.find("Gyroscope1").text = "1"
-                root1.find("Gyroscope2").text = "2"
-                root1.find("Gyroscope3").text = "3"
-                root1.find("Accelerometer1").text = "999"
-                root1.find("Accelerometer2").text = "99"
-                root1.find("Accelerometer3").text = "9"
+                self.root1.find("id_char").text = "S"         # S=sensor packet 
+                self.root1.find("Temperature").text = "Temperature"
+                self.root1.find("Pressure").text = "Pressure"
+                self.root1.find("pH").text = "pHval"
+                self.root1.find("Salinity").text = "Salinity"
+                self.root1.find("Dissolved_Oxygen").text = "DOxy"
+                self.root1.find("Errored_Sensor").text = "0"
+                self.root1.find("Gyroscope1").text = "1"
+                self.root1.find("Gyroscope2").text = "2"
+                self.root1.find("Gyroscope3").text = "3"
+                self.root1.find("Accelerometer1").text = "999"
+                self.root1.find("Accelerometer2").text = "99"
+                self.root1.find("Accelerometer3").text = "9"
 
-                tree1.write(xml_file1)    # Saves all changes to the sensors.xml on the SD card
+                self.tree1.write(self.xml_file1)    # Saves all changes to the sensors.xml on the SD card
                 return
 
 
@@ -213,12 +215,32 @@ class rov:
         """
         def get_essential_meas(self, water_choice):
                 # Get Pressure measurement and write it to sensors.xml
-                depth = get_pressure(water_choice)
+                depth = get_pressure(water_choice, self.root1)
                 write_xml("0", "Pressure", str(depth))
 
                 # Get Temperature measurement and write it to sensors.xml
-                c_temp = get_temperature()
+                c_temp = get_temperature(self.root1)
                 write_xml("0", "Temperature", str(c_temp))
+                
+                # Create the errored sensor string and save in xml
+                current_error = self.error_addr
+                new_error = 0x00
+
+                if depth == -1 and c_temp == -1:
+                        new_error = 0x03 
+                elif c_temp == -1:
+                        new_error = 0x01 
+                elif depth == -1:
+                        new_error = 0x02 
+                else:
+                        new_error = 0x1C        # Mask the byte to clear the temp and pressure bits 
+                        self.error_addr = current_error & new_error
+                        new_error = 0x00
+
+                self.error_addr = current_error | new_error 
+
+                write_xml("0", "Errored_Sensor", str(self.error_addr))
+
 
                 # Get Gyroscope measurement and write it to sensors.xml
                 #write_xml("0", "Gyroscope1", gyro1)
@@ -339,6 +361,32 @@ class rov:
                 return
 
 
+        """
+        Sets the current error address for use within essential measuremnts()
+        Parameters:
+                Sensor Error Address 
+        Return:
+                None
+        Notes:
+        """
+        def set_error_addr(self, error):
+                self.error_addr = error
+                return
+
+        """
+        Gets the current error address for use within essential measuremnts()
+        Parameters:
+                None 
+        Return:
+                None
+        Notes:
+        """
+        def get_error_addr(self):
+                return self.error_addr
+
+
+
+
 ############################################################
 ################ ROV Class Helper functions#################
 ############################################################
@@ -380,6 +428,41 @@ def write_xml(xml_choice, xml_element, string_data):
 
         return
 
+"""
+Gets individual string data to a single element in the chosen xml file.
+Parameters:
+        Select the xml to open, the element in the xml to overwrite, string to write to xml 
+Return:
+        None 
+Notes:
+"""
+def read_xml(xml_choice, xml_element):
+        # Read from command.xml
+        if xml_choice == "1":
+                # Open command.xml for reading
+                base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+                xml_file = os.path.join(base_path, "xml_commands.xml")  # Join base_path with actual .xml file name
+                tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
+                root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
+                
+                # Read data from the element chosen
+                string_data = root.find(xml_element).text
+
+        # Read from sensor.xml
+        elif xml_choice == "0":
+                # Open command.xml for reading
+                base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+                xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
+                tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
+                root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
+
+                # Read data from the element chosen
+                string_data = root.find(xml_element).text
+        else:
+                print("Error in write_xml() function of rov_skelton no xml was written to.")
+
+        return string_data
+
 
 
 """
@@ -391,43 +474,44 @@ Return:
         Returns Depth as float in meters, Prints Temp. as float in Celsius
 Notes:
 """
-def get_pressure(water_choice):
+def get_pressure(water_choice, root1) :
         try:
                 # Create sensor object
                 sensor = ms5837.MS5837_30BA() # Default I2C bus is 1 (Raspberry Pi 3)
+                sensor.init()
 
-                # Must initialize pressure sensor before reading it
-                if not sensor.init():
-                        print("Error initializing pressure sensor.")            # Print not needed in final version
-                        ### exit(1)
-
-                # Freshwater vs Saltwater depth measurements set via user input form cmd center
-                if water_choice == '0':
-                        # Freshwater
-                        sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
-                        freshwaterDepth = sensor.depth() # default is freshwater
-                        water_choice = '1'
-                elif water_choice == '1':
-                        # Saltwater
-                        sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
-                        freshwaterDepth = sensor.depth() # default is freshwater
-                        water_choice = '0'
-                else:
-                        print("Error on water density choice.")         # Print not needed in final version
-
-                if sensor.read():
-                        depth = sensor.pressure(ms5837.UNITS_psi)           # Get presure in psi
-                        #####print("P: %0.4f m \t T: %0.2f C  %0.2f F\n" % (         # Print not needed in final version
-                        ###depth,      # Sensor depth, either fresh or salf water depending on above
-                        ###sensor.temperature(), # Default is degrees C (no arguments)
-                        ###sensor.temperature(ms5837.UNITS_Farenheit))) # Request Farenheit
-                else:
-                        print ("Error reading pressure sensor.")            # Print not needed in final version
-                        ### exit(1)
         except:
-                error_addr_str = root.find("Errored_Sensor").text   # Get data already in xml
-                full_error_str = error_addr_str + "_99"             # Append errored sensor to existing data
-                root.find("Errored_Sensor").text = error + full_error_str   # Set the xml feild
+                #root1.find("Pressure").text = "Not Connected"    # Set the xml feild
+                return -1 
+
+        # Must initialize pressure sensor before reading it
+        #if not sensor.init():
+        #        print("Error initializing pressure sensor.")            # Print not needed in final version
+                ### exit(1)
+
+        # Freshwater vs Saltwater depth measurements set via user input form cmd center
+        if water_choice == '0':
+                # Freshwater
+                sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
+                freshwaterDepth = sensor.depth() # default is freshwater
+                water_choice = '1'
+        elif water_choice == '1':
+                # Saltwater
+                sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
+                freshwaterDepth = sensor.depth() # default is freshwater
+                water_choice = '0'
+        else:
+                print("Error on water density choice.")         # Print not needed in final version
+
+        if sensor.read():
+                depth = sensor.pressure(ms5837.UNITS_psi)           # Get presure in psi
+                #####print("P: %0.4f m \t T: %0.2f C  %0.2f F\n" % (         # Print not needed in final version
+                ###depth,      # Sensor depth, either fresh or salf water depending on above
+                ###sensor.temperature(), # Default is degrees C (no arguments)
+                ###sensor.temperature(ms5837.UNITS_Farenheit))) # Request Farenheit
+        else:
+                print ("Error reading pressure sensor.")            # Print not needed in final version
+                ### exit(1)
         return depth
 
 
@@ -441,7 +525,12 @@ Return:
         Returns temperature as float in Celcius 
 Notes:
 """
-def get_temperature():
+def get_temperature(root1):
+        base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+        xml_file = os.path.join(base_path, "xml_sensors.xml")  # Join base_path with actual .xml file name
+        tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
+        root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
+        c_temp = 0.0
         try:
                 # Create sensor object
                 sensor = tsys01.TSYS01()
@@ -459,9 +548,8 @@ def get_temperature():
                 #####f_temp = sensor.temperature(tsys01.UNITS_Farenheit)     # Get farenheit temp
                 ######print("T: %.2f C\t%.2f F" % (c_temp, f_temp))           # Print not needed in final version
         except:
-                error_addr_str = root.find("Errored_Sensor").text   # Get data already in xml
-                full_error_str = error_addr_str + "_99"             # Append errored sensor to existing data
-                root.find("Errored_Sensor").text = error + full_error_str   # Set the xml feild
+                #root1.find("Temperature").text = "Not Connected"      # Set the xml feild
+                return -1 
         return c_temp 
 
 
