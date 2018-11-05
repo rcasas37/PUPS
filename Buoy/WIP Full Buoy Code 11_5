@@ -1,0 +1,209 @@
+//-----INCLUDE LIBRARY FOR I2C-----//
+#include <Wire.h>
+
+//-----DEFINE PIN 4.7 AS OUTPUT FOR LED-----//
+#define LED P4_7
+
+//-----INITIALIZE LARGE CHAR ARRAYS FOR MESSAGE RECEIVING-----//
+char PacketRxCC[75];
+char PacketRxROV[75];
+
+//-----EXAMPLE CONTROL PACKET FOR TEST/DEBUG-----//
+//char test[] = "C,LTx1200,LTy1000,RTx0,RTy-800,AVa10,Xva10;";
+
+//-----PACKET IDS-----//
+char SensorID = 'S';
+char ControlID = 'C';
+char GPSID = 'L';
+char PauseID = 'p';
+char Order66ID = 'f';
+char ShutdownID = 'b';
+char InitID = 'z';
+
+//-----INITIALIZE COUNT-----//
+int count = 0;
+int gpscount = 0;
+
+//-----SETUP FOR PINS AND SERIAL COMMUNICATION-----//
+void setup() {
+  
+  //-----WAIT FOR HARDWARE SERIAL TO APPEAR-----//
+  while (!Serial);
+  while (!Serial1);
+
+  //-----BEGIN I2C-----//
+  Wire.begin();
+
+  //-----INITIALIZE DIGITAL PIN AS OUTPUT-----//
+  pinMode(LED, OUTPUT);
+
+  //-----BEGIN BACKCHANNEL UART AT 9600 BAUD RATE-----//
+  Serial.begin(9600);
+  
+  //-----BEGIN REGULAR UART AT 9600 BAUD RATE-----//
+  Serial1.begin(9600);
+
+  //-----DELAY TO ALLOW UART COMMS TO BEGIN
+  delay(100);
+
+  //-----INITIALIZE RESET PIN-----//
+  pinMode(P2_4, OUTPUT);
+  digitalWrite(P2_4, LOW);
+  
+  //-----INITIALIZE INTERRUPT PIN-----//
+  pinMode(P1_6, INPUT);
+  
+  //-----INITIALIZE WAKE PIN-----//
+  pinMode(P2_5, OUTPUT);
+  digitalWrite(P2_5, HIGH);
+
+  //-----CLEAR TX AND RX BUFFERS-----//
+
+  //-----CLEAR REGULAR UART TX BUFFER-----//
+  Serial1.flush();
+  //-----CLEAR REGULAR UART RX BUFFER-----//
+  //Serial1.read();
+  //-----CLEAR BACKCHANNEL UART TX BUFFER-----//
+  Serial.flush();
+  //-----CLEAR BACKCHANNEL UART RX BUFFER-----//
+  //Serial.read();
+  Serial.println("SETUP DONE");
+}
+
+
+//-----MAIN LOOP OF BUOY PROGRAM-----//
+void loop() {
+  Serial.write("\ndebug 0\n");
+  //-----BLINK LED FOR DEBUG/TEST HEARTBEAT-----//
+  digitalWrite(LED, HIGH);
+  delay(10);
+  digitalWrite(LED, LOW);
+  delay(10);
+
+  //-----INITAIALIZE ARRAYS TO 0'S-----//
+  for(int i = 0; i < 75; i++){
+    PacketRxROV[i] = '0';
+    PacketRxCC[i] = '0';
+  }
+
+  //-----INITIALIZE CHAR X VARIABLE TO CHECK
+  char x = '0';
+  char y = '0';
+
+  //----------XBEE/REGULAR UART SECTION----------//
+  
+  //-----RESET COUNT-----//
+  count = 0; 
+  if(Serial1.available()){
+    while(x != ';') {
+      if (Serial1.available()) {
+        x = Serial1.read();
+        PacketRxCC[count] = x;
+        if(PacketRxCC[0] == ControlID || PacketRxCC[0] == PauseID || PacketRxCC[0] == InitID || PacketRxCC[0] == Order66ID){
+          Serial.write(PacketRxCC[count]);
+        }
+        if(PacketRxCC[0] == ShutdownID){
+          Serial.write("Buoy Shutdown");
+        }
+        count++;
+      }
+    }
+  }
+  //----------TETHER/BACKCHANNEL UART SECTION----------// 
+
+  //-----RESET COUNT-----// 
+  count = 0;
+  if(Serial.available()){
+    while(y != ';') {
+      if (Serial.available()) {
+        y = Serial.read();
+        PacketRxROV[count] = y;
+        if(PacketRxROV[0] == SensorID){
+          Serial1.write(PacketRxROV[count]);
+        }
+        count++;
+      }
+    }
+  }
+  //----------GPS/I2C SECTION----------//
+  gpscount++;
+  
+  Serial.write("debug 1\n");
+  
+  if(gpscount >= 5){
+    //-----RESET COUNT-----//
+    count = 0;
+    gpscount = 0;
+    Serial.write("debug 2\n");
+    digitalWrite(P2_4, HIGH);    //allow the GPS Sensor to start running
+    Wire.requestFrom(16, 8);    // request 8 bytes from slave device #16
+   
+    char GPSArray[75];                //GPS Array
+    
+    for(int i = 0; i<75; i++)                              
+    {  
+      GPSArray[i] = '_';
+    }
+    char c = Wire.read();
+    delay(2);
+    
+    if(c == '$')
+    {
+      c = Wire.read();
+      delay(2);
+      //Serial.print(c);
+      if(c == 'G')
+      {
+        c = Wire.read();
+        delay(2);
+        //Serial.print(c);
+        if(c == 'N')
+        {
+          c = Wire.read();
+          delay(2);
+          //Serial.print(c);
+          if(c == 'G')
+          {
+            c = Wire.read();
+            delay(2);
+            //Serial.print(c);
+            if(c == 'G')
+            {
+              c = Wire.read();
+              delay(2);
+              //Serial.print(c);
+              if(c == 'A')
+              {
+                c = Wire.read();
+                delay(2);
+                GPSArray[0] = 'L';
+                
+                //Fill Array with GPS data (time, lat, long) separated by commas
+                for(int i = 1; c != '*'; i++)
+                {
+                  GPSArray[i] = c;
+                  //Serial.print(c);
+                  c = Wire.read();
+                  Wire.requestFrom(16, 1);
+                  delay(2);
+  
+                  count = i;
+                }
+                GPSArray[count+1] = ';';  //Append the terminating character to the array
+                Serial.println("\n"); 
+              }
+            }
+          }
+        }
+      }
+    }
+    //GPSArray[count] = ';';   //Append the terminating character to the array
+    for(int i = 0; i<count; i++)                              
+    {  
+      if(GPSArray[i] != '_')
+      {
+          Serial.print(GPSArray[i]);
+      }
+    }
+  }
+}
