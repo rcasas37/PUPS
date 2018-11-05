@@ -50,12 +50,13 @@ class BitBangI2C(object):
       I2C address, the pointer register to write to, and the number of bytes to
       read from the pointer register
       """
-      read_bytes += 1
+      #read_bytes += 1
       arg_list = [self.BB_ADDRESS, address, self.BB_START, self.BB_WRITE,
                   self.BB_ESCAPE, pointer_reg, self.BB_START, self.BB_READ,
                   read_bytes, self.BB_STOP, self.BB_END]
-      count, data = self.pi.bb_i2c_zip(self.SDA, arg_list)
-      return data
+      (count, data) = self.pi.bb_i2c_zip(self.SDA, arg_list)
+      print("Data read is : " + repr(data))
+      return count,data
 
 
    def write(self, address, pointer_reg, data_array):
@@ -63,11 +64,13 @@ class BitBangI2C(object):
       Performs I2C write operation on a particular address. Requires the 7-bit
       I2C address, the pointer register and a data array of the data package to send
       """
-      #read_bytes += 1
+      if type(data_array) is int:
+         assert data_array < 256
+         data_array = [data_array]
       arg_list = [self.BB_ADDRESS, address, self.BB_START, self.BB_WRITE,
                   len(data_array)+1, pointer_reg] + data_array + [self.BB_STOP, self.BB_END]
-      count, data = self.pi.bb_i2c_zip(self.SDA, arg_list)
-      return data
+      (count, data) = self.pi.bb_i2c_zip(self.SDA, arg_list)
+      return count,data
 
 class BNO055(object):
    """
@@ -256,7 +259,7 @@ class BNO055(object):
    OPERATION_MODE_NDOF_FMC_OFF		    = 0x0B
    OPERATION_MODE_NDOF			          = 0x0C
 
-   def __init__(self, rst=None, address=0, i2c=None, pi=None, **kwargs):
+   def __init__(self, rst=None, address=0, i2c_channel=None, pi=None, **kwargs):
       self.address = self.BNO055_ADDRESS_A
       # If reset pin is provided then save it and save pigpio.pi reference
       self.rst = rst
@@ -281,17 +284,17 @@ class BNO055(object):
 
    def _read_bytes(self, address, length):
       # Read a number of unsigned byte values starting from the provided address
-      count, data = self.i2c_channel.read(self.i2c_channel.SDA, address, length)
+      (count, data) = self.i2c_channel.read(self.i2c_channel.SDA, address, length)
       return data
 
    def _read_byte(self, address):
       # Read an 8-bit unsigned value from the provided register address
-      count, data = self.i2c_channel.read(self.i2c_channel.SDA, address, 1)
+      (count, data) = self.i2c_channel.read(self.i2c_channel.SDA, address, 1)
       return data
 
    def _read_signed_byte(self, address):
       # read an 8-bit signed value from the provided register address
-      count, data = self.i2c_channel.read(self.i2c_channel.SDA, address, 1)
+      (count, data) = self.i2c_channel.read(self.i2c_channel.SDA, address, 1)
       if data > 127:
          return data - 256
       else:
@@ -299,7 +302,7 @@ class BNO055(object):
 
    def _config_mode(self):
       # Enter configuration mode
-      self.set_mode(OPERATION_MODE_CONFIG)
+      self.set_mode(self.OPERATION_MODE_CONFIG)
 
    def _operation_mode(self):
       # Enter operation mode to read sensor data
@@ -317,16 +320,17 @@ class BNO055(object):
       # just to make sure that the BNO is in a good state and ready to accept
       # commands (this seems to be necessary after a hard power down).
       try:
-         self._write_byte(self.BNO055_PAGE_ID_ADDR, 0, ack=False)
+         self._write_byte(self.BNO055_PAGE_ID_ADDR, [0], ack=False)
       except IOError:
          # Swallow an IOError to allow it to start up
          pass
 
       # Make sure we're in config mode and on page 0
       self._config_mode()
-      self._write_byte(self.BNO055_PAGE_ID_ADDR, 0)
+      self._write_byte(self.BNO055_PAGE_ID_ADDR, [0])
       # Check the chip ID
       bno_id = self._read_byte(self.BNO055_CHIP_ID_ADDR)
+      print("Output of bno_id is: " + repr(bno_id))
 
       if bno_id != self.BNO055_ID:
          return False
@@ -339,7 +343,7 @@ class BNO055(object):
          self.pi.write(self._rst, 1)
       else:
          # Use the reset command if not provided HW reset pin
-         self._write_byte(self.BNO055_SYS_TRIGGER_ADDR, 0x20, ack=False)
+         self._write_byte(self.BNO055_SYS_TRIGGER_ADDR, [0x20], ack=False)
 
       # Wait 650ms after resetting chip to be ready
       time.sleep(0.65)
@@ -348,7 +352,7 @@ class BNO055(object):
       self._write_byte(self.BNO055_PWR_MODE_ADDR, [self.POWER_MODE_NORMAL])
 
       # Default to internal oscillator
-      self._write_byte(self.BNO055_SYS_TRIGGER_ADDR, 0x00)
+      self._write_byte(self.BNO055_SYS_TRIGGER_ADDR, [0x00])
 
       # Enter normal operation mode
       self._operation_mode()
@@ -421,7 +425,7 @@ class BNO055(object):
           self._config_mode()
           # Perform a self test.
           sys_trigger = self._read_byte(self.BNO055_SYS_TRIGGER_ADDR)
-          self._write_byte(self.BNO055_SYS_TRIGGER_ADDR, sys_trigger | 0x1)
+          self._write_byte(self.BNO055_SYS_TRIGGER_ADDR, [sys_trigger | 0x1])
           # Wait for self test to finish.
           time.sleep(1.0)
           # Read test result.
@@ -540,13 +544,13 @@ class BNO055(object):
       map_config |= (z & 0x03) << 4
       map_config |= (y & 0x03) << 2
       map_config |= x & 0x03
-      self._write_byte(self.BNO055_AXIS_MAP_CONFIG_ADDR, map_config)
+      self._write_byte(self.BNO055_AXIS_MAP_CONFIG_ADDR, [map_config])
       # Set the axis remap sign register value.
       sign_config = 0x00
       sign_config |= (x_sign & 0x01) << 2
       sign_config |= (y_sign & 0x01) << 1
       sign_config |= z_sign & 0x01
-      self._write_byte(self.BNO055_AXIS_MAP_SIGN_ADDR, sign_config)
+      self._write_byte(self.BNO055_AXIS_MAP_SIGN_ADDR, [sign_config])
       # Go back to normal operation mode.
       self._operation_mode()
 
