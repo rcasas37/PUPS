@@ -13,22 +13,16 @@ class PWM:
 
    """
    This class provides an interface to the I2C PCA9685 PWM chip.
-
    The chip provides 16 PWM channels.
-
    All channels use the same frequency which may be set in the
    range 24 to 1526 Hz.
-
    If used to drive servos the frequency should normally be set
    in the range 50 to 60 Hz.
-
    The duty cycle for each channel may be independently set
    between 0 and 100%.
-
    It is also possible to specify the desired pulse width in
    microseconds rather than the duty cycle.  This may be more
    convenient when the chip is used to drive servos.
-
    The chip has 12 bit resolution, i.e. there are 4096 steps
    between off and full on.
    """
@@ -154,14 +148,12 @@ class control:
    """
    Class that handles controlling the motors, lights, and water pump. It also
    passes the PWM and pi object to the class to be used later.
-
    When creating the object, initialize the motors using the parameters
-   where m# is motors, l# is lights, and w# is water pump.
-
-   Initializes channels from channels 0 to 8
+   where m# is motors, l# is lights, and w# is water pump with it having two enables
+   defaulted to GPIO25 and GPIO8.
    """
 
-   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12):
+   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=25, w1_en2=8):
       self.pi = pigpio.pi()
       self.pwm = motors.PWM(self.pi)
       self.pi = pi
@@ -185,6 +177,9 @@ class control:
       self.pwm.set_pulse_width(self.m5, 1530)
       self.pwm.set_pulse_width(self.m6, 1530)
       self.pwm.set_pulse_width(self.l1, 1100)
+      self.pwm.set_duty_cycle(self.w1, 0)
+      self.pi.write(self.w1_en1, 0)
+      self.pi.write(self.w1_en2, 0)
       time.sleep(1)
 
    def disarm(self):
@@ -195,6 +190,9 @@ class control:
       self.pwm.set_pulse_width(self.m5, 0)
       self.pwm.set_pulse_width(self.m6, 0)
       self.pwm.set_pulse_width(self.l1, 1100)
+      self.pwm.set_duty_cycle(self.w1, 0)
+      self.pi.write(self.w1_en1, 0)
+      self.pi.write(self.w1_en2, 0)
 
    def norm_values(self, analog_value):
       return (analog_value // 137)
@@ -272,17 +270,31 @@ class control:
       self.pwm.set_pulse_width(self.m5, 1475 + norm_right_x + 30)
       self.pwm.set_pulse_width(self.m6, 1475 + norm_right_x + 30)
 
-   def light_control(self, power, set1, set2, set3, set4):
-      #If off is set, then it will not check to see what setting it is on
-      if power == 1:
-         if set1 == 1:
-            self.pwm.set_pulse_width(self.l1, 1330)
-         if set2 == 1:
-            self.pwm.set_pulse_width(self.l1, 1530)
-         if set3 == 1:
-            self.pwm.set_pulse_width(self.l1, 1730)
-         if set4 == 1:
-            self.pwm.set_pulse_width(self.l1, 1930)
+   """
+   Controls the light intensity. Needs power which is a variable from 0 to 100
+   and will adjust the pwm (1100-1900) as needed
+   """
+   def light_control(self, power):
+      if power == 0:
+         self.pwm.set_pulse_width(self.l1, 1100)
+      else
+         self.pwm.set_pulse_width(self.l1, 1100 + power*8)
+
+   """
+   Control for water pump. Needs speed (pwm variable) and enable variable since
+   we are just turning it on or off
+   """
+   def water_pump_control(self, pwm, en)
+      if en == 0:
+         self.pwm.set_duty_cycle(self.w1, pwm)
+         self.pi.write(self.w1_en1, 0)
+         self.pi.write(self.w1_en2, 0)
+      elif en == 1:
+         self.pwm.set_duty_cycle(self.w1, pwm)
+         self.pi.write(self.w1_en1, 0)
+         self.pi.write(self.w1_en2, 1)
+
+
 
 if __name__ == "__main__":
 
@@ -297,33 +309,41 @@ if __name__ == "__main__":
       '''
       #Test program for left motors
       print("Test program for Tilt")
-
       print("Sending initialization signal...")
       rov_cont.arm()
-
       while(1):
          x_axis_left = int(input("X-axis of left stick? "))
          y_axis_left = int(input("Y-axis of left stick? "))
-
          rov_cont.left_stick_control(x_axis_left, y_axis_left)
          time.sleep(2)
       '''
 
+      '''
       #Test program for lights
       print("Test program for Light")
 
       rov_cont.arm()
 
       while(1):
-         power_check = int(input("Power on or off (0 - 1): "))
-         set1_check = int(input("Lights at 25%? (0 - 1): "))
-         set2_check = int(input("Lights at 50%? (0 - 1): "))
-         set3_check = int(input("Lights at 75%? (0 - 1): "))
-         set4_check = int(input("Lights at 100%? (0 - 1): "))
+         power_check = int(input("Light intensity? (0 - 100): "))
 
-         rov_cont.light_control(power_check, set1_check, set2_check, set3_check, set4_check)
+         rov_cont.light_control(power_check)
          time.sleep(2)
+      '''
 
+      '''
+      #Test program for water pump
+      print("Test program for water pump")
+
+      rov_cont.arm() 
+
+      while(1):
+         pwm_check = int(input("Speed?: "))
+         en_check = int(input("Is the pump on or off? (0-1): "))
+
+         rov_cont.water_pump_control(pwm_check, en_check)
+         time.sleep(2)
+      '''
+      
    except KeyboardInterrupt:
       rov_cont.disarm()
-
