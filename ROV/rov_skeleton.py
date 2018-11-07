@@ -29,8 +29,8 @@ import xml.etree.ElementTree as et  # Module provides .xml file manipulation and
 class rov:
         default_sensor_xml = "xml_sensors.xml"   
         default_command_xml = "xml_commands.xml"   
-        cmd_xml_elem = ["id_char", "lt_xaxis", "lt_yaxis", "rt_xaxis", "rt_yaxis", "a_button", "x_button", "k_value", "water_type"]
-        error_addr = 0
+        cmd_xml_elem = ["id_char", "lt_xaxis", "lt_yaxis", "rt_xaxis", "rt_yaxis", "a_button", "x_button", "headlights", "crc", "k_value", "water_type"]
+        error_byte = 0
 
         
         """
@@ -57,8 +57,9 @@ class rov:
                 root.find("rt_yaxis").text = "0"        # -32000-32000
                 root.find("a_button").text = "0"        # Pressed("1") or not pressed("0")
                 root.find("x_button").text = "0"        # Pressed("1") or not pressed("0")
-                root.find("k_value").text = "10"        # Our probe is 10
                 root.find("headlights").text = "0"      # Init headlights to off 
+                root.find("crc").text = "0"             # CRC value 
+                root.find("k_value").text = "10"        # Our probe is 10
                 root.find("water_type").text = "salt"   # fresh or salt 
 
                 tree.write(xml_file)    # Saves all changes to the commands.xml on the SD card
@@ -69,6 +70,7 @@ class rov:
                 self.tree1 = et.parse(self.xml_file1)                               # Save file into memory to work with its children/elements
                 self.root1 = self.tree1.getroot()                                   # Returns root of the xml file to get access to all elements 
 
+                """
                 self.root1.find("id_char").text = "S"         # S=sensor packet 
                 self.root1.find("Temperature").text = "Temperature"
                 self.root1.find("Pressure").text = "Pressure"
@@ -82,8 +84,9 @@ class rov:
                 self.root1.find("Accelerometer1").text = "999"
                 self.root1.find("Accelerometer2").text = "99"
                 self.root1.find("Accelerometer3").text = "9"
-
                 self.tree1.write(self.xml_file1)    # Saves all changes to the sensors.xml on the SD card
+                """
+
                 return
 
 
@@ -119,7 +122,7 @@ class rov:
         Parameters:
                None 
         Return:
-               Returns the sensor string in format: "S,pH,DO,Sal,Temp,Presure,Gyro1,Accel1,Error_addr;" 
+               Returns the sensor string in format: "S,pH,DO,Sal,Temp,Presure,Gyro1,Accel1,Error_byte;" 
         Notes:
         """
         def send_sensor_data(self):
@@ -162,18 +165,34 @@ class rov:
 
 
         """
-        Parses data received from serial port and writes it to .xml
+        Parses data received from serial port and writes each element it to command.xml for motor use.
         Parameters:
-                list of parameters
+                Command center string cmd_str
         Return:
-                Do we return any value?
+                None 
         Notes:
         """
-        def parse_control_data(self):
-                # parse the data string from buffer then write each piece to .xml
+        def parse_control_message(self, cmd_str):
+                cmd_list = cmd_str.split(",")           # Get list of each individual cmd from cmd center
+                i = 0
+                length = len(cmd_list)
+                print("Length of cmd_list: %d" % len(cmd_list))
 
-                # write_xml()        # writes to control.xml values of each control data pt.
+                # If the cmd msg is a normal control packet 'C'
+                if (length != 0 and length <= 9):   
+                        for cmd in cmd_list:            # Write each individual element to the command.xml
+                                write_xml("1", self.cmd_xml_elem[i], cmd)
+                                i += 1
+                # If the cmd msg is an initilization packet 'z'
+                elif (length == 2):     
+                        # Set the k value and water type of the sensors
+                        write_xml("1", "k_value", cmd_list[0])
+                        write_xml("1", "water_type", cmd_list[1])
+                        write_xml("1", "crc", cmd_list[2])
+                else:
+                        print("command message is not greater than 1 or larger than 8")
                 return
+
 
 
         """
@@ -223,23 +242,26 @@ class rov:
                 write_xml("0", "Temperature", str(c_temp))
                 
                 # Create the errored sensor string and save in xml
-                current_error = self.error_addr
+                current_error = self.error_byte
                 new_error = 0x00
+                print("Previous error in rov_skeleton: ", current_error)
 
                 if depth == -1 and c_temp == -1:
                         new_error = 0x03 
+                        self.error_byte = current_error | new_error 
                 elif c_temp == -1:
                         new_error = 0x01 
+                        self.error_byte = current_error | new_error 
                 elif depth == -1:
                         new_error = 0x02 
+                        self.error_byte = current_error | new_error 
                 else:
-                        new_error = 0x1C        # Mask the byte to clear the temp and pressure bits 
-                        self.error_addr = current_error & new_error
-                        new_error = 0x00
+                        no_error_mask = 0x1C        # Mask the byte to clear the temp and pressure bits 
+                        self.error_byte = current_error & no_error_mask
+                        print("rov_skeleton no error: ", self.error_byte)
 
-                self.error_addr = current_error | new_error 
 
-                write_xml("0", "Errored_Sensor", str(self.error_addr))
+                write_xml("0", "Errored_Sensor", str(self.error_byte))
 
 
                 # Get Gyroscope measurement and write it to sensors.xml
@@ -340,9 +362,10 @@ class rov:
 
 
         """
-        Writes each command data to the command.xml for motor use
+        DELETE - MARKED FOR DELETION SINCE MOVED THIS FUNCTION TO parse_control_message()
+        Writes each command data element to the command.xml for motor use.
         Parameters:
-                None
+                
         Return:
                 None
         Notes:
@@ -352,37 +375,45 @@ class rov:
                 i = 0
                 length = len(cmd_list)
                 print("Length of cmd_list: %d" % len(cmd_list))
-                if (length != 0 and length <= 9):
-                        for cmd in cmd_list:                    # Write each individual element at a time to the command.xml
+
+                # If the cmd msg is a normal control packet 'C'
+                if (length != 0 and length <= 9):   
+                        for cmd in cmd_list:            # Write each individual element to the command.xml
                                 write_xml("1", self.cmd_xml_elem[i], cmd)
                                 i += 1
+                # If the cmd msg is an initilization packet 'z'
+                elif (length == 2):     
+                        # Set the k value and water type of the sensors
+                        write_xml("1", "k_value", cmd_list[0])
+                        write_xml("1", "water_type", cmd_list[1])
+                        write_xml("1", "crc", cmd_list[2])
                 else:
-                        print("command message is not greater than 1 or larger than 9")
+                        print("command message is not greater than 1 or larger than 8")
                 return
 
 
         """
-        Sets the current error address for use within essential measuremnts()
+        Sets the current error byte for use within essential measuremnts()
         Parameters:
-                Sensor Error Address 
+                Sensor Error Byte 
         Return:
                 None
         Notes:
         """
-        def set_error_addr(self, error):
-                self.error_addr = error
+        def set_error_byte(self, error):
+                self.error_byte = error
                 return
 
         """
-        Gets the current error address for use within essential measuremnts()
+        Gets the current error byte for use within essential measuremnts()
         Parameters:
                 None 
         Return:
-                None
+                Sensor Error Byte
         Notes:
         """
-        def get_error_addr(self):
-                return self.error_addr
+        def get_error_byte(self):
+                return self.error_byte
 
 
 

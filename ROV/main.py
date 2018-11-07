@@ -5,7 +5,7 @@ ESET-420 Capstone II
 Author: SEAL
 File: main.py
 --------
-Contains the main loop and uses functions that run SEAL's rov. Including
+Contains the main loop and uses classes and functions that run SEAL's rov. Including
 movement, sensor readings, and communication to SEAL's cmd center.
 """
 
@@ -35,10 +35,16 @@ def main():
         # Define some variables used within main
         end_expedition = False 	# Variable to end program's main
         cmd_id = "0" 	            # Command ID stored as decimal number in python
+        cmd_message = "0"           # Most current command message 
+        control_ints = [0,0,0,0,0]  # Integer values of the motor elements [lt_xaxis, lt_yaxis, rt_xaxis, rt_yaxis, headlights] 
+        control_elems = ["lt_xaxis","lt_yaxis","rt_xaxis","rt_yaxis","headlights"]  # Control elements for xml access
+        error_byte = 0x00
+
+
+        cmd_test = "C,0,0,0,0,0,0"           #  
         cmd_input = "y"
-        cmd_message = "p,0,0,0,0,0,0,0"            # Init to none 
         cmd_list = [0,0,0,0,0,0,0]  # Init cmd_list
-        error_addr = 0x00
+        
 
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
         rov = rov_skeleton.rov()		            # init rov class/module instance
@@ -60,6 +66,8 @@ def main():
         xml_file1 = os.path.join(base_path1, "xml_sensors.xml")  # Join base_path with actual .xml file name
         tree1 = et.parse(xml_file1)                               # Save file into memory to work with its children/elements
         root1 = tree1.getroot()                                   # Returns root of the xml file to get access to all elements 
+        root1.find("Errored_Sensor").text = "0"
+        tree1.write(xml_file1) 
 
         # Open serial port communication
         ser = serial.Serial(port='/dev/ttyS0', baudrate=9600, parity=serial.PARITY_NONE,
@@ -68,49 +76,65 @@ def main():
 
         """
         Description While Loop:
-        The while loop does what?? Oh that is right, EVERYTHING!
+        This while loop Rx/Tx to/from the tether and controls the operation
+        of the ROV by calling on motor movement functions and sensor reading functions.
         """
         while end_expedition != True:
-                # Everything goes here
                 
                 # Get control data from serial port
                 cmd_message = rov.read_serial_port(ser)         # Read from serial port
-                #rov.write_cmd_xml(cmd_message)              # Write the cmd data to the cmd.xml
-                #cmd_id = root.find("id_char").text              # Save the ID char for program flow
 
                 # CRC Check here before we use the message
+                        ####Fill this in here
+                        ###If CRC is bad 
+                                # Stabilize ROV and use "continue" keyword to start next loop of the while loop
+                                    #### rov.stabilize_function 
 
-
-                # Alternative to writing the cmd message string to xml (IDK why I am trying to do that)
-                cmd_list = cmd_message.split(",")               # Save each individual srting cmd into list cmd_list 
-
-
-                # Check if data is recieved
-                ####if len(cmd_list) != 1:
-
-
+                # Save the cmd data to the cmd.xml
+                rov.parse_control_message(cmd_message)              # Write the cmd data to the cmd.xml
+                cmd_id = root.find("id_char").text              # Save the ID char for program flow
+               
+                # Convert the str values to integers we can use for control.py
+                for i, elem in enumerate(control_ints):
+                        control_ints[i] = int(root.find(control_elems[i]).text)
+                        
                 # Print read results
                 print("This is the control_message: ", cmd_message)
 
-                # Pass the sensor error addresses to the rov class for error detection
-                error_addr = int(root1.find("Errored_Sensor").text)
-                print("Here: ", error_addr)
-                rov.set_error_addr(error_addr)
+
+                # int(root.find("lt_xaxis").text)   # converts lt analog X axis to an integer for use in the motors class
+                
+                ##########
+                # Control ROV command data
+                if (cmd_id == "C"):
+
+                # Shutdown the ROV motors
+                elif (cmd_id == "p"):
+                        # Write 0 to all pts in the cmd_xml and then set motor speed
+
+                # End Expedition operation 
+                elif (cmd_id == "f"):
+                else:
+                        print("Error: Invalid command ID value")
+                ##########
+
+
 
                 # Write sensor data to serial port 
                 rov.write_serial_port(ser, rov.send_sensor_data())
-                ###rov.write_serial_port(ser, "S,pH,DO,Sal,Temp,Press,Orientation,Accel,Error_sensor;")
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
                 cmd_input = input("Would you like to get all measurements? (y,n) ")
 
-
-                # Pass the sensor error addresses to the rov class for error detection
-                error_addr = int(root1.find("Errored_Sensor").text)
-                print("Here1: ", error_addr)
-                rov.set_error_addr(error_addr)
+                # Set the sensor error byte to the rov class for error detection
+                rov.set_error_byte(int(root1.find("Errored_Sensor").text))
 
                 """ 
+                # Alternative to writing the cmd message string to xml (IDK why I am trying to do that)
+                cmd_list = cmd_test.split(",")               # Save each individual srting cmd into list cmd_list 
+
+                # Check if data is recieved
+                if len(cmd_list) != 1:
                 # No data was received stabalize ROV and get essential measurements
                 if len(cmd_list) == 1:
                         rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
@@ -138,7 +162,7 @@ def main():
 
                                 # Get pH, DO, and salinity measurments
                                 atlas_sensor.set_stop_flag(0)           # 0 =go get atlas sensor meas
-                                atlas_sensor.set_error_addr(error_addr) # Pass the sensor errors to the sensor class
+                                atlas_sensor.set_error_byte(error_byte) # Pass the sensor errors to the sensor class
 
                         else:   # Get essential measurements only 
                                 #### atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
@@ -162,11 +186,6 @@ def main():
                                         rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
                                 """
-                # Pass the sensor error addresses to the rov class for error detection
-                error_addr = int(root1.find("Errored_Sensor").text)
-                print("Here2: ", error_addr)
-                rov.set_error_addr(error_addr)
-
 
 
                 """End While Loop"""
@@ -180,58 +199,4 @@ def main():
 # Runs the main just defined above
 main()
 
-"""
-Parameters:
-        None
-Return:
-        None
-Notes:
-"""
-def get_control_data(self):
-        cmd_list = cmd_str.split(",")           # Get list of each individual cmd from cmd center
-        i = 0
-        length = len(cmd_list)
-        print("Length of cmd_list: %d" % len(cmd_list))
-        if (length != 0 and length <= 9):
-                for cmd in cmd_list:                    # Write each individual element at a time to the command.xml
-                        write_xml("1", self.cmd_xml_elem[i], cmd)
-                        i += 1
-        else:
-                print("command message is not greater than 1 or larger than 9")
-        return
 
-
-
-"""
-# End of expedition user input (need to change it to an interupt kind of function)
-if cmd_id == "quit" or cmd_id == "f": 
-        end_expedition = True
-        # Go to an End Expedition function
-
-elif cmd_id == "C":
-        # Motor control here
-        dummy = "dummy"
-
-elif cmd_id == "p":
-        # Stop motors here
-        dummy = "dummy"
-
-else:
-        print("Error. Not Recognized cmd_id.")
-
-# Take Sensor Measurements either all or just essential
-if root.find("x_button").text == "1":
-        print("get_all_meas pressed")
-
-        # Get pH, DO, and salinity measurments
-        atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
-
-else:
-        ####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
-        rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-
-# Get essential meas every time
-print("get_essential_meas here: ")
-rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-
-"""

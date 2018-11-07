@@ -12,5 +12,5 @@
 	<Accelerometer1>Accelerometer1</Accelerometer1>
 	<Accelerometer2>Accelerometer2</Accelerometer2>
 	<Accelerometer3>Accelerometer3</Accelerometer3>
-	<Errored_Sensor>00</Errored_Sensor>
+	<Errored_Sensor>0</Errored_Sensor>
 </sensor_array>

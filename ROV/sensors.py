@@ -27,7 +27,7 @@ stop_flag = 1           # stop=1 and run=0
 kval = "10"             # Our probe is k10
 pres_comp_val = "101"   # Pres. compensation value is in kpa
 temp_comp_val = "25"    # Temp. compensation value is in Celsius
-error_addr = 0x00
+error_byte = 0x00
 
 class atlas_sensors(threading.Thread):
         long_timeout = 1.5                  # the timeout needed to query readings and calibrations
@@ -57,8 +57,8 @@ class atlas_sensors(threading.Thread):
                 pres_comp_val = "101"
                 global temp_comp_val 
                 temp_comp_val = "25"
-                global error_addr
-                error_addr = 0x00
+                global error_byte
+                error_byte = 0x00
                 super(atlas_sensors, self).__init__()
                 self._stop_event = threading.Event()
 
@@ -146,13 +146,13 @@ class atlas_sensors(threading.Thread):
                 return stop_flag
 
         # Error Sensor addresses 
-        def set_error_addr(self, addr):
-                global error_addr 
-                error_addr = addr 
+        def set_error_byte(self, byte):
+                global error_byte 
+                error_byte = byte 
 
-        def get_error_addr(self):
-                global error_addr
-                return error_addr
+        def get_error_byte(self):
+                global error_byte
+                return error_byte
 
         # Kval (as string)
         def set_kval(self, usr_kval):
@@ -289,26 +289,35 @@ def program():
                                 ph_error = 1
                 
                 # Create the errored sensor string 
+                current_error = device.get_error_byte()
+                new_error = 0x00
+                print("Previous error in the sensors.py: ", current_error) 
+
                 if (sal_error == 1 and do_error == 0 and ph_error == 0):
-                        device.set_error_addr(0x10) 
+                        new_error = current_error | (0x10) 
                 elif(do_error == 1 and sal_error == 0 and ph_error == 0):
-                        device.set_error_addr(0x04) 
+                        new_error = current_error | (0x04) 
                 elif(ph_error == 1 and sal_error == 0 and do_error == 0):
-                        device.set_error_addr(0x08) 
+                        new_error = current_error | (0x08) 
                 elif(sal_error == 1 and do_error == 1 and ph_error == 1):
-                        device.set_error_addr(0x1C) 
+                        new_error = current_error | (0x1C) 
                 elif(sal_error == 0 and do_error == 1 and ph_error == 1):
-                        device.set_error_addr(0x0C) 
+                        new_error = current_error | (0x0C) 
                 elif(sal_error == 1 and do_error == 0 and ph_error == 1):
-                        device.set_error_addr(0x18) 
+                        new_error = current_error | (0x18) 
                 elif(sal_error == 1 and do_error == 1 and ph_error == 0):
-                        device.set_error_addr(0x14) 
+                        new_error = current_error | (0x14) 
                 else:
-                        device.set_error_addr(device.get_error_addr() & 0x03) 
-                print("Error in the sensors: ", device.get_error_addr())
+                        print("Error byte in sensors.pyyyy: ", device.get_error_byte())
+                        no_error_mask = 0x03
+                        new_error = current_error & no_error_mask
+
+                device.set_error_byte(new_error)        # Add the error byte to the  
+
+                print("Error in the sensors.py: ", device.get_error_byte()) 
                 
                 # Add errored sensor to xml or clear xml element
-                root.find("Errored_Sensor").text = str(int(root.find("Errored_Sensor").text) | device.get_error_addr())
+                root.find("Errored_Sensor").text = str(device.get_error_byte())
 
                 tree.write(xml_file)         # Saves all changes to the sensors.xml on the SD card
 
