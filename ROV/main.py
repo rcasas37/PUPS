@@ -107,13 +107,16 @@ def main():
                 ##########
                 # Control ROV command data
                 if (cmd_id == "C"):
+                        pass
 
                 # Shutdown the ROV motors
                 elif (cmd_id == "p"):
                         # Write 0 to all pts in the cmd_xml and then set motor speed
+                        pass
 
                 # End Expedition operation 
                 elif (cmd_id == "f"):
+                        pass
                 else:
                         print("Error: Invalid command ID value")
                 ##########

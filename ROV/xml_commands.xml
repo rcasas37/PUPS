@@ -1,5 +1,5 @@
 <command_array title="ROV Commands">
-	<id_char>0</id_char>
+	<id_char />
 	<lt_xaxis>0</lt_xaxis>
 	<lt_yaxis>0</lt_yaxis>
 	<rt_xaxis>0</rt_xaxis>
