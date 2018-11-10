@@ -197,7 +197,7 @@ class control:
    """
    def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=25, w1_en2=8):
       self.pi = pi #pigpio.pi()
-      self.pwm = control.PWM(self.pi)
+      self.pwm = PWM(self.pi)
       self.m1 = m1
       self.m2 = m2
       self.m3 = m3
@@ -351,15 +351,15 @@ class control:
    def right_stick_control(self, right_x, right_y):
       #Check to see what direction it is going in the y axis
       if right_y > 4000:
-          self.tilt_n(self.norm_values(right_y-3999))
+          self.rise(self.norm_values(right_y-3999))
       elif right_y < -4000:
-          self.tilt_s(self.norm_values(right_y+3999))
+          self.dive(self.norm_values(right_y+3999))
 
       #Check to see what direction it is going in the x axis
       if right_x > 4000:
-          self.tilt_e(self.norm_values(right_x-3999))
+          self.rotate_ccw(self.norm_values(right_x-3999))
       elif right_x < -4000:
-          self.tilt_w(self.norm_values(right_x+3999))
+          self.rotate_cw(self.norm_values(right_x+3999))
 
    """
    Rises up to the surface by having motors 1-4 straight up
@@ -461,7 +461,7 @@ if __name__ == "__main__":
    import control
    import pigpio
 
-   rov_cont = motors.control()
+   rov_cont = control.control()
 
    try:
       '''

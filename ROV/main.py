@@ -5,10 +5,9 @@ ESET-420 Capstone II
 Author: SEAL
 File: main.py
 --------
-Contains the main loop and uses classes and functions that run SEAL's rov. Including
+Contains the main loop and uses class instances and functions that run SEAL's rov. Including
 movement, sensor readings, and communication to SEAL's cmd center.
 """
-
 
 # Import code modules
 import rov_skeleton             # Module provides access to all of the fns with our class 'rov'
@@ -17,43 +16,52 @@ import time
 import serial
 import os 
 import xml.etree.ElementTree as et
-
-# Global variables
-# global my_var = 100 
-
+import control
+import pigpio
 
 """
-The main loop will control all of the operations of the ROV
+The main program will control all of the operations of the ROV
 Parameters:
 
 Return:
 	0 on success, error code on failure
 Notes:
-	Initialized all sensor address data before main while loop 
+	Initialized all classes, variables, and files before main while loop execution 
 """
 def main():
         # Define some variables used within main
-        end_expedition = False 	# Variable to end program's main
+        end_expedition = False 	    # Variable to end program's main
         cmd_id = "0" 	            # Command ID stored as decimal number in python
         cmd_message = "0"           # Most current command message 
         control_ints = [0,0,0,0,0]  # Integer values of the motor elements [lt_xaxis, lt_yaxis, rt_xaxis, rt_yaxis, headlights] 
         control_elems = ["lt_xaxis","lt_yaxis","rt_xaxis","rt_yaxis","headlights"]  # Control elements for xml access
-        error_byte = 0x00
+        error_byte = 0x00           # Current error sensor data byte
+        lt_xaxis = 0
+        lt_yaxis = 1
+        rt_xaxis = 2
+        rt_yaxis = 3
+        headlights = 4
 
 
-        cmd_test = "C,0,0,0,0,0,0"           #  
+        # Test variables
+        cmd_test = "C,0,0,0,0,0,0"
         cmd_input = "y"
         cmd_list = [0,0,0,0,0,0,0]  # Init cmd_list
         
 
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
-        rov = rov_skeleton.rov()		            # init rov class/module instance
-        atlas_sensor = rov_skeleton.sensors.atlas_sensors() # Initialize atlas sensor class/module instance
+        rov = rov_skeleton.rov()		            # Init rov class instance
+        pi = pigpio.pi()                                    # Init Raspberry Pi class instance
+        rov_control = control.control(pi=pi)                # Init control class instance 
+        atlas_sensor = rov_skeleton.sensors.atlas_sensors() # Init atlas sensor class instance
 
         # Create atlas sensor thread
         atlas_sensor_thread = Thread(target=atlas_sensor.run)
         atlas_sensor_thread.daemon = True       # Used to stop the thread once main finishes
         atlas_sensor_thread.start()
+
+        # Initalize use of rov control instance by arming and initilizing motors and LEDs to defaults
+        rov_control.arm()
 
         # Initalize use of commands.xml
         base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
@@ -95,8 +103,11 @@ def main():
                 cmd_id = root.find("id_char").text              # Save the ID char for program flow
                
                 # Convert the str values to integers we can use for control.py
-                for i, elem in enumerate(control_ints):
-                        control_ints[i] = int(root.find(control_elems[i]).text)
+                control_ints[lt_xaxis] = int(root.find(control_elems[lt_xaxis]).text)
+                control_ints[lt_yaxis] = int(root.find(control_elems[lt_yaxis]).text)
+                control_ints[rt_xaxis] = int(root.find(control_elems[rt_xaxis]).text)
+                control_ints[rt_yaxis] = int(root.find(control_elems[rt_yaxis]).text)
+                control_ints[headlights] = int(root.find(control_elems[headlights]).text)
                         
                 # Print read results
                 print("This is the control_message: ", cmd_message)
@@ -104,53 +115,79 @@ def main():
 
                 # int(root.find("lt_xaxis").text)   # converts lt analog X axis to an integer for use in the motors class
                 
-                ##########
+                #######################################################
                 # Control ROV command data
                 if (cmd_id == "C"):
+                        # Drive ROV 
+                        rov_control.left_stick_control(control_ints[lt_xaxis, lt_yaxis])
+                        rov_control.right_stick_control(control_ints[rt_xaxis, rt_yaxis])
+
+                        # Set LEDs
+                        rov_control.light_control(control_ints[headlights])
+
+                        # Water Collection Control set at 40% speed 
+                        rov_control.water_pump_control(40, int(root.find("a_button").txt))
+
+                # Initalize ROV data
+                if (cmd_id == "z"):
+                        ##### Set water type and K value
                         pass
 
                 # Shutdown the ROV motors
                 elif (cmd_id == "p"):
-                        # Write 0 to all pts in the cmd_xml and then set motor speed
-                        pass
+                        # Write normalized 0's (4001) to each motor axis to shut down the motors
+                        rov_control.left_stick_control(control_ints[lt_xaxis, lt_yaxis])
+                        rov_control.right_stick_control(control_ints[rt_xaxis, rt_yaxis])
+
+                        # Water Collection Control Off (0)  
+                        rov_control.water_pump_control(40, 0)
 
                 # End Expedition operation 
                 elif (cmd_id == "f"):
-                        pass
+                        # Drive ROV 
+                        rov_control.left_stick_control(control_ints[lt_xaxis, lt_yaxis])
+                        rov_control.right_stick_control(control_ints[rt_xaxis, rt_yaxis])
+
+                        # Set LEDs
+                        rov_control.light_control(control_ints[headlights])
+                        
+                        ### If pressure == 2ft ish then set end expedition to true to quit while loop
+                                ####end_expedition = True 
                 else:
                         print("Error: Invalid command ID value")
-                ##########
 
+
+                # Set the sensor error byte to the rov class for error detection
+                rov.set_error_byte(int(root1.find("Errored_Sensor").text))
+
+                # Get Sensor Measurements
+                if ((root.find("x_button").text) == "1"): # Get all measurements pressed
+                        # Get essential meas 
+                        rov.get_essential_meas("1")     # get pressure and temp. input = salt/fresh water (1/0)
+
+                        # Get pH, DO, and salinity measurments
+                        atlas_sensor.set_stop_flag(0)           # 0 =go get atlas sensor meas
+                        atlas_sensor.set_error_byte(error_byte) # Pass the sensor errors to the sensor class
+
+                else:                                   # Get essential measurements
+                        rov.get_essential_meas("1")     # Get pressure and temp. input = salt/fresh water (1/0)
+                        ####atlas_sensor.set_error_byte(error_byte) # Pass the sensor errors to the sensor class
+
+                #######################################################
 
 
                 # Write sensor data to serial port 
                 rov.write_serial_port(ser, rov.send_sensor_data())
 
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
-                cmd_input = input("Would you like to get all measurements? (y,n) ")
+                #######cmd_input = input("Would you like to get all measurements? (y,n) ")
 
-                # Set the sensor error byte to the rov class for error detection
-                rov.set_error_byte(int(root1.find("Errored_Sensor").text))
 
-                """ 
-                # Alternative to writing the cmd message string to xml (IDK why I am trying to do that)
-                cmd_list = cmd_test.split(",")               # Save each individual srting cmd into list cmd_list 
-
-                # Check if data is recieved
-                if len(cmd_list) != 1:
-                # No data was received stabalize ROV and get essential measurements
-                if len(cmd_list) == 1:
-                        rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
-                                    #The '1' in the function parameter above should be changed based on what the user selects
-
-                # Control Data is recieved
-                else:
-                """ 
+                """
                 # End of expedition user input (need to change it to an interupt kind of function)
-                if cmd_list[0] == "b" or cmd_input == "q":  # End Mission 
+                if cmd_list[0] == "f" or cmd_input == "q":  # End Mission 
                         end_expedition = True
                 else:
-                        #####"""
                         if cmd_input == "y":
                                 get_all_meas = True
                                 print("get_all_meas pressed")
@@ -171,35 +208,22 @@ def main():
                                 #### atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
                                                     #### May not need to tell it explicitely to not go get atlas sensor measurements
                                 rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
-
-                                """
-
-                                #####print("This is the x Button value: ", cmd_list[6])
-                                # Take Sensor Measurements
-                                if cmd_list[6] == "1":    # Get all measurments?
-                                        # Get essential meas here
-                                        rov.get_essential_meas("1")     # get pressure and temp. 1st input = salt/fresh water (1/0)
-
-                                        # Get pH, DO, and salinity measurments
-                                        atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
-
-                                else:   # Get essential measurements only 
-                                        ######atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
-                                                    #### May not need to tell it explicitely to not go get atlas sensor measurements
-                                        rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
-
-                                """
+                """
 
 
                 """End While Loop"""
+
+        # Turns off all motors and LEDs 
+        rov_control.disarm()
+
         # Shut down sensor thread before terminating the program
         atlas_sensor.terminate_thread()
         print("GOODBYE!")
 
-        return 0 # End main() Definition # 
+        return 0 # End main() Definition 
 
 
-# Runs the main just defined above
+# Runs the main defined above
 main()
 
 
