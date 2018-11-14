@@ -75,6 +75,7 @@ def main():
 
                 # Alternative to writing the cmd message string to xml (IDK why I am trying to do that)
                 cmd_list = cmd_message.split(",")               # Save each individual srting cmd into list cmd_list 
+                print("*************************************************************************************************************************: ", len(cmd_list))
 
 
                 # Check if data is recieved
@@ -102,7 +103,6 @@ def main():
                         if cmd_list[0] == "b" or cmd_input == "q":  # End Mission 
                                 end_expedition = True
                         else:
-                                """
                                 if cmd_input == "y":
                                         get_all_meas = True
                                         print("get_all_meas pressed")
@@ -124,6 +124,7 @@ def main():
                                 else:   # Get essential measurements only 
                                         atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
                                         rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                                """
 
 
 
