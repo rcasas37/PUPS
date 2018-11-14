@@ -27,7 +27,6 @@ stop_flag = 1           # stop=1 and run=0
 kval = "10"             # Our probe is k10
 pres_comp_val = "101"   # Pres. compensation value is in kpa
 temp_comp_val = "25"    # Temp. compensation value is in Celsius
-error_byte = 0x00
 
 class atlas_sensors(threading.Thread):
         long_timeout = 1.5                  # the timeout needed to query readings and calibrations
@@ -35,6 +34,9 @@ class atlas_sensors(threading.Thread):
         default_bus = 1                     # the default bus for I2C on the newer Raspberry Pis, certain older boards use bus 0
         default_address = 97                # the default address for the sensor
         current_addr = default_address
+        #kval = "10"
+        #pres_comp_val = ".3"
+        #temp_comp_val = "25"
 
         def __init__(self, address=default_address, bus=default_bus):
                 # open two file streams, one for reading and one for writing
@@ -57,8 +59,6 @@ class atlas_sensors(threading.Thread):
                 pres_comp_val = "101"
                 global temp_comp_val 
                 temp_comp_val = "25"
-                global error_byte
-                error_byte = 0x00
                 super(atlas_sensors, self).__init__()
                 self._stop_event = threading.Event()
 
@@ -145,15 +145,6 @@ class atlas_sensors(threading.Thread):
                 global stop_flag
                 return stop_flag
 
-        # Error Sensor addresses 
-        def set_error_byte(self, byte):
-                global error_byte 
-                error_byte = byte 
-
-        def get_error_byte(self):
-                global error_byte
-                return error_byte
-
         # Kval (as string)
         def set_kval(self, usr_kval):
                 global kval
@@ -182,28 +173,9 @@ class atlas_sensors(threading.Thread):
                 global temp_comp_val
                 return temp_comp_val
 
-
-
-"""
-This function runs all 3 of the atlas sensors within a separate thread.
-
-"""
 def program():
         device = atlas_sensors()         # Creates the I2C port object, specify the address or bus if necessary
 
-        # Initalize access to the sensors xml file
-        base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-        xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
-        tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
-        root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
-        
-        # Initalize access to the commands xml file
-        base_path1 = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-        xml_file1 = os.path.join(base_path1, "xml_commands.xml")  # Join base_path with actual .xml file name
-        tree1 = et.parse(xml_file1)                               # Save file into memory to work with its children/elements
-        root1 = tree1.getroot()                                   # Returns root of the xml file to get access to all elements 
-
-        # Iitalize all atlas sensors
         try:
                 # Initalize Conductivity Sensor
                 device.set_i2c_address(100)
@@ -230,25 +202,25 @@ def program():
         except:
                 error = "Atlas Sensor Error: " 
 
+        # Initalize access to the sensors.xml file
+        base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+        xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
+        tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
+        root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
 
 
         # Initilize values used on atlas sensor measurements
-        salinity = 0                        
-        k_value = root1.find("k_value").text 
+        salinity = 0                        # Holds salinity measurement for DO sensor
 
         # For while loop
         usr_input = "R"
         num_sensors = 0             #Must do it once for each sensor
-        error = ""
-        do_error = 0
-        ph_error = 0
-        sal_error = 0
 
         # Get one DO, EC and pH sensor reading
         while num_sensors != 3:
                 while device.get_stop_flag() == 1:
                         # do nothing. If stop flag is 0 = go then do the below
-                        time.sleep(.5)
+                        time.sleep(1)
                         dummyinput = "dummy variable"
 
                 #Set i2c address to poll each sensor once: EC=100, DO=97, pH=99        
@@ -263,10 +235,11 @@ def program():
                                 print(ec_reading[2])
                                 ######Must save salinity temp value for use below save in "salinity" variable
                                 root.find("Salinity").text = ec_reading[2]
-                                sal_error = 0
                         except:
                                 # Add errored sensor to the xml sensor data
-                                sal_error = 1
+                                error_addr_str = root.find("Errored_Sensor").text   # Get data already in xml
+                                full_error_str = error_addr_str + "_100"            # Append errored sensor to existing data
+                                root.find("Errored_Sensor").text = error + full_error_str   # Set the xml feild
 
                 elif num_sensors == 1:
                         try:
@@ -274,15 +247,16 @@ def program():
                                 print("Testing DO probe...")
 
                                 print(device.query("P," + str(device.get_pres_comp())))     # Set Pressure compensation value 
-                                ####print(device.query("S," + str(salinity)))                           # Set salinity compensation value 
+                                ####print(device.query(salinity))                           # Set salinity compensation value 
                                 print(device.query("T," + str(device.get_temp_comp())))     # Set Temperature compensation value 
                                 do_reading = (device.query("R")).split()       # Get DO measurement and split the command into a list to get the measurement as a string
                                 print(do_reading[2])
                                 root.find("Dissolved_Oxygen").text = do_reading[2]
-                                do_error = 0
                         except:
                                 # Add errored sensor to the xml sensor data
-                                do_error = 1
+                                error_addr_str = root.find("Errored_Sensor").text   # Get data already in xml
+                                full_error_str = error_addr_str + "_97"              # Append errored sensor to existing data
+                                root.find("Errored_Sensor").text = error + full_error_str   # Set the xml feild
                 else:
                         try:
                                 device.set_i2c_address(99)
@@ -292,50 +266,30 @@ def program():
                                 ph_reading = (device.query("R")).split()        # Get pH measurement
                                 print(ph_reading[2])
                                 root.find("pH").text = ph_reading[2]
-                                ph_error = 0
                         except:
                                 # Add errored sensor to the xml sensor data
-                                ph_error = 1
-                
-                # Create the errored sensor string 
-                current_error = device.get_error_byte()
-                new_error = 0x00
-                ####print("Previous error in the sensors.py: ", current_error) 
-
-                if (sal_error == 1 and do_error == 0 and ph_error == 0):
-                        new_error = current_error | (0x10) 
-                elif(do_error == 1 and sal_error == 0 and ph_error == 0):
-                        new_error = current_error | (0x04) 
-                elif(ph_error == 1 and sal_error == 0 and do_error == 0):
-                        new_error = current_error | (0x08) 
-                elif(sal_error == 1 and do_error == 1 and ph_error == 1):
-                        new_error = current_error | (0x1C) 
-                elif(sal_error == 0 and do_error == 1 and ph_error == 1):
-                        new_error = current_error | (0x0C) 
-                elif(sal_error == 1 and do_error == 0 and ph_error == 1):
-                        new_error = current_error | (0x18) 
-                elif(sal_error == 1 and do_error == 1 and ph_error == 0):
-                        new_error = current_error | (0x14) 
-                else:
-                        ######print("Error byte in sensors.pyyyy: ", device.get_error_byte())
-                        no_error_mask = 0x03
-                        new_error = current_error & no_error_mask
-
-                device.set_error_byte(new_error)        # Add the error byte to the  
-
-                ####print("Error in the sensors.py: ", device.get_error_byte()) 
-                
-                # Add errored sensor to xml or clear xml element
-                root.find("Errored_Sensor").text = str(device.get_error_byte())
+                                error_addr_str = root.find("Errored_Sensor").text   # Get data already in xml
+                                full_error_str = error_addr_str + "_99"             # Append errored sensor to existing data
+                                root.find("Errored_Sensor").text = error + full_error_str   # Set the xml feild
 
                 tree.write(xml_file)         # Saves all changes to the sensors.xml on the SD card
 
+                """
+                if len(usr_input) == 0:
+                        print ("Please input valid command.")
+                else:
+                        try:
+                                print(device.query(usr_input))
+                        except IOError:
+                                print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
+                """
+                
                 #Increment to test the next sensor
                 num_sensors += 1
 
                 if num_sensors == 3:
                         num_sensors = 0             #Reset this variable to restart upon new user input
-                        device.set_stop_flag(1)     #Thread should stop now since stop_flag = 1 
+                        device.set_stop_flag(1)     #Thread should stop now now since stop_flag = 1 
 
 ###this stuff is block commented out since we will not be operating the atlas sensors from the cmd line
 """ 
@@ -343,26 +297,21 @@ def program():
                         devices = device.list_i2c_devices()
                         for i in range(len (devices)):
                                 print (devices[i])
-
                 # address command lets you change which address the raspberry pi will poll
                 elif usr_input.upper().startswith("address"):
                         addr = int(string.split(usr_input, ',')[1])
                         device.set_i2c_address(addr)
                         print("i2c address set to " + str(addr))
-
                 # continuous polling command automatically polls the board
                 elif usr_input.upper().startswith("poll"):
                         delaytime = float(string.split(usr_input, ',')[1])
-
                         # check for polling time being too short, change it to the minimum timeout if too short
                         if delaytime < atlas_sensors.long_timeout:
                                 print("polling time is shorter than timeout, setting polling time to %0.2f" % atlas_sensors.long_timeout)
                                 delaytime = atlas_sensors.long_timeout
-
                         # get the information of the board you're polling
                         info = string.split(device.query("i"), ",")[1]
                         print("polling %s sensor every %0.2f seconds, press ctrl-c to stop polling" % (info, delaytime))
-
                         try:
                                 while true:
                                         print(device.query("r"))
@@ -379,4 +328,3 @@ def program():
 
 #if __name__ == '__main__':
 #        main()
-
