@@ -31,6 +31,7 @@ Notes:
 def main():
         # Define some variables used within main
         end_expedition = False 	    # Variable to end program's main
+        water_type = 1              # 1 = saltwater, 0 = freshwater
         cmd_id = "0" 	            # Command ID stored as decimal number in python
         cmd_message = "0"           # Most current command message 
         control_ints = [0,0,0,0,0]  # Integer values of the motor elements [lt_xaxis, lt_yaxis, rt_xaxis, rt_yaxis, headlights] 
@@ -82,105 +83,108 @@ def main():
                             stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
         ser.flushInput() # Flush serial port
 
-        """
-        Description While Loop:
-        This while loop Rx/Tx to/from the tether and controls the operation
-        of the ROV by calling on motor movement functions and sensor reading functions.
-        """
-        while end_expedition != True:
-                
-                # Get control data from serial port
-                cmd_message = rov.read_serial_port(ser)         # Read from serial port
-
-                # CRC Check here before we use the message
-                        ####Fill this in here
-                        ###If CRC is bad 
-                                # Stabilize ROV and use "continue" keyword to start next loop of the while loop
-                                    #### rov.stabilize_function 
-
-                # Save the cmd data to the cmd.xml
-                rov.parse_control_message(cmd_message)              # Write the cmd data to the cmd.xml
-                cmd_id = root.find("id_char").text              # Save the ID char for program flow
-               
-                # Convert the str values to integers we can use for control.py
-                control_ints[lt_xaxis] = int(root.find(control_elems[lt_xaxis]).text)
-                control_ints[lt_yaxis] = int(root.find(control_elems[lt_yaxis]).text)
-                control_ints[rt_xaxis] = int(root.find(control_elems[rt_xaxis]).text)
-                control_ints[rt_yaxis] = int(root.find(control_elems[rt_yaxis]).text)
-                control_ints[headlights] = int(root.find(control_elems[headlights]).text)
+        try:
+                """
+                Description While Loop:
+                This while loop Rx/Tx to/from the tether and controls the operation
+                of the ROV by calling on motor movement functions and sensor reading functions.
+                """
+                while end_expedition != True:
                         
-                # Print read results
-                print("This is the control_message: ", cmd_message)
+                        # Get control data from serial port
+                        cmd_message = rov.read_serial_port(ser)         # Read from serial port
+
+                        # CRC Check here before we use the message
+                                ####Fill this in here
+                                ###If CRC is bad 
+                                        # Stabilize ROV and use "continue" keyword to start next loop of the while loop
+                                            #### rov.stabilize_function 
+
+                        # Save the cmd data to the cmd.xml
+                        rov.parse_control_message(cmd_message)              # Write the cmd data to the cmd.xml
+                        cmd_id = root.find("id_char").text                  # Save the ID char for program flow
+                       
+                        # Convert the str values to integers we can use for control.py
+                        control_ints[lt_xaxis] = int(root.find(control_elems[lt_xaxis]).text)
+                        control_ints[lt_yaxis] = int(root.find(control_elems[lt_yaxis]).text)
+                        control_ints[rt_xaxis] = int(root.find(control_elems[rt_xaxis]).text)
+                        control_ints[rt_yaxis] = int(root.find(control_elems[rt_yaxis]).text)
+                        control_ints[headlights] = int(root.find(control_elems[headlights]).text)
+                                
+                        # Print read results
+                        print("This is the control_message: ", cmd_message)
 
 
-                # int(root.find("lt_xaxis").text)   # converts lt analog X axis to an integer for use in the motors class
-                
-                #######################################################
-                # Control ROV command data
-                if (cmd_id == "C"):
-                        # Drive ROV 
-                        rov_control.left_stick_control(control_ints[lt_xaxis, lt_yaxis])
-                        rov_control.right_stick_control(control_ints[rt_xaxis, rt_yaxis])
-
-                        # Set LEDs
-                        rov_control.light_control(control_ints[headlights])
-
-                        # Water Collection Control set at 40% speed 
-                        rov_control.water_pump_control(40, int(root.find("a_button").txt))
-
-                # Initalize ROV data
-                if (cmd_id == "z"):
-                        ##### Set water type and K value
-                        pass
-
-                # Shutdown the ROV motors
-                elif (cmd_id == "p"):
-                        # Write normalized 0's (4001) to each motor axis to shut down the motors
-                        rov_control.left_stick_control(control_ints[lt_xaxis, lt_yaxis])
-                        rov_control.right_stick_control(control_ints[rt_xaxis, rt_yaxis])
-
-                        # Water Collection Control Off (0)  
-                        rov_control.water_pump_control(40, 0)
-
-                # End Expedition operation 
-                elif (cmd_id == "f"):
-                        # Drive ROV 
-                        rov_control.left_stick_control(control_ints[lt_xaxis, lt_yaxis])
-                        rov_control.right_stick_control(control_ints[rt_xaxis, rt_yaxis])
-
-                        # Set LEDs
-                        rov_control.light_control(control_ints[headlights])
+                        # int(root.find("lt_xaxis").text)   # converts lt analog X axis to an integer for use in the motors class
                         
-                        ### If pressure == 2ft ish then set end expedition to true to quit while loop
-                                ####end_expedition = True 
-                else:
-                        print("Error: Invalid command ID value")
+                        #######################################################
+                        # Control ROV command data
+                        if (cmd_id == "C"):
+                                # Drive ROV 
+                                rov_control.left_stick_control(control_ints[lt_xaxis], control_ints[lt_yaxis])
+                                rov_control.right_stick_control(control_ints[rt_xaxis], control_ints[rt_yaxis])
+
+                                # Set LEDs
+                                rov_control.light_control(control_ints[headlights])
+
+                                # Water Collection Control set at 40% speed 
+                                rov_control.water_pump_control(40, int(root.find("a_button").txt))
+
+                        # Initalize ROV data
+                        elif (cmd_id == "z"):
+                                ##### Set water type and K value
+                                water_type = int(root.find("water_type").text)
+                                rov.set_fluid_density(water_type)
+                                pass
+
+                        # Shutdown the ROV motors
+                        elif (cmd_id == "p"):
+                                # Write normalized 0's (4001) to each motor axis to shut down the motors
+                                rov_control.left_stick_control(4001, 4001)
+                                rov_control.right_stick_control(4001, 4001)
+
+                                # Water Collection Control Off (0)  
+                                rov_control.water_pump_control(40, 0)
+
+                        # End Expedition operation 
+                        elif (cmd_id == "f"):
+                                # Drive ROV 
+                                rov_control.left_stick_control(control_ints[lt_xaxis], control_ints[lt_yaxis])
+                                rov_control.right_stick_control(control_ints[rt_xaxis], control_ints[rt_yaxis])
+
+                                # Set LEDs
+                                rov_control.light_control(control_ints[headlights])
+                                
+                                ### If pressure == 2ft ish then set end expedition to true to quit while loop
+                                        ####end_expedition = True 
+                        else:
+                                print("Error: Invalid command ID value")
 
 
-                # Set the sensor error byte to the rov class for error detection
-                rov.set_error_byte(int(root1.find("Errored_Sensor").text))
+                        # Set the sensor error byte to the rov class for error detection
+                        rov.set_error_byte(int(root1.find("Errored_Sensor").text))
 
-                # Get Sensor Measurements
-                if ((root.find("x_button").text) == "1"): # Get all measurements pressed
-                        # Get essential meas 
-                        rov.get_essential_meas("1")     # get pressure and temp. input = salt/fresh water (1/0)
+                        # Get Sensor Measurements
+                        if ((root.find("x_button").text) == "1"): # Get all measurements pressed
+                                # Get essential meas 
+                                rov.get_essential_meas()     # get pressure and temp. input = salt/fresh water (1/0)
 
-                        # Get pH, DO, and salinity measurments
-                        atlas_sensor.set_stop_flag(0)           # 0 =go get atlas sensor meas
-                        atlas_sensor.set_error_byte(error_byte) # Pass the sensor errors to the sensor class
+                                # Get pH, DO, and salinity measurments
+                                atlas_sensor.set_stop_flag(0)           # 0 =go get atlas sensor meas
+                                atlas_sensor.set_error_byte(error_byte) # Pass the sensor errors to the sensor class
 
-                else:                                   # Get essential measurements
-                        rov.get_essential_meas("1")     # Get pressure and temp. input = salt/fresh water (1/0)
-                        ####atlas_sensor.set_error_byte(error_byte) # Pass the sensor errors to the sensor class
+                        else:                                   # Get essential measurements only
+                                rov.get_essential_meas()     # Get pressure and temp. input = salt/fresh water (1/0)
 
-                #######################################################
+                        #######################################################
 
 
-                # Write sensor data to serial port 
-                rov.write_serial_port(ser, rov.send_sensor_data())
+                        # Write sensor data to serial port 
+                        rov.write_serial_port(ser, rov.send_sensor_data())
 
-                # Controls if all meas or essential measurments are taken this is the user input from the cmd center
-                #######cmd_input = input("Would you like to get all measurements? (y,n) ")
+                        # Controls if all meas or essential measurments are taken this is the user input from the cmd center
+                        #######cmd_input = input("Would you like to get all measurements? (y,n) ")
+        except KeyboardInterrupt:
 
 
                 """

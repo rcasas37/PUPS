@@ -31,6 +31,7 @@ class rov:
         default_command_xml = "xml_commands.xml"   
         cmd_xml_elem = ["id_char", "lt_xaxis", "lt_yaxis", "rt_xaxis", "rt_yaxis", "a_button", "x_button", "headlights", "crc", "k_value", "water_type"]
         error_byte = 0
+        water_type = 1      # 1 = saltwater, 0 = freshwater
 
         
         """
@@ -44,6 +45,8 @@ class rov:
                 ROV class initilization function called upon when ROV object is created.
         """
         def __init__(self, sensor_xml_file=default_sensor_xml, command_xml_file=default_command_xml):
+                self.water_type = 1
+
                 # Initilize all values in commands.xml to defaults (0)
                 base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
                 xml_file = os.path.join(base_path, command_xml_file)     # Join base_path with actual .xml file name
@@ -60,7 +63,7 @@ class rov:
                 root.find("headlights").text = "0"      # Init headlights to off 
                 root.find("crc").text = "0"             # CRC value 
                 root.find("k_value").text = "10"        # Our probe is 10
-                root.find("water_type").text = "salt"   # fresh or salt 
+                root.find("water_type").text = "1"      # 0 = fresh, 1 = saltwater 
 
                 tree.write(xml_file)    # Saves all changes to the commands.xml on the SD card
 
@@ -70,7 +73,6 @@ class rov:
                 self.tree1 = et.parse(self.xml_file1)                               # Save file into memory to work with its children/elements
                 self.root1 = self.tree1.getroot()                                   # Returns root of the xml file to get access to all elements 
 
-                """
                 self.root1.find("id_char").text = "S"         # S=sensor packet 
                 self.root1.find("Temperature").text = "Temperature"
                 self.root1.find("Pressure").text = "Pressure"
@@ -85,7 +87,6 @@ class rov:
                 self.root1.find("Accelerometer2").text = "99"
                 self.root1.find("Accelerometer3").text = "9"
                 self.tree1.write(self.xml_file1)    # Saves all changes to the sensors.xml on the SD card
-                """
 
                 return
 
@@ -179,10 +180,11 @@ class rov:
                 print("Length of cmd_list: %d" % len(cmd_list))
 
                 # If the cmd msg is a normal control packet 'C'
-                if (length != 0 and length <= 9):   
+                if (length != 0 and length <= 8):       ###### was 0 to 9  
                         for cmd in cmd_list:            # Write each individual element to the command.xml
                                 write_xml("1", self.cmd_xml_elem[i], cmd)
                                 i += 1
+                ###############move this into the above one since it is from 0 to 9
                 # If the cmd msg is an initilization packet 'z'
                 elif (length == 2):     
                         # Set the k value and water type of the sensors
@@ -232,19 +234,21 @@ class rov:
                 Do we return any value?
         Notes:
         """
-        def get_essential_meas(self, water_choice):
+        def get_essential_meas(self):
                 # Get Pressure measurement and write it to sensors.xml
-                depth = get_pressure(water_choice, self.root1)
+                depth = get_pressure(self.water_type, self.root1)
+                print("depth:::::::::: ", depth)
                 write_xml("0", "Pressure", str(depth))
 
                 # Get Temperature measurement and write it to sensors.xml
                 c_temp = get_temperature(self.root1)
+                print("temp:::::::::: ", c_temp)
                 write_xml("0", "Temperature", str(c_temp))
                 
                 # Create the errored sensor string and save in xml
                 current_error = self.error_byte
                 new_error = 0x00
-                print("Previous error in rov_skeleton: ", current_error)
+                ###print("Previous error in rov_skeleton: ", current_error)
 
                 if depth == -1 and c_temp == -1:
                         new_error = 0x03 
@@ -258,7 +262,7 @@ class rov:
                 else:
                         no_error_mask = 0x1C        # Mask the byte to clear the temp and pressure bits 
                         self.error_byte = current_error & no_error_mask
-                        print("rov_skeleton no error: ", self.error_byte)
+                        print("rov_skeleton.py no error, but current error is: ", self.error_byte)
 
 
                 write_xml("0", "Errored_Sensor", str(self.error_byte))
@@ -395,7 +399,7 @@ class rov:
         """
         Sets the current error byte for use within essential measuremnts()
         Parameters:
-                Sensor Error Byte 
+                error - sets the current sensor error within the ROV 
         Return:
                 None
         Notes:
@@ -405,15 +409,16 @@ class rov:
                 return
 
         """
-        Gets the current error byte for use within essential measuremnts()
+        Sets the current water choice for use within essential measuremnts()
         Parameters:
-                None 
+                water_choice - the type of water chosen by user passed at initalization (salt or freshwater) 
         Return:
-                Sensor Error Byte
+                None
         Notes:
         """
-        def get_error_byte(self):
-                return self.error_byte
+        def set_water_type(self, water_choice):
+                self.water_type = water_choice
+                return 
 
 
 
@@ -521,16 +526,16 @@ def get_pressure(water_choice, root1) :
                 ### exit(1)
 
         # Freshwater vs Saltwater depth measurements set via user input form cmd center
-        if water_choice == '0':
+        if water_choice == 0:
                 # Freshwater
                 sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
-                freshwaterDepth = sensor.depth() # default is freshwater
-                water_choice = '1'
-        elif water_choice == '1':
+                freshwaterDepth = sensor.depth()
+                water_choice = 1
+        elif water_choice == 1:
                 # Saltwater
                 sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
-                freshwaterDepth = sensor.depth() # default is freshwater
-                water_choice = '0'
+                freshwaterDepth = sensor.depth()
+                water_choice = 0
         else:
                 print("Error on water density choice.")         # Print not needed in final version
 
@@ -557,11 +562,7 @@ Return:
 Notes:
 """
 def get_temperature(root1):
-        base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-        xml_file = os.path.join(base_path, "xml_sensors.xml")  # Join base_path with actual .xml file name
-        tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
-        root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
-        c_temp = 0.0
+        c_temp = 3.0
         try:
                 # Create sensor object
                 sensor = tsys01.TSYS01()

@@ -191,6 +191,19 @@ This function runs all 3 of the atlas sensors within a separate thread.
 def program():
         device = atlas_sensors()         # Creates the I2C port object, specify the address or bus if necessary
 
+        # Initalize access to the sensors xml file
+        base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+        xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
+        tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
+        root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
+        
+        # Initalize access to the commands xml file
+        base_path1 = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+        xml_file1 = os.path.join(base_path1, "xml_commands.xml")  # Join base_path with actual .xml file name
+        tree1 = et.parse(xml_file1)                               # Save file into memory to work with its children/elements
+        root1 = tree1.getroot()                                   # Returns root of the xml file to get access to all elements 
+
+        # Iitalize all atlas sensors
         try:
                 # Initalize Conductivity Sensor
                 device.set_i2c_address(100)
@@ -217,15 +230,11 @@ def program():
         except:
                 error = "Atlas Sensor Error: " 
 
-        # Initalize access to the sensors.xml file
-        base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-        xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
-        tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
-        root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
 
 
         # Initilize values used on atlas sensor measurements
-        salinity = 0                        # Holds salinity measurement for DO sensor
+        salinity = 0                        
+        k_value = root1.find("k_value").text 
 
         # For while loop
         usr_input = "R"
@@ -265,7 +274,7 @@ def program():
                                 print("Testing DO probe...")
 
                                 print(device.query("P," + str(device.get_pres_comp())))     # Set Pressure compensation value 
-                                ####print(device.query(salinity))                           # Set salinity compensation value 
+                                ####print(device.query("S," + str(salinity)))                           # Set salinity compensation value 
                                 print(device.query("T," + str(device.get_temp_comp())))     # Set Temperature compensation value 
                                 do_reading = (device.query("R")).split()       # Get DO measurement and split the command into a list to get the measurement as a string
                                 print(do_reading[2])
@@ -291,7 +300,7 @@ def program():
                 # Create the errored sensor string 
                 current_error = device.get_error_byte()
                 new_error = 0x00
-                print("Previous error in the sensors.py: ", current_error) 
+                ####print("Previous error in the sensors.py: ", current_error) 
 
                 if (sal_error == 1 and do_error == 0 and ph_error == 0):
                         new_error = current_error | (0x10) 
@@ -308,13 +317,13 @@ def program():
                 elif(sal_error == 1 and do_error == 1 and ph_error == 0):
                         new_error = current_error | (0x14) 
                 else:
-                        print("Error byte in sensors.pyyyy: ", device.get_error_byte())
+                        ######print("Error byte in sensors.pyyyy: ", device.get_error_byte())
                         no_error_mask = 0x03
                         new_error = current_error & no_error_mask
 
                 device.set_error_byte(new_error)        # Add the error byte to the  
 
-                print("Error in the sensors.py: ", device.get_error_byte()) 
+                ####print("Error in the sensors.py: ", device.get_error_byte()) 
                 
                 # Add errored sensor to xml or clear xml element
                 root.find("Errored_Sensor").text = str(device.get_error_byte())

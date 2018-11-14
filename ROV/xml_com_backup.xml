@@ -7,7 +7,8 @@
 	<rt_yaxis>0</rt_yaxis>
 	<a_button>0</a_button>
 	<x_button>0</x_button>
+	<headlights>0</headlights>
+	<crc>0</crc>
 	<k_value>10</k_value>
 	<water_type>salt</water_type>
-	
 </command_array>
