@@ -237,12 +237,12 @@ class rov:
         def get_essential_meas(self):
                 # Get Pressure measurement and write it to sensors.xml
                 depth = get_pressure(self.water_type, self.root1)
-                print("depth:::::::::: ", depth)
+                ###print("depth:::::::::: ", depth)
                 write_xml("0", "Pressure", str(depth))
 
                 # Get Temperature measurement and write it to sensors.xml
                 c_temp = get_temperature(self.root1)
-                print("temp:::::::::: ", c_temp)
+                ###print("temp:::::::::: ", c_temp)
                 write_xml("0", "Temperature", str(c_temp))
                 
                 # Create the errored sensor string and save in xml
@@ -262,7 +262,7 @@ class rov:
                 else:
                         no_error_mask = 0x1C        # Mask the byte to clear the temp and pressure bits 
                         self.error_byte = current_error & no_error_mask
-                        print("rov_skeleton.py no error, but current error is: ", self.error_byte)
+                        ###print("rov_skeleton.py no error, but current error is: ", self.error_byte)
 
 
                 write_xml("0", "Errored_Sensor", str(self.error_byte))

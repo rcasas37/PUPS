@@ -103,13 +103,19 @@ def main():
                         # Save the cmd data to the cmd.xml
                         rov.parse_control_message(cmd_message)              # Write the cmd data to the cmd.xml
                         cmd_id = root.find("id_char").text                  # Save the ID char for program flow
-                       
+                        ###k_val = root.find("k_value").text                  # Save the ID char for program flow
+
+                        ###print("k_vall : ", k_val)
+                        ####print("Id character: ", cmd_id)
+                        
+                        """
                         # Convert the str values to integers we can use for control.py
                         control_ints[lt_xaxis] = int(root.find(control_elems[lt_xaxis]).text)
                         control_ints[lt_yaxis] = int(root.find(control_elems[lt_yaxis]).text)
                         control_ints[rt_xaxis] = int(root.find(control_elems[rt_xaxis]).text)
                         control_ints[rt_yaxis] = int(root.find(control_elems[rt_yaxis]).text)
                         control_ints[headlights] = int(root.find(control_elems[headlights]).text)
+                        """
                                 
                         # Print read results
                         print("This is the control_message: ", cmd_message)
@@ -135,7 +141,6 @@ def main():
                                 ##### Set water type and K value
                                 water_type = int(root.find("water_type").text)
                                 rov.set_fluid_density(water_type)
-                                pass
 
                         # Shutdown the ROV motors
                         elif (cmd_id == "p"):
@@ -185,6 +190,40 @@ def main():
                         # Controls if all meas or essential measurments are taken this is the user input from the cmd center
                         #######cmd_input = input("Would you like to get all measurements? (y,n) ")
         except KeyboardInterrupt:
+                root.find("id_char").text = "0"         # C=control, p=stop motors, f=end mission, z=initialize probes
+                root.find("lt_xaxis").text = "0"        # -32000-32000
+                root.find("lt_yaxis").text = "0"        # -32000-32000
+                root.find("rt_xaxis").text = "0"        # -32000-32000
+                root.find("rt_yaxis").text = "0"        # -32000-32000
+                root.find("a_button").text = "0"        # Pressed("1") or not pressed("0")
+                root.find("x_button").text = "0"        # Pressed("1") or not pressed("0")
+                root.find("headlights").text = "0"      # Init headlights to off 
+                root.find("crc").text = "0"             # CRC value 
+                root.find("k_value").text = "10"        # Our probe is 10
+                root.find("water_type").text = "1"      # 0 = fresh, 1 = saltwater 
+
+                tree.write(xml_file)    # Saves all changes to the commands.xml on the SD card
+
+                # Initilize all values in sensors.xml to defaults (0)
+                base_path1 = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+                self.xml_file1 = os.path.join(base_path1, sensor_xml_file)     # Join base_path with actual .xml file name
+                self.tree1 = et.parse(self.xml_file1)                               # Save file into memory to work with its children/elements
+                self.root1 = self.tree1.getroot()                                   # Returns root of the xml file to get access to all elements 
+
+                self.root1.find("id_char").text = "S"         # S=sensor packet 
+                self.root1.find("Temperature").text = "Temperature"
+                self.root1.find("Pressure").text = "Pressure"
+                self.root1.find("pH").text = "pHval"
+                self.root1.find("Salinity").text = "Salinity"
+                self.root1.find("Dissolved_Oxygen").text = "DOxy"
+                self.root1.find("Errored_Sensor").text = "0"
+                self.root1.find("Gyroscope1").text = "1"
+                self.root1.find("Gyroscope2").text = "2"
+                self.root1.find("Gyroscope3").text = "3"
+                self.root1.find("Accelerometer1").text = "999"
+                self.root1.find("Accelerometer2").text = "99"
+                self.root1.find("Accelerometer3").text = "9"
+                self.tree1.write(self.xml_file1)    # Saves all changes to the sensors.xml on the SD card
 
 
                 """
