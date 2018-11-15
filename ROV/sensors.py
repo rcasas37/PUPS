@@ -248,7 +248,7 @@ def program():
         while num_sensors != 3:
                 while device.get_stop_flag() == 1:
                         # do nothing. If stop flag is 0 = go then do the below
-                        time.sleep(.5)
+                        ##time.sleep(.5)
                         dummyinput = "dummy variable"
 
                 #Set i2c address to poll each sensor once: EC=100, DO=97, pH=99        

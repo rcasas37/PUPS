@@ -464,7 +464,6 @@ if __name__ == "__main__":
    rov_cont = control.control()
 
    try:
-      '''
       #Test program for left motors
       print("Test program for Tilt")
       print("Sending initialization signal...")
@@ -474,7 +473,6 @@ if __name__ == "__main__":
          y_axis_left = int(input("Y-axis of left stick? "))
          rov_cont.left_stick_control(x_axis_left, y_axis_left)
          time.sleep(2)
-      '''
 
       '''
       #Test program for lights
@@ -487,6 +485,7 @@ if __name__ == "__main__":
       '''
 
       
+      '''
       #Test program for water pump
       print("Test program for water pump")
 
@@ -497,7 +496,8 @@ if __name__ == "__main__":
          en_check = int(input("Is the pump on or off? (0-1): "))
 
          rov_cont.water_pump_control(pwm_check, en_check)
-         time.sleep(2)
+         #time.sleep(2)
+      '''
       
    except KeyboardInterrupt:
       rov_cont.disarm()

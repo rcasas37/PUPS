@@ -101,24 +101,26 @@ def main():
                                             #### rov.stabilize_function 
 
                         # Save the cmd data to the cmd.xml
-                        rov.parse_control_message(cmd_message)              # Write the cmd data to the cmd.xml
+                        #rov.parse_control_message(cmd_message)              # Write the cmd data to the cmd.xml
                         cmd_id = root.find("id_char").text                  # Save the ID char for program flow
                         ###k_val = root.find("k_value").text                  # Save the ID char for program flow
 
                         ###print("k_vall : ", k_val)
                         ####print("Id character: ", cmd_id)
+
+                        # Print read results
+                        print("This is the control_message: ", cmd_message)
+
+                        # Write sensor data to serial port 
+                        rov.write_serial_port(ser, rov.send_sensor_data())
                         
-                        """
                         # Convert the str values to integers we can use for control.py
                         control_ints[lt_xaxis] = int(root.find(control_elems[lt_xaxis]).text)
                         control_ints[lt_yaxis] = int(root.find(control_elems[lt_yaxis]).text)
                         control_ints[rt_xaxis] = int(root.find(control_elems[rt_xaxis]).text)
                         control_ints[rt_yaxis] = int(root.find(control_elems[rt_yaxis]).text)
                         control_ints[headlights] = int(root.find(control_elems[headlights]).text)
-                        """
                                 
-                        # Print read results
-                        print("This is the control_message: ", cmd_message)
 
 
                         # int(root.find("lt_xaxis").text)   # converts lt analog X axis to an integer for use in the motors class
@@ -167,7 +169,7 @@ def main():
 
 
                         # Set the sensor error byte to the rov class for error detection
-                        rov.set_error_byte(int(root1.find("Errored_Sensor").text))
+                        #rov.set_error_byte(int(root1.find("Errored_Sensor").text))
 
                         # Get Sensor Measurements
                         if ((root.find("x_button").text) == "1"): # Get all measurements pressed
@@ -184,8 +186,6 @@ def main():
                         #######################################################
 
 
-                        # Write sensor data to serial port 
-                        rov.write_serial_port(ser, rov.send_sensor_data())
 
                         # Controls if all meas or essential measurments are taken this is the user input from the cmd center
                         #######cmd_input = input("Would you like to get all measurements? (y,n) ")

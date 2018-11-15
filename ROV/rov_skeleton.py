@@ -612,7 +612,7 @@ def get_ph_do_sal(pressure, temp, k_val="10"):
                 while device.get_stop_flag() == 1:
                         # do nothing
                         # If stop flag is 0 = go then do the below
-                        time.sleep(1)
+                        #time.sleep(1)
                         dummyinput = "dummy variable"
 
                 try:
