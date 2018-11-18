@@ -165,7 +165,7 @@ def main():
                                 ### If pressure == 2ft ish then set end expedition to true to quit while loop
                                         ####end_expedition = True 
                         else:
-                                print("Error: Invalid command ID value")
+                                print("Error: Invalid command ID value: ", cmd_id)
 
 
                         # Set the sensor error byte to the rov class for error detection

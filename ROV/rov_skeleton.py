@@ -52,7 +52,7 @@ class rov:
                 xml_file = os.path.join(base_path, command_xml_file)     # Join base_path with actual .xml file name
                 tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
                 root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
-                
+                '''               
                 root.find("id_char").text = "0"         # C=control, p=stop motors, f=end mission, z=initialize probes
                 root.find("lt_xaxis").text = "0"        # -32000-32000
                 root.find("lt_yaxis").text = "0"        # -32000-32000
@@ -64,7 +64,7 @@ class rov:
                 root.find("crc").text = "0"             # CRC value 
                 root.find("k_value").text = "10"        # Our probe is 10
                 root.find("water_type").text = "1"      # 0 = fresh, 1 = saltwater 
-
+                '''
                 tree.write(xml_file)    # Saves all changes to the commands.xml on the SD card
 
                 # Initilize all values in sensors.xml to defaults (0)

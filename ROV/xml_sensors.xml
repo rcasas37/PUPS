@@ -1,15 +1,15 @@
 <sensor_array title="ROV Sensors">
 	<id_char>S</id_char>
-	<Temperature>23.0659476591</Temperature>
-	<Pressure>15.3536949161</Pressure>
-	<Dissolved_Oxygen>DOxy</Dissolved_Oxygen>
+	<Temperature>Temperature</Temperature>
+	<Pressure>Pressure</Pressure>
+	<Dissolved_Oxygen>Dissolved_Oxy</Dissolved_Oxygen>
 	<Salinity>Salinity</Salinity>
-	<pH>pHval</pH>
-	<Gyroscope1>1</Gyroscope1>
-	<Gyroscope2>2</Gyroscope2>
-	<Gyroscope3>3</Gyroscope3>
-	<Accelerometer1>999</Accelerometer1>
-	<Accelerometer2>99</Accelerometer2>
-	<Accelerometer3>9</Accelerometer3>
+	<pH>pH</pH>
+	<Gyroscope1>Gyroscope1</Gyroscope1>
+	<Gyroscope2>Gyroscope2</Gyroscope2>
+	<Gyroscope3>Gyroscope3</Gyroscope3>
+	<Accelerometer1>Accelerometer1</Accelerometer1>
+	<Accelerometer2>Accelerometer2</Accelerometer2>
+	<Accelerometer3>Accelerometer3</Accelerometer3>
 	<Errored_Sensor>0</Errored_Sensor>
 </sensor_array>
