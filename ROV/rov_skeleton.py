@@ -289,9 +289,10 @@ class rov:
                                 line_str += char    # Append a single char string to the line_str 
                                 if line_str[-len_eol:] == eol:                  # Check if char is terminating character
                                         break
-                                if size is not None and len(line_str) >= size:  # Check if message is even in the buffer
-                                        break
+                                #if size is not None and len(line_str) >= size:  # Check if message is exists in the buffer
+                                #        break
                         else:
+                                print("NO CHARACTER TO READ")
                                 break
                 return bytes(line_str) 
 
@@ -352,31 +353,34 @@ Return:
 Notes:
 """
 def write_xml(xml_choice, xml_element, string_data):
-        # Write to command.xml
-        if xml_choice == "1":
-                # Open command.xml for reading
-                base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-                xml_file = os.path.join(base_path, "xml_commands.xml")  # Join base_path with actual .xml file name
-                tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
-                root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
-                
-                # Write the new data to the element chosen
-                root.find(xml_element).text = string_data
-                tree.write(xml_file)    # Saves all changes to the command.xml
+        try:
+                # Write to command.xml
+                if xml_choice == "1":
+                        # Open command.xml for reading
+                        base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+                        xml_file = os.path.join(base_path, "xml_commands.xml")  # Join base_path with actual .xml file name
+                        tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
+                        root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
+                        
+                        # Write the new data to the element chosen
+                        root.find(xml_element).text = string_data
+                        tree.write(xml_file)    # Saves all changes to the command.xml
 
-        # Write to sensor.xml
-        elif xml_choice == "0":
-                # Open command.xml for reading
-                base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-                xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
-                tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
-                root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
+                # Write to sensor.xml
+                elif xml_choice == "0":
+                        # Open command.xml for reading
+                        base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+                        xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
+                        tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
+                        root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
 
-                # Write the new data to the element chosen
-                root.find(xml_element).text = string_data
-                tree.write(xml_file)    # Saves all changes to the sensor.xml
-        else:
-                print("Error in write_xml() function of rov_skelton no xml was written to.")
+                        # Write the new data to the element chosen
+                        root.find(xml_element).text = string_data
+                        tree.write(xml_file)    # Saves all changes to the sensor.xml
+                else:
+                        print("Error in write_xml() function of rov_skelton no xml was written to.")
+        except:
+                print("Error writing temp or press to XML.")
 
         return
 
@@ -402,16 +406,16 @@ def get_pressure(water_choice):
                 exit(1)
 
         # Freshwater vs Saltwater depth measurements set via user input form cmd center
-        if water_choice == '0':
-                # Freshwater
-                sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
-                freshwaterDepth = sensor.depth() # default is freshwater
-                water_choice = '1'
-        elif water_choice == '1':
+        if water_choice == "1":
                 # Saltwater
                 sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
                 freshwaterDepth = sensor.depth() # default is freshwater
-                water_choice = '0'
+                water_choice = "0"
+        elif water_choice == "0":
+                # Freshwater
+                sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
+                freshwaterDepth = sensor.depth() # default is freshwater
+                water_choice = "1"
         else:
                 print("Error on water density choice.")         # Print not needed in final version
 

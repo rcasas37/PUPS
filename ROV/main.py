@@ -17,6 +17,8 @@ import time
 import serial
 import os 
 import xml.etree.ElementTree as et
+import control
+import pigpio
 
 # Global variables
 # global my_var = 100 
@@ -33,13 +35,17 @@ Notes:
 def main():
         # Define some variables used within main
         end_expedition = False 	# Variable to end program's main
+        depth = 1               # Program terminates if depth is less than 0.867psi
         cmd_id = "0" 	            # Command ID stored as decimal number in python
         cmd_input = "n"
         cmd_message = "p,0,0,0,0,0,0,0"            # Init to none 
         cmd_list = [0,0,0,0,0,0,0]  # Init cmd_list
+        temp_list =[0,0,0]
 
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
-        rov = rov_skeleton.rov()		            # init rov class/module instance
+        rov = rov_skeleton.rov()		            # Init rov class/module instance
+        pi = pigpio.pi()                                    # Init Raspberry Pi class instance
+        rov_control = control.control(pi=pi)                # Init control class instance
         atlas_sensor = rov_skeleton.sensors.atlas_sensors() # Initialize atlas sensor class/module instance
 
         # Create atlas sensor thread
@@ -54,8 +60,21 @@ def main():
         root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
 
         # Open serial port communication
-        ser = serial.Serial(port='/dev/ttyS0', baudrate=9600, parity=serial.PARITY_NONE,
+        ser = serial.Serial(port='/dev/ttyS0', baudrate=38400, parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=1)
+
+        cmd_id = "0" 
+        lt_xaxis = 0 
+        lt_yaxis = 0 
+        rt_xaxis = 0 
+        rt_yaxis = 0 
+        collector_button = 0 
+        sensor_button = "0" 
+        headlights = 0 
+        kval = "0" 
+        water_type = "0" 
+
+
         ser.flushInput() # Flush serial port
 
         """
@@ -64,38 +83,125 @@ def main():
         """
         while end_expedition != True:
                 # Everything goes here
-                
+
                 # Get control data from serial port
                 cmd_message = rov.read_serial_port(ser)         # Read from serial port
-                #rov.write_cmd_xml(cmd_message)              # Write the cmd data to the cmd.xml
-                #cmd_id = root.find("id_char").text              # Save the ID char for program flow
 
                 # CRC Check here before we use the message
 
-
-                # Alternative to writing the cmd message string to xml (IDK why I am trying to do that)
-                cmd_list = cmd_message.split(",")               # Save each individual srting cmd into list cmd_list 
-                print("*************************************************************************************************************************: ", len(cmd_list))
-
-
-                # Check if data is recieved
-                ####if len(cmd_list) != 1:
-
-
-                # Print read results
-                print("This is the control_message: ", cmd_message)
+                cmd_message = cmd_message.replace(";", "")      # Remove the terminating ; from the message to use the data
 
                 # Write sensor data to serial port 
                 rov.write_serial_port(ser, rov.send_sensor_data())
-                ###rov.write_serial_port(ser, "S,pH,DO,Sal,Temp,Press,Orientation,Accel,Error_sensor;")
+                
+                
+                # Alternative to writing the cmd message string to xml (IDK why I am trying to do that)
+                cmd_list = cmd_message.split(",")               # Save each individual srting cmd into list cmd_list 
+                msg_len = len(cmd_list)
+                if msg_len != 8 and msg_len != 3:
+                        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$: ", msg_len)
+                        #maybe stabalize rov here? cause no data recieved?
+                        ser.flushInput() # Flush serial port
+                        print("This is the control_message: ", cmd_message)
+                        
+                        # Bandaid
+                        #if msg_len > 3:
+                        #        temp_list = cmd_message.split("C")               # Save each individual srting cmd into list cmd_list 
+                        #        print(temp_list)
+                        #        cmd_message = "C" + temp_list[2]
+                        #        cmd_list = cmd_message.split(",")               # Save each individual srting cmd into list cmd_list 
+                        #        msg_len = len(cmd_list)
 
+                        #print("This is the control_message2: ", cmd_message)
+                        continue
+                print("*************************************************************************************************************************: ", msg_len)
+
+                # Print read results
+                print("This is the control_message: ", cmd_message)
+                
+                # Save Command Center data into variables
+                if msg_len == 8:
+                        cmd_id = cmd_list[0]
+                        lt_xaxis = int(cmd_list[1])
+                        lt_yaxis = int(cmd_list[2])
+                        rt_xaxis = int(cmd_list[3])
+                        rt_yaxis = int(cmd_list[4])
+                        collector_button = cmd_list[5]
+                        sensor_button = cmd_list[6]
+                        headlights = int(cmd_list[7])
+
+                elif msg_len == 3:
+                        cmd_id = cmd_list[0]
+                        kval = cmd_list[1]
+                        water_type = cmd_list[2]
+                        print("WATER_TYPE: ", water_type)
+                        print("KVAL: ", kval)
+
+                else:
+                        print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", msg_len)
+                        continue
+
+                # Control ROV Command Data
+                if cmd_id == "C":
+                        # Drive ROV 
+                        rov_control.left_stick_control(lt_xaxis, lt_yaxis)
+                        rov_control.right_stick_control(rt_xaxis, rt_yaxis)
+
+                        # Set LEDs
+                        rov_control.light_control(headlights)
+
+                        # Water Collection Control set at 40% speed
+                        rov_control.water_pump_control(40, collector_button)
+                        
+                        pass
+                # Shutdown ROV motors
+                elif cmd_id == "p":
+                        # Write normalized 0's (4001) to each motor axis to shut down the motors
+                        rov_control.left_stick_control(4001, 4001)
+                        rov_control.right_stick_control(4001, 4001)
+
+                        # Water Collection Control set to off (0)
+                        rov_control.water_pump_control(40, 0)
+                        pass
+
+                # Initalize ROV Data
+                elif cmd_id == "z":
+                        # Set k value for salinity probe. Water type is sent to pressure sensor each time after it is set
+                        atlas_sensor.set_kval(kval) 
+                        pass
+
+                # End Expedition operation, quit loop and program when depth is approx 2ft or 0.867 psi
+                elif cmd_id == "f":
+                        # Drive ROV 
+                        rov_control.left_stick_control(lt_xaxis, lt_yaxis)
+                        rov_control.right_stick_control(rt_xaxis, rt_yaxis)
+
+                        # Set LEDs
+                        rov_control.light_control(headlights)
+
+                        # Terminate when pressure is less than 2ft or 0.867 psi
+                        if depth <= 0.867:
+                                end_expedition = True
+                        pass
+                else:
+                        print("Error, invalid command ID value: ", cmd_id)
+
+
+                #ser.flushInput() # Flush serial port
+
+
+                # Get Sensor Measurements
+                if sensor_button == "1":
+                        depth = rov.get_essential_meas(water_type)        # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                        atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
+                        
+                else: 
+                        depth = rov.get_essential_meas(water_type)        # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                
+
+                """
                 # Controls if all meas or essential measurments are taken this is the user input from the cmd center
                 #####cmd_input = input("Would you like to get all measurements? (y,n) ")
-
-                
-                # No data was received stabalize ROV and get essential measurements
-                if len(cmd_list) == 1:
-                        rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
                 # Control Data is recieved
                 else:
@@ -110,7 +216,6 @@ def main():
                                 else:
                                         get_all_meas = False
                                         #####print("get_all_meas NOT pressed")
-                                """
 
                                 #####print("This is the x Button value: ", cmd_list[6])
                                 # Take Sensor Measurements
@@ -124,12 +229,15 @@ def main():
                                 else:   # Get essential measurements only 
                                         atlas_sensor.set_stop_flag(1) # 1 = do NOT get atlas sensor meas
                                         rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
-                                """
+               """
 
 
 
 
                 """End While Loop"""
+        # Write sensor data to serial port for last time before quit 
+        rov.write_serial_port(ser, rov.send_sensor_data())
+
         # Shut down sensor thread before terminating the program
         atlas_sensor.terminate_thread()
         print("GOODBYE!")
@@ -140,50 +248,3 @@ def main():
 # Runs the main just defined above
 main()
 
-"""
-Parameters:
-        None
-Return:
-        None
-Notes:
-"""
-def get_control_data(self):
-        cmd_list = cmd_str.split(",")           # Get list of each individual cmd from cmd center
-        i = 0
-        length = len(cmd_list)
-        print("Length of cmd_list: %d" % len(cmd_list))
-        if (length != 0 and length <= 9):
-                for cmd in cmd_list:                    # Write each individual element at a time to the command.xml
-                        write_xml("1", self.cmd_xml_elem[i], cmd)
-                        i += 1
-        else:
-                print("command message is not greater than 1 or larger than 9")
-        return
-
-
-
-"""
-# End of expedition user input (need to change it to an interupt kind of function)
-if cmd_id == "quit" or cmd_id == "f": 
-        end_expedition = True
-        # Go to an End Expedition function
-elif cmd_id == "C":
-        # Motor control here
-        dummy = "dummy"
-elif cmd_id == "p":
-        # Stop motors here
-        dummy = "dummy"
-else:
-        print("Error. Not Recognized cmd_id.")
-# Take Sensor Measurements either all or just essential
-if root.find("x_button").text == "1":
-        print("get_all_meas pressed")
-        # Get pH, DO, and salinity measurments
-        atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
-else:
-        ####depth, c_temp = rov.get_essential_meas("1")     # Get pressure and temp. 1st input = salt/fresh water (1/0)
-        rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-# Get essential meas every time
-print("get_essential_meas here: ")
-rov.get_essential_meas("1")     # Get pressure and temp. tuple 1st input = salt/fresh water (1/0)
-"""

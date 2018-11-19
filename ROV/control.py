@@ -49,7 +49,7 @@ class PWM:
    _OCH    = 1<<3
    _OUTDRV = 1<<2
 
-   def __init__(self, pi, bus=1, address=0x40):
+   def __init__(self, pi, bus=1, address=0x41):
 
       self.pi = pi
       self.bus = bus
@@ -444,14 +444,16 @@ class control:
       N/A
    """
    def water_pump_control(self, pwm, en):
-      if en == 0:
+      if en == "0":
          self.pwm.set_duty_cycle(self.w1, pwm)
          self.pi.write(self.w1_en1, 0)
          self.pi.write(self.w1_en2, 0)
-      elif en == 1:
+      elif en == "1":
          self.pwm.set_duty_cycle(self.w1, pwm)
          self.pi.write(self.w1_en1, 0)
          self.pi.write(self.w1_en2, 1)
+      else:
+         pass
 
 
 if __name__ == "__main__":

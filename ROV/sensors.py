@@ -54,7 +54,7 @@ class atlas_sensors(threading.Thread):
                 global stop_flag
                 stop_flag = 1
                 global kval 
-                kval = 10
+                kval = "10"
                 global pres_comp_val 
                 pres_comp_val = "101"
                 global temp_comp_val 
@@ -183,7 +183,11 @@ def program():
                 device.query("O,TDS,0")
                 device.query("O,S,1")       # Only enable salinity output reading (PSU which is approx ppt)
                 device.query("O,SG,0")
-                device.query("K,10")        # Set default k parameter as 10
+                if device.get_kval() == "0":
+                        kval = "1"
+                else:
+                        kval = "10"
+                device.query("K," + device.get_kval())        # Set default k parameter as 10
                 device.query("T,23")        # Set default temp as 23C 
                 #device.query("L,0")        # Disable EC LED
                 
