@@ -134,8 +134,6 @@ def main():
                         cmd_id = cmd_list[0]
                         kval = cmd_list[1]
                         water_type = cmd_list[2]
-                        print("WATER_TYPE: ", water_type)
-                        print("KVAL: ", kval)
 
                 else:
                         print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", msg_len)
