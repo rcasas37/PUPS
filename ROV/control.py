@@ -195,8 +195,9 @@ class control:
    Return:
       N/A
    """
-   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=25, w1_en2=8):
+   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=25, w1_en2=8, off=103):
       self.pi = pi #pigpio.pi()
+      #self.pi = pigpio.pi()
       self.pwm = PWM(self.pi)
       self.m1 = m1
       self.m2 = m2
@@ -208,6 +209,7 @@ class control:
       self.w1 = w1
       self.w1_en1 = w1_en1
       self.w1_en2 = w1_en2
+      self.offset = off
 
    """
    Sends the initialization signal to all motors, sets the light off, water pump
@@ -218,13 +220,13 @@ class control:
       N/A
    """
    def arm(self):
-      self.pwm.set_pulse_width(self.m1, 1530)
-      self.pwm.set_pulse_width(self.m2, 1530)
-      self.pwm.set_pulse_width(self.m3, 1530)
-      self.pwm.set_pulse_width(self.m4, 1530)
-      self.pwm.set_pulse_width(self.m5, 1530)
-      self.pwm.set_pulse_width(self.m6, 1530)
-      self.pwm.set_pulse_width(self.l1, 1100)
+      self.pwm.set_pulse_width(self.m1, 1500 + self.offset)
+      self.pwm.set_pulse_width(self.m2, 1500 + self.offset)
+      self.pwm.set_pulse_width(self.m3, 1500 + self.offset)
+      self.pwm.set_pulse_width(self.m4, 1500 + self.offset)
+      self.pwm.set_pulse_width(self.m5, 1500 + self.offset)
+      self.pwm.set_pulse_width(self.m6, 1500 + self.offset)
+      self.pwm.set_pulse_width(self.l1, 1100 + self.offset)
       self.pwm.set_duty_cycle(self.w1, 0)
       self.pi.write(self.w1_en1, 0)
       self.pi.write(self.w1_en2, 0)
@@ -244,7 +246,7 @@ class control:
       self.pwm.set_pulse_width(self.m4, 0)
       self.pwm.set_pulse_width(self.m5, 0)
       self.pwm.set_pulse_width(self.m6, 0)
-      self.pwm.set_pulse_width(self.l1, 1100)
+      self.pwm.set_pulse_width(self.l1, 1100 + self.offset)
       self.pwm.set_duty_cycle(self.w1, 0)
       self.pi.write(self.w1_en1, 0)
       self.pi.write(self.w1_en2, 0)
@@ -278,12 +280,18 @@ class control:
           self.tilt_n(self.norm_values(left_y-3999))
       elif left_y < -4000:
           self.tilt_s(self.norm_values(left_y+3999))
+      else:
+          self.pwm.set_pulse_width(self.m1, 1500 + self.offset)
+          self.pwm.set_pulse_width(self.m3, 1500 + self.offset)
 
       #Check to see what direction it is going in the x axis
       if left_x > 4000:
           self.tilt_e(self.norm_values(left_x-3999))
       elif left_x < -4000:
           self.tilt_w(self.norm_values(left_x+3999))
+      else:
+          self.pwm.set_pulse_width(self.m2, 1500 + self.offset)
+          self.pwm.set_pulse_width(self.m4, 1500 + self.offset)
 
    """
    Tilting the ROV to the north direction
@@ -294,8 +302,8 @@ class control:
       N/A
    """
    def tilt_n(self, norm_left_y):
-      self.pwm.set_pulse_width(self.m1, 1525 + left_y + 30)
-      self.pwm.set_pulse_width(self.m3, 1530)
+      self.pwm.set_pulse_width(self.m1, 1525 + norm_left_y  + self.offset)
+      self.pwm.set_pulse_width(self.m3, 1500 + self.offset)
       #self.pwm.set_pulse_width(self.m3, -left_y)
 
    """
@@ -307,8 +315,8 @@ class control:
       N/A
    """
    def tilt_s(self, norm_left_y):
-      self.pwm.set_pulse_width(self.m3, 1475 + left_y + 30)
-      self.pwm.set_pulse_width(self.m1, 1530)
+      self.pwm.set_pulse_width(self.m3, 1475 + norm_left_y + self.offset)
+      self.pwm.set_pulse_width(self.m1, 1500 + self.offset)
       #self.pwm.set_pulse_width(self.m1, -left_y)
 
    """
@@ -320,8 +328,8 @@ class control:
       N/A
    """
    def tilt_e(self, norm_left_x):
-      self.pwm.set_pulse_width(self.m2, 1525 + left_x + 30)
-      self.pwm.set_pulse_width(self.m4, 1530)
+      self.pwm.set_pulse_width(self.m2, 1525 + norm_left_x + self.offset)
+      self.pwm.set_pulse_width(self.m4, 1500 + self.offset)
       #self.pwm.set_pulse_width(self.m4, -left_x)
 
    """
@@ -333,8 +341,8 @@ class control:
       N/A
    """
    def tilt_w(self, norm_left_x):
-      self.pwm.set_pulse_width(self.m4, 1475 + left_x + 30)
-      self.pwm.set_pulse_width(self.m2, 1530)
+      self.pwm.set_pulse_width(self.m4, 1475 + norm_left_x + self.offset)
+      self.pwm.set_pulse_width(self.m2, 1500 + self.offset)
       #self.pwm.set_pulse_width(self.m2, -left_x)
 
    """
@@ -351,9 +359,9 @@ class control:
    def right_stick_control(self, right_x, right_y):
       #Check to see what direction it is going in the y axis
       if right_y > 4000:
-          self.rise(self.norm_values(right_y-3999))
+          self.dive(self.norm_values(right_y-3999))
       elif right_y < -4000:
-          self.dive(self.norm_values(right_y+3999))
+          self.rise(self.norm_values(right_y+3999))
 
       #Check to see what direction it is going in the x axis
       if right_x > 4000:
@@ -370,10 +378,10 @@ class control:
       N/A
    """
    def rise(self, norm_right_y):
-      self.pwm.set_pulse_width(self.m1, 1525 + norm_right_y + 30)
-      self.pwm.set_pulse_width(self.m2, 1525 + norm_right_y + 30)
-      self.pwm.set_pulse_width(self.m3, 1525 + norm_right_y + 30)
-      self.pwm.set_pulse_width(self.m4, 1525 + norm_right_y + 30)
+      self.pwm.set_pulse_width(self.m1, 1525 + norm_right_y + self.offset)
+      self.pwm.set_pulse_width(self.m2, 1525 + norm_right_y + self.offset)
+      self.pwm.set_pulse_width(self.m3, 1525 + norm_right_y + self.offset)
+      self.pwm.set_pulse_width(self.m4, 1525 + norm_right_y + self.offset)
 
    """
    Dives down to the surface by having motors 1-4 straight up
@@ -384,10 +392,10 @@ class control:
       N/A
    """
    def dive(self, norm_right_y):
-      self.pwm.set_pulse_width(self.m1, 1475 + norm_right_y + 30)
-      self.pwm.set_pulse_width(self.m2, 1475 + norm_right_y + 30)
-      self.pwm.set_pulse_width(self.m3, 1475 + norm_right_y + 30)
-      self.pwm.set_pulse_width(self.m4, 1475 + norm_right_y + 30)
+      self.pwm.set_pulse_width(self.m1, 1475 + norm_right_y + self.offset)
+      self.pwm.set_pulse_width(self.m2, 1475 + norm_right_y + self.offset)
+      self.pwm.set_pulse_width(self.m3, 1475 + norm_right_y + self.offset)
+      self.pwm.set_pulse_width(self.m4, 1475 + norm_right_y + self.offset)
 
    """
    Rotates counter-clockwise by having motors 5 and 6 go forward
@@ -398,8 +406,8 @@ class control:
       N/A
    """
    def rotate_cw(self, norm_right_x):
-      self.pwm.set_pulse_width(self.m5, 1525 + norm_right_x + 30)
-      self.pwm.set_pulse_width(self.m6, 1525 + norm_right_x + 30)
+      self.pwm.set_pulse_width(self.m5, 1525 + norm_right_x + self.offset)
+      self.pwm.set_pulse_width(self.m6, 1525 + norm_right_x + self.offset)
 
    """
    Rotates clockwise by having motors 5 and 6 go backwards
@@ -410,8 +418,8 @@ class control:
       N/A
    """
    def rotate_ccw(self, norm_right_x):
-      self.pwm.set_pulse_width(self.m5, 1475 + norm_right_x + 30)
-      self.pwm.set_pulse_width(self.m6, 1475 + norm_right_x + 30)
+      self.pwm.set_pulse_width(self.m5, 1475 + norm_right_x + self.offset)
+      self.pwm.set_pulse_width(self.m6, 1475 + norm_right_x + self.offset)
 
    """
    Controls the light intensity. Needs power which is a variable from 0 to 100
@@ -424,9 +432,9 @@ class control:
    """
    def light_control(self, power):
       if power == 0:
-         self.pwm.set_pulse_width(self.l1, 1100)
+         self.pwm.set_pulse_width(self.l1, 1100 + self.offset)
       else:
-         self.pwm.set_pulse_width(self.l1, 1100 + power*8)
+         self.pwm.set_pulse_width(self.l1, 1100 + self.offset + power*8)
 
    """
    Control for water pump. Needs speed (pwm variable) and enable variable since
@@ -444,16 +452,14 @@ class control:
       N/A
    """
    def water_pump_control(self, pwm, en):
-      if en == "0":
+      if en == 0:
          self.pwm.set_duty_cycle(self.w1, pwm)
          self.pi.write(self.w1_en1, 0)
          self.pi.write(self.w1_en2, 0)
-      elif en == "1":
+      elif en == 1:
          self.pwm.set_duty_cycle(self.w1, pwm)
          self.pi.write(self.w1_en1, 0)
          self.pi.write(self.w1_en2, 1)
-      else:
-         pass
 
 
 if __name__ == "__main__":
@@ -466,7 +472,6 @@ if __name__ == "__main__":
    rov_cont = control.control()
 
    try:
-      '''
       #Test program for left motors
       print("Test program for Tilt")
       print("Sending initialization signal...")
@@ -476,7 +481,6 @@ if __name__ == "__main__":
          y_axis_left = int(input("Y-axis of left stick? "))
          rov_cont.left_stick_control(x_axis_left, y_axis_left)
          time.sleep(2)
-      '''
 
       '''
       #Test program for lights
@@ -489,17 +493,16 @@ if __name__ == "__main__":
       '''
 
       
+      '''
       #Test program for water pump
       print("Test program for water pump")
-
       rov_cont.arm()
-
       while(1):
          pwm_check = int(input("Speed?: "))
          en_check = int(input("Is the pump on or off? (0-1): "))
-
          rov_cont.water_pump_control(pwm_check, en_check)
-         time.sleep(2)
+         #time.sleep(2)
+      '''
       
    except KeyboardInterrupt:
       rov_cont.disarm()
