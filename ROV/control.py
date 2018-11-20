@@ -49,7 +49,7 @@ class PWM:
    _OCH    = 1<<3
    _OUTDRV = 1<<2
 
-   def __init__(self, pi, bus=1, address=0x41):
+   def __init__(self, pi, bus=1, address=0x40):
 
       self.pi = pi
       self.bus = bus
@@ -195,7 +195,7 @@ class control:
    Return:
       N/A
    """
-   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=25, w1_en2=8, off=103):
+   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=25, w1_en2=8, off=30):
       self.pi = pi #pigpio.pi()
       #self.pi = pigpio.pi()
       self.pwm = PWM(self.pi)
@@ -210,6 +210,10 @@ class control:
       self.w1_en1 = w1_en1
       self.w1_en2 = w1_en2
       self.offset = off
+      self.speed_m1 = 0 
+      self.speed_m2 = 0 
+      self.speed_m3 = 0 
+      self.speed_m4 = 0 
 
    """
    Sends the initialization signal to all motors, sets the light off, water pump
@@ -261,7 +265,7 @@ class control:
       Normalized values
    """
    def norm_values(self, analog_value):
-      return (analog_value // 137)
+      return ((analog_value // 137) // 2)   # Divide by 2 to split operation band
 
    """
    Main function calls sub functions that handle what is done depending on the incoming
@@ -277,73 +281,23 @@ class control:
    def left_stick_control(self, left_x, left_y):
       #Check to see what direction it is going in the y axis
       if left_y > 4000:
-          self.tilt_n(self.norm_values(left_y-3999))
+          self.speed_m1 = -self.norm_values(left_y-3999)
       elif left_y < -4000:
-          self.tilt_s(self.norm_values(left_y+3999))
+          self.speed_m3 =  self.norm_values(left_y+3999)
+      #Reset speed values to defaults
       else:
-          self.pwm.set_pulse_width(self.m1, 1500 + self.offset)
-          self.pwm.set_pulse_width(self.m3, 1500 + self.offset)
+          self.speed_m1 = 0 
+          self.speed_m3 = 0 
 
       #Check to see what direction it is going in the x axis
       if left_x > 4000:
-          self.tilt_e(self.norm_values(left_x-3999))
+          self.speed_m2 = -self.norm_values(left_x-3999)
       elif left_x < -4000:
-          self.tilt_w(self.norm_values(left_x+3999))
+          self.speed_m4 = self.norm_values(left_x+3999)
+      #Reset speed values to defaults
       else:
-          self.pwm.set_pulse_width(self.m2, 1500 + self.offset)
-          self.pwm.set_pulse_width(self.m4, 1500 + self.offset)
-
-   """
-   Tilting the ROV to the north direction
-   Parameters:
-      self - Needed for all functions in class
-      norm_left_y - normalized left y-axis value used to modify pulse width
-   Return:
-      N/A
-   """
-   def tilt_n(self, norm_left_y):
-      self.pwm.set_pulse_width(self.m1, 1525 + norm_left_y  + self.offset)
-      self.pwm.set_pulse_width(self.m3, 1500 + self.offset)
-      #self.pwm.set_pulse_width(self.m3, -left_y)
-
-   """
-   Tilting the ROV to the south direction
-   Parameters:
-      self - Needed for all functions in class
-      norm_left_y - normalized left y-axis value used to modify pulse width
-   Return:
-      N/A
-   """
-   def tilt_s(self, norm_left_y):
-      self.pwm.set_pulse_width(self.m3, 1475 + norm_left_y + self.offset)
-      self.pwm.set_pulse_width(self.m1, 1500 + self.offset)
-      #self.pwm.set_pulse_width(self.m1, -left_y)
-
-   """
-   Tilting the ROV to the east direction
-   Parameters:
-      self - Needed for all functions in class
-      norm_left_x - normalized left x-axis value used to modify pulse width
-   Return:
-      N/A
-   """
-   def tilt_e(self, norm_left_x):
-      self.pwm.set_pulse_width(self.m2, 1525 + norm_left_x + self.offset)
-      self.pwm.set_pulse_width(self.m4, 1500 + self.offset)
-      #self.pwm.set_pulse_width(self.m4, -left_x)
-
-   """
-   Tilting the ROV to the west direction
-   Parameters:
-      self - Needed for all functions in class
-      norm_left_x - normalized left x-axis value used to modify pulse width
-   Return:
-      N/A
-   """
-   def tilt_w(self, norm_left_x):
-      self.pwm.set_pulse_width(self.m4, 1475 + norm_left_x + self.offset)
-      self.pwm.set_pulse_width(self.m2, 1500 + self.offset)
-      #self.pwm.set_pulse_width(self.m2, -left_x)
+          self.speed_m2 = 0 
+          self.speed_m4 = 0 
 
    """
    Main function calls sub functions that handle what is done depending on the incoming
@@ -358,44 +312,69 @@ class control:
    """
    def right_stick_control(self, right_x, right_y):
       #Check to see what direction it is going in the y axis
-      if right_y > 4000:
-          self.dive(self.norm_values(right_y-3999))
-      elif right_y < -4000:
-          self.rise(self.norm_values(right_y+3999))
+      if right_y > 4000:        #Rise
+          self.speed_m1 += self.norm_values(right_y-3999)
+          self.speed_m2 += self.norm_values(right_y-3999)
+          self.speed_m3 += self.norm_values(right_y-3999)
+          self.speed_m4 += self.norm_values(right_y-3999)
+      elif right_y < -4000:     #Dive
+          self.speed_m1 += self.norm_values(right_y-3999)
+          self.speed_m2 += self.norm_values(right_y-3999)
+          self.speed_m3 += self.norm_values(right_y-3999)
+          self.speed_m4 += self.norm_values(right_y-3999)
 
       #Check to see what direction it is going in the x axis
       if right_x > 4000:
-          self.rotate_ccw(self.norm_values(right_x-3999))
+          self.rotate_ccw(self.norm_values(right_x-3999) * 2)   # Mult by 2 to get full power since norm_vals returns half power
       elif right_x < -4000:
-          self.rotate_cw(self.norm_values(right_x+3999))
+          self.rotate_cw(self.norm_values(right_x+3999) * 2)
+      else:
+          self.pwm.set_pulse_width(self.m5, 1500 + self.offset)
+          self.pwm.set_pulse_width(self.m6, 1500 + self.offset)
+
 
    """
-   Rises up to the surface by having motors 1-4 straight up
+   Sets motor speed for motors 1-4 as they are both used by the right and left joysticks
+   from the command center. Motors 5-6 are only changed by one therefore they are 
+   excluded.
    Parameters:
       self - Needed for all functions in class
-      norm_right_y - normalized right y-axis value used to modify pulse width
    Return:
       N/A
    """
-   def rise(self, norm_right_y):
-      self.pwm.set_pulse_width(self.m1, 1525 + norm_right_y + self.offset)
-      self.pwm.set_pulse_width(self.m2, 1525 + norm_right_y + self.offset)
-      self.pwm.set_pulse_width(self.m3, 1525 + norm_right_y + self.offset)
-      self.pwm.set_pulse_width(self.m4, 1525 + norm_right_y + self.offset)
+   def set_motor_speed(self):
+      # Set motor 1 speed
+      if self.speed_m1 > 0:
+         self.pwm.set_pulse_width(self.m1, 1525 + self.speed_m1 + self.offset)
+      elif self.speed_m1 < 0:
+         self.pwm.set_pulse_width(self.m1, 1475 + self.speed_m1 + self.offset)
+      else:
+         self.pwm.set_pulse_width(self.m1, 1500 + self.offset)
+         
+      # Set motor 2 speed
+      if self.speed_m2 > 0:
+         self.pwm.set_pulse_width(self.m2, 1525 + self.speed_m2 + self.offset)
+      elif self.speed_m2 < 0:
+         self.pwm.set_pulse_width(self.m2, 1475 + self.speed_m2 + self.offset)
+      else:
+         self.pwm.set_pulse_width(self.m2, 1500 + self.offset)
 
-   """
-   Dives down to the surface by having motors 1-4 straight up
-   Parameters:
-      self - Needed for all functions in class
-      norm_right_y - normalized right y-axis value used to modify pulse width
-   Return:
-      N/A
-   """
-   def dive(self, norm_right_y):
-      self.pwm.set_pulse_width(self.m1, 1475 + norm_right_y + self.offset)
-      self.pwm.set_pulse_width(self.m2, 1475 + norm_right_y + self.offset)
-      self.pwm.set_pulse_width(self.m3, 1475 + norm_right_y + self.offset)
-      self.pwm.set_pulse_width(self.m4, 1475 + norm_right_y + self.offset)
+      # Set motor 3 speed
+      if self.speed_m3 > 0:
+         self.pwm.set_pulse_width(self.m3, 1525 + self.speed_m3 + self.offset)
+      elif self.speed_m3 < 0:
+         self.pwm.set_pulse_width(self.m3, 1475 + self.speed_m3 + self.offset)
+      else:
+         self.pwm.set_pulse_width(self.m3, 1500 + self.offset)
+
+      # Set motor 4 speed
+      if self.speed_m4 > 0:
+         self.pwm.set_pulse_width(self.m4, 1525 + self.speed_m4 + self.offset)
+      elif self.speed_m4 < 0:
+         self.pwm.set_pulse_width(self.m4, 1475 + self.speed_m4 + self.offset)
+      else:
+         self.pwm.set_pulse_width(self.m4, 1500 + self.offset)
+
 
    """
    Rotates counter-clockwise by having motors 5 and 6 go forward

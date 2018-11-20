@@ -292,7 +292,7 @@ class rov:
                                 #if size is not None and len(line_str) >= size:  # Check if message is exists in the buffer
                                 #        break
                         else:
-                                print("NO CHARACTER TO READ")
+                                #print("NO CHARACTER TO READ")
                                 break
                 return bytes(line_str) 
 
@@ -313,7 +313,7 @@ class rov:
                 ser.write(sensor_encoded)
 
                 # This is the sensor string I am getting
-                print("This is the sensor string I have to send: ", sensor_str)
+                ############print("This is the sensor string I have to send: ", sensor_str)
 
                 return
 
