@@ -27,10 +27,12 @@ import pigpio
 """
 The main loop will control all of the operations of the ROV
 Parameters:
-Return:
-	0 on success, error code on failure
+        None
+Return:	
+        None
 Notes:
-	Initialized all sensor address data before main while loop 
+	Initialized all sensor address data before main while loop and within
+        other class object init() functions
 """
 def main():
         # Define some variables used within main
@@ -44,10 +46,10 @@ def main():
 
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
         rov = rov_skeleton.rov()		            # Init rov class/module instance
-        pi = pigpio.pi()                                    # Init Raspberry Pi class instance
-        rov_control = control.control(pi=pi)                # Init control class instance
+        ###pi = pigpio.pi()                                    # Init Raspberry Pi class instance
+        ###rov_control = control.control(pi=pi)                # Init control class instance
         atlas_sensor = rov_skeleton.sensors.atlas_sensors() # Initialize atlas sensor class/module instance
-        rov_control.arm()                                   # Init motor pwm signals
+        ###rov_control.arm()                                   # Init motor pwm signals
 
         # Create atlas sensor thread
         atlas_sensor_thread = Thread(target=atlas_sensor.run)
@@ -74,7 +76,9 @@ def main():
 
         """
         Description While Loop:
-        The while loop does what?? Oh that is right, EVERYTHING!
+        Reads and writes to the tether.
+        Operates the ROV: controls the thrusters and takes sensor measurements.
+        Logic to control the ROV's different states obtained from command center packets.
         """
         while end_expedition != True:
                 # Everything goes here
@@ -101,6 +105,10 @@ def main():
                 # Alternative to writing the cmd message string to xml (IDK why I am trying to do that)
                 cmd_list = cmd_message.split(",")               # Save each individual srting cmd into list cmd_list 
                 msg_len = len(cmd_list)
+
+                #testing:
+                depth,x,y,z,w = rov.get_essential_meas(water_type)        # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                print('x={0:0.3F} y={1:0.3F} z={2:0.3F} w={3}'.format(x, y, z, w))
 
                 if msg_len != 8 and msg_len != 3 and msg_len != 1:
                         #print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$: ", msg_len)
@@ -142,6 +150,7 @@ def main():
 
                 #ser.flushInput() # Flush serial port
 
+                '''
                 # Control ROV Command Data
                 if cmd_id == "C":
                         # Drive ROV 
@@ -189,7 +198,7 @@ def main():
                         pass
                 else:
                         print("Error, invalid command ID value: ", cmd_id)
-
+                '''
 
                 #ser.flushInput() # Flush serial port
 

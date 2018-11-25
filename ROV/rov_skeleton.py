@@ -30,7 +30,6 @@ class rov:
         default_command_xml = "xml_commands.xml"   
         cmd_xml_elem = ["id_char", "lt_xaxis", "lt_yaxis", "rt_xaxis", "rt_yaxis", "a_button", "x_button", "k_value", "water_type"]
 
-        
         """
         Initilizes the .xml files with values of zeros since this is only called 
         upon once at startup of the ROV, initalizes sensor objects for continues use with the rov class.
@@ -45,8 +44,8 @@ class rov:
         def __init__(self, sensor_xml_file=default_sensor_xml, command_xml_file=default_command_xml):
                 # Init imu, temp and pressure sensor objects
                 self.bno = BNO055.BNO055(i2c=3, rst=18)         # Create bno object that uses bitbanged i2c line (3)
-                self.temp_sensor = tsys01.TSYS01()         # Create temperature object that uses standard i2c line (1) 
-                self.pres_sensor = ms5837.MS5837_30BA()    # Create pressure object that uses standard i2c line (1) 
+                #self.temp_sensor = tsys01.TSYS01()         # Create temperature object that uses standard i2c line (1) 
+                #self.pres_sensor = ms5837.MS5837_30BA()    # Create pressure object that uses standard i2c line (1) 
 
                 # Initilize all values in commands.xml to defaults (0)
                 self.base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
@@ -189,12 +188,12 @@ class rov:
         """
         def get_essential_meas(self, water_choice):
                 # Get Pressure measurement and write it to sensors.xml
-                depth = self.get_pressure(water_choice)
+                depth = get_pressure(water_choice)
                 #write_xml("0", "Pressure", str(depth))
                 self.root1.find("Pressure").text = depth
 
                 # Get Temperature measurement and write it to sensors.xml
-                c_temp = self.get_temperature()
+                c_temp = get_temperature()
                 #write_xml("0", "Temperature", str(c_temp))
                 self.root1.find("Temperature").text = c_temp
 
@@ -348,7 +347,7 @@ class rov:
                 Returns tuple of quaternion data, 3 vectors and the rotation about the vector
         Notes:
         """
-        def get_imu():
+        def get_imu(self):
                 # Initialize the BNO055 and stop if something went wrong.
                 if not self.bno.begin():
                         raise RuntimeError('Failed to initialize BNO055! Is the sensor connected?')
@@ -371,84 +370,85 @@ class rov:
 
 
 
-        """
-        Obtains a single pressure measurement from pressure sensor
-        Called only by get_essential_meas() part of rov class.
-        Parameters:
-                Water density chioce (salt/fresh watter) as string,
-        Return:
-                Returns Depth as float in meters, Prints Temp. as float in Celsius
-        Notes:
-        """
-        def get_pressure(water_choice):
-
-                # Create sensor object
-                sensor = ms5837.MS5837_30BA() # Default I2C bus is 1 (Raspberry Pi 3)
-
-                # Must initialize pressure sensor before reading it
-                if not self.pres_sensor.init():
-                        print("Error initializing pressure sensor.")            # Print not needed in final version
-                        exit(1)
-
-                # Freshwater vs Saltwater depth measurements set via user input form cmd center
-                if water_choice == "1":
-                        # Saltwater
-                        self.pres_sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
-                        freshwaterDepth = self.pres_sensor.depth() # default is freshwater
-                        water_choice = "0"
-                elif water_choice == "0":
-                        # Freshwater
-                        self.pres_sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
-                        freshwaterDepth = self.pres_sensor.depth() # default is freshwater
-                        water_choice = "1"
-                else:
-                        print("Error on water density choice.")         # Print not needed in final version
-
-                if self.pres_sensor.read():
-                        depth = self.pres_sensor.pressure(ms5837.UNITS_psi)           # Get presure in psi
-                        #####print("P: %0.4f m \t T: %0.2f C  %0.2f F\n" % (         # Print not needed in final version
-                        ###depth,      # Sensor depth, either fresh or salf water depending on above
-                        ###sensor.temperature(), # Default is degrees C (no arguments)
-                        ###sensor.temperature(ms5837.UNITS_Farenheit))) # Request Farenheit
-                else:
-                        print ("Error reading pressure sensor.")            # Print not needed in final version
-                        exit(1)
-                return depth
-
-
-
-        """
-        Obtains a single temperature measurement from termperature sensor
-        Called only by get_essential_meas() part of rov class.
-        Parameters:
-               none 
-        Return:
-                Returns temperature as float in Celcius 
-        Notes:
-        """
-        def get_temperature():
-                # Create sensor object
-                #sensor = tsys01.TSYS01()
-
-                # Must initilize temp sensor object
-                if not self.temp_sensor.init():
-                    print("Error initializing temperature sensor.")         # Print not needed in final version
-                    exit(1)
-
-                # Read temp sensor once and save in c_temp variable
-                if not self.temp_sensor.read():
-                    print("Error reading temperature sensor.")          # Print not needed in final version
-                    exit(1)
-                c_temp = self.temp_sensor.temperature()                           # Get celcius temp
-                #####f_temp = sensor.temperature(tsys01.UNITS_Farenheit)     # Get farenheit temp
-                ######print("T: %.2f C\t%.2f F" % (c_temp, f_temp))           # Print not needed in final version
-                
-                return c_temp 
-
 
 
 ############################################################
 ################ ROV Class Helper functions#################
 ############################################################
 
+
+"""
+Obtains a single pressure measurement from pressure sensor
+Called only by get_essential_meas() part of rov class.
+Parameters:
+        Water density chioce (salt/fresh watter) as string,
+Return:
+        Returns Depth as float in meters, Prints Temp. as float in Celsius
+Notes:
+"""
+def get_pressure(water_choice):
+
+        # Create sensor object
+        sensor = ms5837.MS5837_30BA() # Default I2C bus is 1 (Raspberry Pi 3)
+
+        # Must initialize pressure sensor before reading it
+        if not sensor.init():
+                print("Error initializing pressure sensor.")            # Print not needed in final version
+                exit(1)
+
+        # Freshwater vs Saltwater depth measurements set via user input form cmd center
+        if water_choice == "1":
+                # Saltwater
+                sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
+                freshwaterDepth = sensor.depth() # default is freshwater
+                water_choice = "0"
+        elif water_choice == "0":
+                # Freshwater
+                self.pres_sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
+                freshwaterDepth = sensor.depth() # default is freshwater
+                water_choice = "1"
+        else:
+                print("Error on water density choice.")         # Print not needed in final version
+
+        if sensor.read():
+                depth = sensor.pressure(ms5837.UNITS_psi)           # Get presure in psi
+                #####print("P: %0.4f m \t T: %0.2f C  %0.2f F\n" % (         # Print not needed in final version
+                ###depth,      # Sensor depth, either fresh or salf water depending on above
+                ###sensor.temperature(), # Default is degrees C (no arguments)
+                ###sensor.temperature(ms5837.UNITS_Farenheit))) # Request Farenheit
+        else:
+                print ("Error reading pressure sensor.")            # Print not needed in final version
+                exit(1)
+        return depth
+
+
+
+"""
+Obtains a single temperature measurement from termperature sensor
+Called only by get_essential_meas() part of rov class.
+Parameters:
+        None 
+Return:
+        Returns temperature as float in Celcius 
+Notes:
+"""
+def get_temperature():
+        # Create sensor object
+        sensor = tsys01.TSYS01()
+
+        # Must initilize temp sensor object
+        if not sensor.init():
+            print("Error initializing temperature sensor.")         # Print not needed in final version
+            exit(1)
+
+        # Read temp sensor once and save in c_temp variable
+        if not sensor.read():
+            print("Error reading temperature sensor.")          # Print not needed in final version
+            exit(1)
+        
+        c_temp = sensor.temperature()                           # Get celcius temp
+        #####f_temp = sensor.temperature(tsys01.UNITS_Farenheit)     # Get farenheit temp
+        ######print("T: %.2f C\t%.2f F" % (c_temp, f_temp))           # Print not needed in final version
+        
+        return c_temp 
 
