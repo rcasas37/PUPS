@@ -1,8 +1,0 @@
-options for two uart interfaces on raspberry pi:
-https://raspberrypi.stackexchange.com/questions/3475/how-to-get-more-than-one-uart-interface
-
-code from adafruit:
-https://learn.adafruit.com/adafruit-bno055-absolute-orientation-sensor/arduino-code
-
-code for I2C:
-https://www.arduino.cc/en/Tutorial/MasterWriter

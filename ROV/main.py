@@ -197,11 +197,11 @@ def main():
                 # Get Sensor Measurements
                 if sensor_button == "1":
                         print("WATER TYPE: ", water_type)
-                        depth = rov.get_essential_meas(water_type)        # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                        depth,x,y,z,w = rov.get_essential_meas(water_type)        # Get pressure and temp. 1st input = salt/fresh water (1/0)
                         atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
                         
                 else: 
-                        depth = rov.get_essential_meas(water_type)        # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                        depth,x,y,z,w = rov.get_essential_meas(water_type)        # Get pressure and temp. 1st input = salt/fresh water (1/0)
 
                 #count += 1
 
