@@ -44,8 +44,8 @@ class rov:
         def __init__(self, sensor_xml_file=default_sensor_xml, command_xml_file=default_command_xml):
                 # Init imu, temp and pressure sensor objects
                 self.bno = BNO055.BNO055(i2c=3, rst=18)         # Create bno object that uses bitbanged i2c line (3)
-                #self.temp_sensor = tsys01.TSYS01()         # Create temperature object that uses standard i2c line (1) 
-                #self.pres_sensor = ms5837.MS5837_30BA()    # Create pressure object that uses standard i2c line (1) 
+                self.temp_sensor = tsys01.TSYS01()         # Create temperature object that uses standard i2c line (1) 
+                self.pres_sensor = ms5837.MS5837_30BA()    # Create pressure object that uses standard i2c line (1) 
 
                 # Initilize all values in commands.xml to defaults (0)
                 self.base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
@@ -188,21 +188,21 @@ class rov:
         """
         def get_essential_meas(self, water_choice):
                 # Get Pressure measurement and write it to sensors.xml
-                depth = get_pressure(water_choice)
+                depth = self.get_pressure(water_choice)
                 #write_xml("0", "Pressure", str(depth))
                 self.root1.find("Pressure").text = depth
 
                 # Get Temperature measurement and write it to sensors.xml
-                c_temp = get_temperature()
+                c_temp = self.get_temperature()
                 #write_xml("0", "Temperature", str(c_temp))
                 self.root1.find("Temperature").text = c_temp
 
                 # Get IMU measurement and write it to sensors.xml
-                x,y,z,w = self.get_imu()
+                #x,y,z,w = self.get_imu()
                 
                 # use function here to determine "warning tilted at least +45deg n/s/e/w"
 
-                return depth,x,y,z,w 
+                return depth#,x,y,z,w 
 
 
 
@@ -369,6 +369,81 @@ class rov:
                 return x,y,z,w
 
 
+        """
+        Obtains a single pressure measurement from pressure sensor
+        Called only by get_essential_meas() part of rov class.
+        Parameters:
+                Water density chioce (salt/fresh watter) as string,
+        Return:
+                Returns Depth as float in meters, Prints Temp. as float in Celsius
+        Notes:
+        """
+        def get_pressure(self, water_choice):
+
+                # Create sensor object
+                #self.pres_sensor = ms5837.MS5837_30BA() # Default I2C bus is 1 (Raspberry Pi 3)
+
+                # Must initialize pressure sensor before reading it
+                if not self.pres_sensor.init():
+                        print("Error initializing pressure sensor.")            # Print not needed in final version
+                        exit(1)
+
+                # Freshwater vs Saltwater depth measurements set via user input form cmd center
+                if water_choice == "1":
+                        # Saltwater
+                        self.pres_sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
+                        freshwaterDepth = self.pres_sensor.depth() # default is freshwater
+                        water_choice = "0"
+                elif water_choice == "0":
+                        # Freshwater
+                        self.pres_sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
+                        freshwaterDepth = self.pres_sensor.depth() # default is freshwater
+                        water_choice = "1"
+                else:
+                        print("Error on water density choice.")         # Print not needed in final version
+
+                if self.pres_sensor.read():
+                        depth = self.pres_sensor.pressure(ms5837.UNITS_psi)           # Get presure in psi
+                        #####print("P: %0.4f m \t T: %0.2f C  %0.2f F\n" % (         # Print not needed in final version
+                        ###depth,      # Sensor depth, either fresh or salf water depending on above
+                        ###sensor.temperature(), # Default is degrees C (no arguments)
+                        ###sensor.temperature(ms5837.UNITS_Farenheit))) # Request Farenheit
+                else:
+                        print ("Error reading pressure sensor.")            # Print not needed in final version
+                        exit(1)
+                return depth
+
+
+
+        """
+        Obtains a single temperature measurement from termperature sensor
+        Called only by get_essential_meas() part of rov class.
+        Parameters:
+                None 
+        Return:
+                Returns temperature as float in Celcius 
+        Notes:
+        """
+        def get_temperature(self):
+                # Create sensor object
+                #self.temp_sensor = tsys01.TSYS01()
+
+                # Must initilize temp sensor object
+                if not self.temp_sensor.init():
+                    print("Error initializing temperature sensor.")         # Print not needed in final version
+                    exit(1)
+
+                # Read temp sensor once and save in c_temp variable
+                if not self.temp_sensor.read():
+                    print("Error reading temperature sensor.")          # Print not needed in final version
+                    exit(1)
+                
+                c_temp = self.temp_sensor.temperature()                           # Get celcius temp
+                #####f_temp = sensor.temperature(tsys01.UNITS_Farenheit)     # Get farenheit temp
+                ######print("T: %.2f C\t%.2f F" % (c_temp, f_temp))           # Print not needed in final version
+                
+                return c_temp 
+
 
 
 
@@ -404,7 +479,7 @@ def get_pressure(water_choice):
                 water_choice = "0"
         elif water_choice == "0":
                 # Freshwater
-                self.pres_sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
+                sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
                 freshwaterDepth = sensor.depth() # default is freshwater
                 water_choice = "1"
         else:
