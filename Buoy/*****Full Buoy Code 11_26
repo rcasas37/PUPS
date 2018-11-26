@@ -34,10 +34,10 @@ void setup() {
   pinMode(LED, OUTPUT);
 
   //-----BEGIN BACKCHANNEL UART AT 9600 BAUD RATE-----//
-  Serial.begin(9600);
+  Serial.begin(38400);
   
   //-----BEGIN REGULAR UART AT 9600 BAUD RATE-----//
-  Serial1.begin(9600);
+  Serial1.begin(19200);
 
   //-----BEGIN I2C-----//
   Wire.begin();
@@ -73,7 +73,7 @@ void loop() {
   digitalWrite(LED, HIGH);
   delay(1);
   //Serial.println("Debug 1");
-  if(gpscount != 20){    //-----CHECK IF GPSCOUNT IS GREATER THAN OR EQUAL TO 5, OTHERWISE CONTINUE (SO WE ARE NOT SENDING GPS DATA EVERY ITERATION)-----//
+  if(gpscount != 15){    //-----CHECK IF GPSCOUNT IS GREATER THAN OR EQUAL TO 5, OTHERWISE CONTINUE (SO WE ARE NOT SENDING GPS DATA EVERY ITERATION)-----//
   
   //-----INITAIALIZE ARRAYS TO 0'S-----//
   for(int i = 0; i < 75; i++){
