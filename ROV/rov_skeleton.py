@@ -207,7 +207,7 @@ class rov:
                 # Saves all changes to the sensors.xml on the SD card
                 self.tree1.write(self.xml_file1)                    
 
-                return 
+                return orientation 
 
 
         """
@@ -231,19 +231,11 @@ class rov:
                 w = 0
                 
                 # Check if roll or pitch exceeds 45 degree threshold
-                if roll < -45:
-                        e = 1
-                        #print("Warning: tilted past 45 degrees East.")
-                elif roll > 45:
-                        w = 1
-                        #print("Warning: tilted past 45 degrees West.")
+                if roll < -45: e = 1
+                elif roll > 45: w = 1
 
-                if pitch < 45:
-                        s = 1
-                        #print("Warning: tilted past 45 degrees South.")
-                elif pitch > 135:
-                        n = 1
-                        #print("Warning: tilted past 45 degrees North.")
+                if pitch < 45: s = 1
+                elif pitch > 135: n = 1
 
                 # Write the error string to the sensor xml
                 if n == 1: tilt_data = "North"

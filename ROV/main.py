@@ -71,10 +71,7 @@ def main():
         kval = "0" 
         water_type = "0" 
         count = 0
-        x = 0
-        y = 0
-        z = 0
-        q = 0
+        orient = [0,0,0,0,""]
 
         ser.flushInput() # Flush serial port
 
@@ -174,8 +171,8 @@ def main():
                 # Control ROV Command Data
                 if cmd_id == "C":
                         # Drive ROV 
-                        rov_control.left_stick_control(lt_xaxis, lt_yaxis)
-                        rov_control.right_stick_control(rt_xaxis, rt_yaxis)
+                        rov_control.left_stick_control(lt_xaxis, lt_yaxis, orient)
+                        rov_control.right_stick_control(rt_xaxis, rt_yaxis, orient)
                         rov_control.set_motor_speed()
 
                         # Set LEDs
@@ -205,8 +202,8 @@ def main():
                 # End Expedition operation, quit loop and program when depth is approx 2ft or 0.867 psi
                 elif cmd_id == "f":
                         # Drive ROV 
-                        rov_control.left_stick_control(lt_xaxis, lt_yaxis)
-                        rov_control.right_stick_control(rt_xaxis, rt_yaxis)
+                        rov_control.left_stick_control(lt_xaxis, lt_yaxis, orient)
+                        rov_control.right_stick_control(rt_xaxis, rt_yaxis, orient)
                         rov_control.set_motor_speed()
 
                         # Set LEDs
@@ -224,12 +221,15 @@ def main():
                 # Get sensor measurements
                 if sensor_button == "1":
                         print("water type: ", water_type)
-                        rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
                         atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
-                        
                 else: 
-                        rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> fb31a33d79cc936128766fc156b7bdb89a349376
                 #count += 1
 
                 """End While Loop"""

@@ -214,6 +214,7 @@ class control:
       self.speed_m2 = 0 
       self.speed_m3 = 0 
       self.speed_m4 = 0 
+      self.stabilize_var = 40   # 20% of motor speed
 
    """
    Sends the initialization signal to all motors, sets the light off, water pump
@@ -270,7 +271,8 @@ class control:
    """
    Main function calls sub functions that handle what is done depending on the incoming
    x and y axis values from the left stick. Created a software deadband of +/- 4000 to 
-   prevent jittering when the controller sticks are not touched.
+   prevent jittering when the controller sticks are not touched. Tilts ROV in a single 
+   direction, downward (always negative speed values).
    Parameters:
       self - Needed for all functions in class
       left_x - Controller value from x-axis on left stick 
@@ -278,7 +280,7 @@ class control:
    Return:
       N/A
    """
-   def left_stick_control(self, left_x, left_y):
+   def left_stick_control(self, left_x, left_y, orient=[0,0,0,0,""]):
       #Check to see what direction it is going in the y axis
       if left_y > 4000:
           self.speed_m1 = -self.norm_values(left_y-3999)
@@ -288,6 +290,10 @@ class control:
       else:
           self.speed_m1 = 0 
           self.speed_m3 = 0 
+          
+          # Stabilize north and south
+          if orient[0] == 1: self.speed_m3 = -self.stabilize_var
+          elif orient[1] == 1: self.speed_m1 = -self.stabilize_var
 
       #Check to see what direction it is going in the x axis
       if left_x > 4000:
@@ -298,6 +304,10 @@ class control:
       else:
           self.speed_m2 = 0 
           self.speed_m4 = 0 
+
+          # Stabilize east and west
+          if orient[2] == 1: self.speed_m4 = -self.stabilize_var
+          elif orient[3] == 1: self.speed_m2 = -self.stabilize_var
 
    """
    Main function calls sub functions that handle what is done depending on the incoming
@@ -310,7 +320,7 @@ class control:
    Return:
       N/A
    """
-   def right_stick_control(self, right_x, right_y):
+   def right_stick_control(self, right_x, right_y, orient=[0,0,0,0,""]):
       #Check to see what direction it is going in the y axis
       if right_y > 4000:        #Rise
           self.speed_m1 += self.norm_values(right_y-3999)
@@ -318,10 +328,10 @@ class control:
           self.speed_m3 += self.norm_values(right_y-3999)
           self.speed_m4 += self.norm_values(right_y-3999)
       elif right_y < -4000:     #Dive
-          self.speed_m1 += self.norm_values(right_y-3999)
-          self.speed_m2 += self.norm_values(right_y-3999)
-          self.speed_m3 += self.norm_values(right_y-3999)
-          self.speed_m4 += self.norm_values(right_y-3999)
+          self.speed_m1 += self.norm_values(right_y+3999)
+          self.speed_m2 += self.norm_values(right_y+3999)
+          self.speed_m3 += self.norm_values(right_y+3999)
+          self.speed_m4 += self.norm_values(right_y+3999)
 
       #Check to see what direction it is going in the x axis
       if right_x > 4000:
