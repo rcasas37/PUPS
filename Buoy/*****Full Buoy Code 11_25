@@ -29,9 +29,6 @@ void setup() {
   //-----WAIT FOR HARDWARE SERIAL TO APPEAR-----//
   while (!Serial);
   while (!Serial1);
-
-  //-----BEGIN I2C-----//
-  Wire.begin();
   
   //-----INITIALIZE DIGITAL PIN AS OUTPUT-----//
   pinMode(LED, OUTPUT);
@@ -42,6 +39,9 @@ void setup() {
   //-----BEGIN REGULAR UART AT 9600 BAUD RATE-----//
   Serial1.begin(9600);
 
+  //-----BEGIN I2C-----//
+  Wire.begin();
+  
   //-----DELAY TO ALLOW UART COMMS TO BEGIN
   //delay(1000);
 
@@ -105,7 +105,8 @@ void loop() {
             Serial.write(PacketRxCC[count]);
           //}
           if(PacketRxCC[0] == ShutdownID){
-            Serial.write("Buoy Shutdown;");//BOUY shutdown
+            Serial1.write("Buoy Shutdown;");//BOUY shutdown
+            break;
           }
           count++;
         }
@@ -205,13 +206,13 @@ void loop() {
         }
       }
     }
-    Serial.println("-----Debug 5");
+    //Serial.println("-----Debug 5");
     //-----SEND EACH BYTE OF ARRAY THROUGH TETHER 
     for(int l = 0; l < countb; l++)                              
     {  
       if(GPSArray[l] != '_')
       {
-          Serial.print(GPSArray[l]);
+          Serial1.print(GPSArray[l]);
       }
     }
     //Serial.println("----------Debug 6");
