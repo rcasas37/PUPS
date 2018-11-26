@@ -10,5 +10,5 @@
 	<E>0</E>
 	<S>0</S>
 	<W>0</W>
-	<Errored_Sensor> </Errored_Sensor>
+	<Errored_Sensor>0</Errored_Sensor>
 </sensor_array>

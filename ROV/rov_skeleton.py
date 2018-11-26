@@ -91,7 +91,7 @@ class rov:
                 self.root1.find("S").text = "0" 
                 self.root1.find("E").text = "0" 
                 self.root1.find("W").text = "0" 
-                self.root1.find("Errored_Sensor").text = " "
+                self.root1.find("Errored_Sensor").text = "0"
 
                 self.tree1.write(self.xml_file1)    # Saves all changes to the sensors.xml on the SD card
                 return
