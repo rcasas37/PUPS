@@ -280,7 +280,7 @@ class control:
    Return:
       N/A
    """
-   def left_stick_control(self, left_x, left_y, orient=[0,0,0,0,""]):
+   def left_stick_control(self, left_x, left_y, orient=[0,0,0,0]):
       #Check to see what direction it is going in the y axis
       if left_y > 4000:
           self.speed_m1 = -self.norm_values(left_y-3999)
@@ -320,7 +320,7 @@ class control:
    Return:
       N/A
    """
-   def right_stick_control(self, right_x, right_y, orient=[0,0,0,0,""]):
+   def right_stick_control(self, right_x, right_y, orient=[0,0,0,0]):
       #Check to see what direction it is going in the y axis
       if right_y > 4000:        #Rise
           self.speed_m1 += self.norm_values(right_y-3999)

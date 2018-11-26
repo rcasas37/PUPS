@@ -20,9 +20,6 @@ import xml.etree.ElementTree as et
 import control
 import pigpio
 
-# Global variables
-# global my_var = 100 
-
 
 """
 The main loop will control all of the operations of the ROV
@@ -85,24 +82,16 @@ def main():
                 # Everything goes here
 
                 '''
-                # get sensor measurements
+
+                # Get sensor measurements
                 if sensor_button == "1":
                         print("water type: ", water_type)
-                        #depth,x,y,z,w = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
-                        #x,y,z,w = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
-                        roll,pitch = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
                         atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
-                        
                 else: 
-                        #depth,x,y,z,w = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
-                        #x,y,z,w = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
-                        roll,pitch = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
-                # do something wth my measurements
-                #print('x={0:0.3f} y={1:0.3f} z={2:0.3f} w={3}'.format(x, y, z, w))
-                print('roll={0:0.3f} pitch={1:0.3f}'.format(roll, pitch))
+                        orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
 
-                time.sleep(.2)
-
+                #time.sleep(.50)
                 ''' 
 
                 #print("inWaiting() bytes: ", ser.inWaiting())
@@ -226,10 +215,6 @@ def main():
                 else: 
                         orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
 
-<<<<<<< HEAD
-=======
-
->>>>>>> fb31a33d79cc936128766fc156b7bdb89a349376
                 #count += 1
 
                 """End While Loop"""

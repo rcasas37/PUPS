@@ -82,7 +82,10 @@ class rov:
                 self.root1.find("pH").text = "pHval"
                 self.root1.find("Salinity").text = "Salinity"
                 self.root1.find("Dissolved_Oxygen").text = "DOxy"
-                self.root1.find("Orientation").text = " " 
+                self.root1.find("N").text = "0" 
+                self.root1.find("S").text = "0" 
+                self.root1.find("E").text = "0" 
+                self.root1.find("W").text = "0" 
                 self.root1.find("Errored_Sensor").text = " "
 
                 self.tree1.write(self.xml_file1)    # Saves all changes to the sensors.xml on the SD card
@@ -139,7 +142,8 @@ class rov:
                 # create sensor string from sensors.xml 
                 sensor_str= (self.root1.find("id_char").text + "," + self.root1.find("pH").text + "," + self.root1.find("Dissolved_Oxygen").text + "," +
                             self.root1.find("Salinity").text + "," + self.root1.find("Temperature").text + "," + self.root1.find("Pressure").text + "," +
-                            self.root1.find("Orientation").text + "," + self.root1.find("Errored_Sensor").text + ";") 
+                            self.root1.find("N").text + "," +  self.root1.find("E").text + "," + self.root1.find("S").text + "," + self.root1.find("W").text + "," + 
+                            self.root1.find("Errored_Sensor").text + ";") 
 
                 return sensor_str
 
@@ -188,22 +192,26 @@ class rov:
         """
         def get_essential_meas(self, water_choice):
                 # Get Pressure measurement and write it to sensors.xml
-                #depth = self.get_pressure(water_choice)
+                depth = self.get_pressure(water_choice)
                 #write_xml("0", "Pressure", str(depth))
-                #self.root1.find("Pressure").text = depth
+                self.root1.find("Pressure").text = depth
 
                 # Get Temperature measurement and write it to sensors.xml
-                #c_temp = self.get_temperature()
+                c_temp = self.get_temperature()
                 #write_xml("0", "Temperature", str(c_temp))
-                #self.root1.find("Temperature").text = c_temp
+                self.root1.find("Temperature").text = c_temp
 
                 # Get IMU measurement and write it to sensors.xml
                 roll,pitch = self.get_imu()
                 
                 # Use function here to determine "warning tilted at least +45deg n/s/e/w"
                 orientation = self.check_orientation(roll,pitch)
-                self.root1.find("Orientation").text = orientation[4]
+                self.root1.find("N").text = orientation[0]
+                self.root1.find("S").text = orientation[1]
+                self.root1.find("E").text = orientation[2]
+                self.root1.find("W").text = orientation[3]
 
+                #nsew
                 # Saves all changes to the sensors.xml on the SD card
                 self.tree1.write(self.xml_file1)                    
 
@@ -225,31 +233,33 @@ class rov:
         def check_orientation(self, roll, pitch):
                 tilt_data = "" 
                 # Default the orientations to OKAY (not tilted off of any axis by more than 45 degrees
-                n = 0
-                s = 0
-                e = 0
-                w = 0
+                n = "0"
+                s = "0"
+                e = "0"
+                w = "0"
                 
                 # Check if roll or pitch exceeds 45 degree threshold
-                if roll < -45: e = 1
-                elif roll > 45: w = 1
+                if roll < -45: e = "1"
+                elif roll > 45: w = "1"
 
-                if pitch < 45: s = 1
-                elif pitch > 135: n = 1
-
+                if pitch < 45: s = "1"
+                elif pitch > 135: n = "1"
+                
+                '''Delete'''
                 # Write the error string to the sensor xml
-                if n == 1: tilt_data = "North"
-                elif s == 1: tilt_data = "South"
-                elif e == 1: tilt_data = "East"
-                elif w == 1: tilt_data = "West"
-                if n == 1 and e == 1: tilt_data = "Northeast"
-                elif s == 1 and e == 1: tilt_data = "Southeast"
-                elif n == 1 and w == 1: tilt_data = "Northwest"
-                elif s == 1 and w == 1: tilt_data = "Northwest"
+                if n == "1": tilt_data = "North"
+                elif s == "1": tilt_data = "South"
+                elif e == "1": tilt_data = "East"
+                elif w == "1": tilt_data = "West"
+                if n == "1" and e == "1": tilt_data = "Northeast"
+                elif s == "1" and e == "1": tilt_data = "Southeast"
+                elif n == "1" and w == "1": tilt_data = "Northwest"
+                elif s == "1" and w == "1": tilt_data = "Northwest"
                 
                 print("Tilted past 45 degrees: ", tilt_data)
+                '''Delete'''
 
-                return n,s,e,w,tilt_data
+                return n,s,e,w
 
 
 

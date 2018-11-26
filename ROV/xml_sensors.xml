@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <sensor_array title="ROV Sensors">
 	<id_char>S</id_char>
 	<Temperature>Temperature</Temperature>
@@ -5,6 +6,9 @@
 	<Dissolved_Oxygen>DOxy</Dissolved_Oxygen>
 	<Salinity>Salinity</Salinity>
 	<pH>pHval</pH>
-	<Orientation>South</Orientation>
+	<N>0</N>
+	<E>0</E>
+	<S>0</S>
+	<W>0</W>
 	<Errored_Sensor> </Errored_Sensor>
 </sensor_array>
