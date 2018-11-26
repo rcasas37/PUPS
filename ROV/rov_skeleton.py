@@ -44,8 +44,13 @@ class rov:
         def __init__(self, sensor_xml_file=default_sensor_xml, command_xml_file=default_command_xml):
                 # Init imu, temp and pressure sensor objects
                 self.bno = BNO055.BNO055(i2c=3, rst=18)         # Create bno object that uses bitbanged i2c line (3)
-                self.temp_sensor = tsys01.TSYS01()         # Create temperature object that uses standard i2c line (1) 
-                self.pres_sensor = ms5837.MS5837_30BA()    # Create pressure object that uses standard i2c line (1) 
+
+                # Initialize the BNO055 and stop if something went wrong.
+                if not self.bno.begin():
+                        raise RuntimeError('Failed to initialize BNO055! Is the sensor connected?')
+
+                self.temp_sensor = tsys01.TSYS01()              # Create temperature object that uses standard i2c line (1) 
+                self.pres_sensor = ms5837.MS5837_30BA()         # Create pressure object that uses standard i2c line (1) 
 
                 # Initilize all values in commands.xml to defaults (0)
                 self.base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
@@ -77,13 +82,8 @@ class rov:
                 self.root1.find("pH").text = "pHval"
                 self.root1.find("Salinity").text = "Salinity"
                 self.root1.find("Dissolved_Oxygen").text = "DOxy"
+                self.root1.find("Orientation").text = " " 
                 self.root1.find("Errored_Sensor").text = " "
-                self.root1.find("Gyroscope1").text = "1"
-                self.root1.find("Gyroscope2").text = "2"
-                self.root1.find("Gyroscope3").text = "3"
-                self.root1.find("Accelerometer1").text = "999"
-                self.root1.find("Accelerometer2").text = "99"
-                self.root1.find("Accelerometer3").text = "9"
 
                 self.tree1.write(self.xml_file1)    # Saves all changes to the sensors.xml on the SD card
                 return
@@ -139,7 +139,7 @@ class rov:
                 # create sensor string from sensors.xml 
                 sensor_str= (self.root1.find("id_char").text + "," + self.root1.find("pH").text + "," + self.root1.find("Dissolved_Oxygen").text + "," +
                             self.root1.find("Salinity").text + "," + self.root1.find("Temperature").text + "," + self.root1.find("Pressure").text + "," +
-                            self.root1.find("Gyroscope1").text + "," + self.root1.find("Accelerometer1").text + "," + self.root1.find("Errored_Sensor").text + ";") 
+                            self.root1.find("Orientation").text + "," + self.root1.find("Errored_Sensor").text + ";") 
 
                 return sensor_str
 
@@ -183,26 +183,81 @@ class rov:
         Parameters:
                 water_choice - chosen by the user at startup
         Return:
-                depth and quaternion tuple 
+                depth and orientation tuple 
         Notes:
         """
         def get_essential_meas(self, water_choice):
                 # Get Pressure measurement and write it to sensors.xml
-                depth = self.get_pressure(water_choice)
+                #depth = self.get_pressure(water_choice)
                 #write_xml("0", "Pressure", str(depth))
-                self.root1.find("Pressure").text = depth
+                #self.root1.find("Pressure").text = depth
 
                 # Get Temperature measurement and write it to sensors.xml
-                c_temp = self.get_temperature()
+                #c_temp = self.get_temperature()
                 #write_xml("0", "Temperature", str(c_temp))
-                self.root1.find("Temperature").text = c_temp
+                #self.root1.find("Temperature").text = c_temp
 
                 # Get IMU measurement and write it to sensors.xml
-                #x,y,z,w = self.get_imu()
+                roll,pitch = self.get_imu()
                 
-                # use function here to determine "warning tilted at least +45deg n/s/e/w"
+                # Use function here to determine "warning tilted at least +45deg n/s/e/w"
+                orientation = self.check_orientation(roll,pitch)
+                self.root1.find("Orientation").text = orientation[4]
 
-                return depth#,x,y,z,w 
+                # Saves all changes to the sensors.xml on the SD card
+                self.tree1.write(self.xml_file1)                    
+
+                return 
+
+
+        """
+        Checks the orientation of the ROV and returns a binary tuple of 4 values that represent north,
+        south, east, and west. A 1 for any of the 4 values means that the rov is tilted past 45 degrees
+        in that direction. This means that at most there should only ever be at most 2 values that are 1.
+        This also writes the direction in which the ROV is tilting if any.
+        Parameters:
+                Roll - The angle tilted off of the x-axis
+                Pitch - The angle tilted off of the y-axis
+        Return:
+                Return binary tuple of horizontal coordinate plane where 1 means it is tilted past threshold 
+        Notes:
+        """
+        def check_orientation(self, roll, pitch):
+                tilt_data = "" 
+                # Default the orientations to OKAY (not tilted off of any axis by more than 45 degrees
+                n = 0
+                s = 0
+                e = 0
+                w = 0
+                
+                # Check if roll or pitch exceeds 45 degree threshold
+                if roll < -45:
+                        e = 1
+                        #print("Warning: tilted past 45 degrees East.")
+                elif roll > 45:
+                        w = 1
+                        #print("Warning: tilted past 45 degrees West.")
+
+                if pitch < 45:
+                        s = 1
+                        #print("Warning: tilted past 45 degrees South.")
+                elif pitch > 135:
+                        n = 1
+                        #print("Warning: tilted past 45 degrees North.")
+
+                # Write the error string to the sensor xml
+                if n == 1: tilt_data = "North"
+                elif s == 1: tilt_data = "South"
+                elif e == 1: tilt_data = "East"
+                elif w == 1: tilt_data = "West"
+                if n == 1 and e == 1: tilt_data = "Northeast"
+                elif s == 1 and e == 1: tilt_data = "Southeast"
+                elif n == 1 and w == 1: tilt_data = "Northwest"
+                elif s == 1 and w == 1: tilt_data = "Northwest"
+                
+                print("Tilted past 45 degrees: ", tilt_data)
+
+                return n,s,e,w,tilt_data
 
 
 
@@ -348,25 +403,24 @@ class rov:
         Notes:
         """
         def get_imu(self):
-                # Initialize the BNO055 and stop if something went wrong.
-                if not self.bno.begin():
-                        raise RuntimeError('Failed to initialize BNO055! Is the sensor connected?')
+                try:
+                        # Read the Euler angles for heading, roll, pitch (all in degrees).
+                        heading, roll, pitch = self.bno.read_euler()
 
-                # Read the Euler angles for heading, roll, pitch (all in degrees).
-                heading, roll, pitch = self.bno.read_euler()
+                        # Print everything out.
+                        #print('H={0:0.2F} R={1:0.2F} P={2:0.2F}'.format(heading, roll, pitch))
 
-                # Read the calibration status, 0=uncalibrated and 3=fully calibrated.
-                sys, gyro, accel, mag = self.bno.get_calibration_status()
+                        # Orientation as a quaternion:
+                        #x,y,z,w = self.bno.read_quaternion()
+                        #print('x={0:0.3F} y={1:0.3F} z={2:0.3F} w={3}'.format(x, y, z, w))
+                        
+                except:
+                        print("IMU sensor not read")
+                        #return 0,0,0,0
+                        return 0,0
 
-                # Print everything out.
-                print('Heading={0:0.2F} Roll={1:0.2F} Pitch={2:0.2F}\tSys_cal={3} Gyro_cal={4} Accel_cal={5} Mag_cal={6}'.format(
-                      heading, roll, pitch, sys, gyro, accel, mag))
-
-                # Orientation as a quaternion:
-                x,y,z,w = self.bno.read_quaternion()
-                print('x={0:0.3F} y={1:0.3F} z={2:0.3F} w={3}'.format(x, y, z, w))
-
-                return x,y,z,w
+                #return x,y,z,w
+                return roll, pitch
 
 
         """

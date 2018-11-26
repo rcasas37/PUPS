@@ -71,6 +71,10 @@ def main():
         kval = "0" 
         water_type = "0" 
         count = 0
+        x = 0
+        y = 0
+        z = 0
+        q = 0
 
         ser.flushInput() # Flush serial port
 
@@ -82,6 +86,27 @@ def main():
         """
         while end_expedition != True:
                 # Everything goes here
+
+                '''
+                # get sensor measurements
+                if sensor_button == "1":
+                        print("water type: ", water_type)
+                        #depth,x,y,z,w = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        #x,y,z,w = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        roll,pitch = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
+                        
+                else: 
+                        #depth,x,y,z,w = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        #x,y,z,w = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        roll,pitch = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                # do something wth my measurements
+                #print('x={0:0.3f} y={1:0.3f} z={2:0.3f} w={3}'.format(x, y, z, w))
+                print('roll={0:0.3f} pitch={1:0.3f}'.format(roll, pitch))
+
+                time.sleep(.2)
+
+                #'' 
 
                 #print("inWaiting() bytes: ", ser.inWaiting())
                 #if ser.inWaiting():
@@ -151,7 +176,6 @@ def main():
 
                 #ser.flushInput() # Flush serial port
 
-                '''
                 # Control ROV Command Data
                 if cmd_id == "C":
                         # Drive ROV 
@@ -199,22 +223,22 @@ def main():
                         pass
                 else:
                         print("Error, invalid command ID value: ", cmd_id)
-                '''
 
                 #ser.flushInput() # Flush serial port
+                #'''
 
-
-                # Get Sensor Measurements
+                # Get sensor measurements
                 if sensor_button == "1":
-                        print("WATER TYPE: ", water_type)
-                        depth,x,y,z,w = rov.get_essential_meas(water_type)        # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                        print("water type: ", water_type)
+                        rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
                         atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
                         
                 else: 
-                        depth,x,y,z,w = rov.get_essential_meas(water_type)        # Get pressure and temp. 1st input = salt/fresh water (1/0)
+                        rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+
+                print("Sensor string: ", rov.send_sensor_data())
 
                 #count += 1
-
 
                 """End While Loop"""
         # Write sensor data to serial port for last time before quit 
