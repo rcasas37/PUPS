@@ -42,15 +42,20 @@ class rov:
                 ROV class initilization function called upon when ROV object is created.
         """
         def __init__(self, sensor_xml_file=default_sensor_xml, command_xml_file=default_command_xml):
-                # Init imu, temp and pressure sensor objects
+                # Init imu sensor object
                 self.bno = BNO055.BNO055(i2c=3, rst=18)         # Create bno object that uses bitbanged i2c line (3)
-
-                # Initialize the BNO055 and stop if something went wrong.
                 if not self.bno.begin():
                         raise RuntimeError('Failed to initialize BNO055! Is the sensor connected?')
 
+                # Init temperature sensor object
                 self.temp_sensor = tsys01.TSYS01()              # Create temperature object that uses standard i2c line (1) 
+                #if not self.temp_sensor.init():
+                #    print("Error initializing temperature sensor.")         # Print not needed in final version
+
+                # Init pressure sensor object
                 self.pres_sensor = ms5837.MS5837_30BA()         # Create pressure object that uses standard i2c line (1) 
+                #if not self.pres_sensor.init():
+                #        print("Error initializing pressure sensor.")            # Print not needed in final version
 
                 # Initilize all values in commands.xml to defaults (0)
                 self.base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
@@ -142,8 +147,8 @@ class rov:
                 # create sensor string from sensors.xml 
                 sensor_str= (self.root1.find("id_char").text + "," + self.root1.find("pH").text + "," + self.root1.find("Dissolved_Oxygen").text + "," +
                             self.root1.find("Salinity").text + "," + self.root1.find("Temperature").text + "," + self.root1.find("Pressure").text + "," +
-                            self.root1.find("N").text + "," +  self.root1.find("E").text + "," + self.root1.find("S").text + "," + self.root1.find("W").text + "," + 
-                            self.root1.find("Errored_Sensor").text + ";") 
+                            self.root1.find("Errored_Sensor").text + "," + self.root1.find("N").text + "," +  self.root1.find("E").text + "," + self.root1.find("S").text + "," +
+                            self.root1.find("W").text + ";") 
 
                 return sensor_str
 
@@ -438,11 +443,13 @@ class rov:
 
                 # Create sensor object
                 #self.pres_sensor = ms5837.MS5837_30BA() # Default I2C bus is 1 (Raspberry Pi 3)
-
-                # Must initialize pressure sensor before reading it
-                if not self.pres_sensor.init():
-                        print("Error initializing pressure sensor.")            # Print not needed in final version
-                        exit(1)
+                
+                try:
+                        # Must initialize pressure sensor before reading it
+                        if not self.pres_sensor.init():
+                                print("Error initializing pressure sensor.")            # Print not needed in final version
+                except:
+                        return "-1"
 
                 # Freshwater vs Saltwater depth measurements set via user input form cmd center
                 if water_choice == "1":
@@ -466,7 +473,7 @@ class rov:
                         ###sensor.temperature(ms5837.UNITS_Farenheit))) # Request Farenheit
                 else:
                         print ("Error reading pressure sensor.")            # Print not needed in final version
-                        exit(1)
+                        #exit(1)
                 return depth
 
 
@@ -484,15 +491,17 @@ class rov:
                 # Create sensor object
                 #self.temp_sensor = tsys01.TSYS01()
 
-                # Must initilize temp sensor object
-                if not self.temp_sensor.init():
-                    print("Error initializing temperature sensor.")         # Print not needed in final version
-                    exit(1)
+                try:
+                        # Must initilize temp sensor object
+                        if not self.temp_sensor.init():
+                            print("Error initializing temperature sensor.")         # Print not needed in final version
+                except:
+                        return "-1"
 
                 # Read temp sensor once and save in c_temp variable
                 if not self.temp_sensor.read():
                     print("Error reading temperature sensor.")          # Print not needed in final version
-                    exit(1)
+                    #exit(1)
                 
                 c_temp = self.temp_sensor.temperature()                           # Get celcius temp
                 #####f_temp = sensor.temperature(tsys01.UNITS_Farenheit)     # Get farenheit temp

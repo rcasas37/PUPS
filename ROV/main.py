@@ -43,10 +43,10 @@ def main():
 
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
         rov = rov_skeleton.rov()		            # Init rov class/module instance
-        ###pi = pigpio.pi()                                    # Init Raspberry Pi class instance
-        ###rov_control = control.control(pi=pi)                # Init control class instance
+        pi = pigpio.pi()                                    # Init Raspberry Pi class instance
+        rov_control = control.control(pi=pi)                # Init control class instance
         atlas_sensor = rov_skeleton.sensors.atlas_sensors() # Initialize atlas sensor class/module instance
-        ###rov_control.arm()                                   # Init motor pwm signals
+        rov_control.arm()                                   # Init motor pwm signals
 
         # Create atlas sensor thread
         atlas_sensor_thread = Thread(target=atlas_sensor.run)
@@ -54,7 +54,7 @@ def main():
         atlas_sensor_thread.start()
 
         # Open serial port communication
-        ser = serial.Serial(port='/dev/ttyS0', baudrate=38400, parity=serial.PARITY_NONE,
+        ser = serial.Serial(port='/dev/ttyS0', baudrate=19200, parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=0.010)
 
         cmd_id = "0" 
@@ -94,7 +94,7 @@ def main():
                 #time.sleep(.50)
                 ''' 
 
-                #print("inWaiting() bytes: ", ser.inWaiting())
+                print("inWaiting() bytes: ", ser.inWaiting())
                 #if ser.inWaiting():
                         # Get control data from serial port
                 cmd_message = rov.read_serial_port(ser)         # Read from serial port
