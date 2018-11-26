@@ -318,10 +318,10 @@ class control:
           self.speed_m3 += self.norm_values(right_y-3999)
           self.speed_m4 += self.norm_values(right_y-3999)
       elif right_y < -4000:     #Dive
-          self.speed_m1 += self.norm_values(right_y-3999)
-          self.speed_m2 += self.norm_values(right_y-3999)
-          self.speed_m3 += self.norm_values(right_y-3999)
-          self.speed_m4 += self.norm_values(right_y-3999)
+          self.speed_m1 += self.norm_values(right_y+3999)
+          self.speed_m2 += self.norm_values(right_y+3999)
+          self.speed_m3 += self.norm_values(right_y+3999)
+          self.speed_m4 += self.norm_values(right_y+3999)
 
       #Check to see what direction it is going in the x axis
       if right_x > 4000:

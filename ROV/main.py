@@ -131,11 +131,6 @@ def main():
                 cmd_list = cmd_message.split(",")               # Save each individual srting cmd into list cmd_list 
                 msg_len = len(cmd_list)
 
-                #testing:
-                depth = rov.get_essential_meas(water_type)        # Get pressure and temp. 1st input = salt/fresh water (1/0)
-                print("depth: " , depth)
-                #print('x={0:0.3F} y={1:0.3F} z={2:0.3F} w={3}'.format(x, y, z, w))
-
                 if msg_len != 8 and msg_len != 3 and msg_len != 1:
                         #print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$: ", msg_len)
                         #maybe stabalize rov here? cause no data recieved?
@@ -236,7 +231,6 @@ def main():
                 else: 
                         rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
 
-                print("Sensor string: ", rov.send_sensor_data())
 
                 #count += 1
 
