@@ -268,7 +268,7 @@ class control:
       Normalized values
    """
    def norm_values(self, analog_value):
-      return ((analog_value // 137) // 2)   # Divide by 2 to split operation band
+      return ((analog_value // 140) // 2)   # Divide by 2 to split operation band
 
    """
    Main function calls sub functions that handle what is done depending on the incoming

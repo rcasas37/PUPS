@@ -47,6 +47,7 @@ def main():
         rov_control = control.control(pi=pi)                # Init control class instance
         atlas_sensor = rov_skeleton.sensors.atlas_sensors() # Initialize atlas sensor class/module instance
         rov_control.arm()                                   # Init motor pwm signals
+        time.sleep(1)                                       # Wait for thrusters to arm
 
         # Create atlas sensor thread
         atlas_sensor_thread = Thread(target=atlas_sensor.run)
