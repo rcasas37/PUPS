@@ -94,7 +94,7 @@ def main():
                 #time.sleep(.50)
                 ''' 
 
-                print("inWaiting() bytes: ", ser.inWaiting())
+                #print("inWaiting() bytes: ", ser.inWaiting())
                 #if ser.inWaiting():
                         # Get control data from serial port
                 cmd_message = rov.read_serial_port(ser)         # Read from serial port
@@ -211,6 +211,7 @@ def main():
                         print("Error, invalid command ID value: ", cmd_id)
 
                 #ser.flushInput() # Flush serial port
+
 
                 # Get sensor measurements
                 if sensor_button == "1":

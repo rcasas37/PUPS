@@ -205,9 +205,9 @@ class rov:
         """
         def get_essential_meas(self, water_choice, ec, do, ph):
                 # Save atlas sensor data to sensors xml
-                self.root1.find("Salinity").text = str(ec) 
-                self.root1.find("Dissolved_Oxygen").text = str(do) 
-                self.root1.find("pH").text = str(ph) 
+                #self.root1.find("Salinity").text = str(ec) 
+                #self.root1.find("Dissolved_Oxygen").text = str(do) 
+                #self.root1.find("pH").text = str(ph) 
 
                 # Get Pressure measurement and write it to sensors.xml
                 depth = self.get_pressure(water_choice)
@@ -248,7 +248,7 @@ class rov:
         def check_orientation(self, roll, pitch):
                 # Check to make sure IMU sensor is working
                 if roll == 500 and pitch == 500:
-                        return "-1","-1","-1","-1"
+                        return "1","1","1","1"
 
                 # Default the orientations to OKAY or zero (not tilted off of any axis by more than 45 degrees
                 n = "0"
@@ -275,7 +275,7 @@ class rov:
                 elif n == "1" and w == "1": tilt_data = "Northwest"
                 elif s == "1" and w == "1": tilt_data = "Northwest"
                 
-                print("Tilted past 45 degrees: ", tilt_data)
+                #print("Tilted past 45 degrees: ", tilt_data)
                 '''Delete'''
 
                 return n,s,e,w

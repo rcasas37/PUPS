@@ -27,6 +27,9 @@ stop_flag = 1           # stop=1 and run=0
 kval = "10"             # Our probe is k10
 pres_comp_val = "101"   # Pres. compensation value is in kpa
 temp_comp_val = "25"    # Temp. compensation value is in Celsius
+ph_val = 7
+ec_val = 0
+do_val = 0
 
 class atlas_sensors(threading.Thread):
         long_timeout = 1.5                  # the timeout needed to query readings and calibrations
@@ -34,12 +37,6 @@ class atlas_sensors(threading.Thread):
         default_bus = 1                     # the default bus for I2C on the newer Raspberry Pis, certain older boards use bus 0
         default_address = 97                # the default address for the sensor
         current_addr = default_address
-        global ph_val 
-        ph_val = 7
-        global ec_val 
-        ec_val = 25
-        global do_val 
-        do_val = 0
 
         #kval = "10"
         #pres_comp_val = ".3"
@@ -68,6 +65,12 @@ class atlas_sensors(threading.Thread):
                 temp_comp_val = "25"
                 super(atlas_sensors, self).__init__()
                 self._stop_event = threading.Event()
+                global ph_val
+                ph_val = 7
+                global ec_val
+                ec_val = 0
+                global do_val
+                do_val = 0
 
         def terminate_thread(self):
                 self._stop_event.set()
@@ -182,11 +185,11 @@ class atlas_sensors(threading.Thread):
 
         # pH value (as float)
         def set_ph(self, ph):
-                global ph_val
+                global ph_val 
                 ph_val = ph
 
         def get_ph(self):
-                global ph_val 
+                global ph_val
                 return ph_val 
         
         # EC value (as float)
@@ -241,10 +244,10 @@ def program():
                 error = "Atlas Sensor Error: " 
 
         # Initalize access to the sensors.xml file
-        #base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-        #xml_file = os.path.join(base_path, "xml_atlas.xml")   # Join base_path with actual .xml file name
-        #tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
-        #root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
+        base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+        xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
+        tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
+        root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
 
 
         # Initilize values used on atlas sensor measurements
@@ -275,12 +278,12 @@ def program():
                                 ec_reading = (device.query("R")).split()        # Get Salinity measurement
                                 print(ec_reading[2])
                                 ######Must save salinity temp value for use below save in "salinity" variable
-                                #root.find("Salinity").text = ec_reading[2]
-                                self.set_ec_val(ec_reading[2])
+                                root.find("Salinity").text = ec_reading[2]
+                                device.set_ec_val(ec_reading[2])
                                 ec_error = 0
                         except:
                                 # Return error value 
-                                ec_error = 1
+                                ec_error = -1
 
                 elif num_sensors == 1:
                         try:
@@ -292,12 +295,12 @@ def program():
                                 print(device.query("T," + str(device.get_temp_comp())))     # Set Temperature compensation value 
                                 do_reading = (device.query("R")).split()       # Get DO measurement and split the command into a list to get the measurement as a string
                                 print(do_reading[2])
-                               # root.find("Dissolved_Oxygen").text = do_reading[2]
-                                self.set_do_val(do_reading[2])
+                                root.find("Dissolved_Oxygen").text = do_reading[2]
+                                device.set_do_val(do_reading[2])
                                 do_error = 0
                         except:
                                 # Return error value 
-                                do_error = 1
+                                do_error = -1
                 else:
                         try:
                                 device.set_i2c_address(99)
@@ -306,14 +309,17 @@ def program():
                                 print(device.query("T," + str(device.get_temp_comp())))     # Set Temperature compensation value 
                                 ph_reading = (device.query("R")).split()        # Get pH measurement
                                 print(ph_reading[2])
-                               # root.find("pH").text = ph_reading[2]
-                                self.set_ph_val(ph_reading[2])
+                                root.find("pH").text = ph_reading[2]
+                                device.set_ph_val(ph_reading[2])
                                 ph_error = 0
                         except:
                                 # Return error value 
-                                ph_error = 1
-
-                #tree.write(xml_file)         # Saves all changes to the sensors.xml on the SD card
+                                ph_error = -1
+                
+                try:
+                        tree.write(xml_file)         # Saves all changes to the sensors.xml on the SD card
+                except:
+                        print("Error writing atlas sensors to xml")
 
                 """
                 if len(usr_input) == 0:
