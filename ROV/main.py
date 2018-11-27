@@ -79,160 +79,164 @@ def main():
         Logic to control the ROV's different states obtained from command center packets.
         """
         while end_expedition != True:
-                # Everything goes here
+                try:
+                        # Everything goes here
 
-                '''
+                        #print("inWaiting() bytes: ", ser.inWaiting())
+                        #if ser.inWaiting():
+                                # Get control data from serial port
+                        cmd_message = rov.read_serial_port(ser)         # Read from serial port
+                        #ser.flushInput() # Flush serial port
+                        #else:
+                        #if count == 3:
+                        #        ser.flushInput() # Flush serial port
+                        #        count = 0
+                                
+                        #        continue
 
-                # Get sensor measurements
-                if sensor_button == "1":
-                        print("water type: ", water_type)
-                        orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
-                        atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
-                else: 
-                        orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        # CRC Check here before we use the message
 
-                #time.sleep(.50)
-                ''' 
+                        cmd_message = cmd_message.replace(";", "")      # Remove the terminating ; from the message to use the data
 
-                #print("inWaiting() bytes: ", ser.inWaiting())
-                #if ser.inWaiting():
-                        # Get control data from serial port
-                cmd_message = rov.read_serial_port(ser)         # Read from serial port
-                #ser.flushInput() # Flush serial port
-                #else:
-                #if count == 3:
-                #        ser.flushInput() # Flush serial port
-                #        count = 0
-                        
-                #        continue
+                        # Write sensor data to serial port 
+                        rov.write_serial_port(ser, rov.send_sensor_data())
 
-                # CRC Check here before we use the message
+                        # Alternative to writing the cmd message string to xml (IDK why I am trying to do that)
+                        cmd_list = cmd_message.split(",")               # Save each individual srting cmd into list cmd_list 
+                        msg_len = len(cmd_list)
 
-                cmd_message = cmd_message.replace(";", "")      # Remove the terminating ; from the message to use the data
+                        if msg_len != 8 and msg_len != 3 and msg_len != 1:
+                                #print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$: ", msg_len)
+                                #maybe stabalize rov here? cause no data recieved?
+                                ser.flushInput() # Flush serial port
+                                #print("This is the control_message: ", cmd_message)
+                                continue
+                        else:
+                                if cmd_list[0] != '':
+                                        print("*************************************************************************************************************************: ", msg_len)
 
-                # Write sensor data to serial port 
-                rov.write_serial_port(ser, rov.send_sensor_data())
+                                        # Print read results
+                                        print("This is the control_message: ", cmd_message)
 
-                # Alternative to writing the cmd message string to xml (IDK why I am trying to do that)
-                cmd_list = cmd_message.split(",")               # Save each individual srting cmd into list cmd_list 
-                msg_len = len(cmd_list)
+                        # Save Command Center data into variables
+                        if msg_len == 8:
+                                cmd_id = cmd_list[0]
+                                if cmd_id == "C":
+                                        if rov.check_int(cmd_list[1]):
+                                                lt_xaxis = int(cmd_list[1])
+                                        if rov.check_int(cmd_list[2]):
+                                                lt_yaxis = int(cmd_list[2])
+                                        if rov.check_int(cmd_list[3]):
+                                                rt_xaxis = int(cmd_list[3])
+                                        if rov.check_int(cmd_list[4]):
+                                                rt_yaxis = int(cmd_list[4])
+                                        collector_button = cmd_list[5]
+                                        sensor_button = cmd_list[6]
+                                        if rov.check_int(cmd_list[7]):
+                                                headlights = int(cmd_list[7])
 
-                if msg_len != 8 and msg_len != 3 and msg_len != 1:
-                        #print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$: ", msg_len)
-                        #maybe stabalize rov here? cause no data recieved?
-                        ser.flushInput() # Flush serial port
-                        #print("This is the control_message: ", cmd_message)
-                        continue
-                else:
-                        if cmd_list[0] != '':
-                                print("*************************************************************************************************************************: ", msg_len)
+                        elif msg_len == 3:
+                                cmd_id = cmd_list[0]
+                                if cmd_id == "z":
+                                        kval = cmd_list[1]
+                                        water_type = cmd_list[2]
 
-                                # Print read results
-                                print("This is the control_message: ", cmd_message)
-                
-                # Save Command Center data into variables
-                if msg_len == 8:
-                        cmd_id = cmd_list[0]
-                        if rov.check_int(cmd_list[1]):
-                                lt_xaxis = int(cmd_list[1])
-                        if rov.check_int(cmd_list[2]):
-                                lt_yaxis = int(cmd_list[2])
-                        if rov.check_int(cmd_list[3]):
-                                rt_xaxis = int(cmd_list[3])
-                        if rov.check_int(cmd_list[4]):
-                                rt_yaxis = int(cmd_list[4])
-                        collector_button = cmd_list[5]
-                        sensor_button = cmd_list[6]
-                        if rov.check_int(cmd_list[7]):
-                                headlights = int(cmd_list[7])
+                        elif msg_len == 1:
+                                cmd_id = cmd_list[0]
+                                if cmd_id == '':        # If no data is recieved
+                                        continue
 
-                elif msg_len == 3:
-                        cmd_id = cmd_list[0]
-                        kval = cmd_list[1]
-                        water_type = cmd_list[2]
-
-                elif msg_len == 1:
-                        cmd_id = cmd_list[0]
-                        if cmd_id == '':        # If no data is recieved
+                        else:
+                                print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", msg_len)
                                 continue
 
-                else:
-                        print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", msg_len)
-                        continue
+                        #ser.flushInput() # Flush serial port
 
-                #ser.flushInput() # Flush serial port
+                        # Control ROV Command Data
+                        if cmd_id == "C":
+                                # Drive ROV 
+                                rov_control.left_stick_control(lt_xaxis, lt_yaxis, orient)
+                                rov_control.right_stick_control(rt_xaxis, rt_yaxis, orient)
+                                rov_control.set_motor_speed()
 
-                # Control ROV Command Data
-                if cmd_id == "C":
-                        # Drive ROV 
-                        rov_control.left_stick_control(lt_xaxis, lt_yaxis, orient)
-                        rov_control.right_stick_control(rt_xaxis, rt_yaxis, orient)
-                        rov_control.set_motor_speed()
+                                # Set LEDs
+                                rov_control.light_control(headlights)
 
-                        # Set LEDs
-                        rov_control.light_control(headlights)
+                                # Water Collection Control set at 40% speed
+                                rov_control.water_pump_control(40, collector_button)
+                                
+                                pass
+                        # Shutdown ROV motors
+                        elif cmd_id == "p":
+                                # Write normalized 0's (4001) to each motor axis to shut down the motors
+                                rov_control.left_stick_control(4001, 4001)
+                                rov_control.right_stick_control(4001, 4001)
+                                rov_control.set_motor_speed()
 
-                        # Water Collection Control set at 40% speed
-                        rov_control.water_pump_control(40, collector_button)
-                        
-                        pass
-                # Shutdown ROV motors
-                elif cmd_id == "p":
-                        # Write normalized 0's (4001) to each motor axis to shut down the motors
-                        rov_control.left_stick_control(4001, 4001)
-                        rov_control.right_stick_control(4001, 4001)
-                        rov_control.set_motor_speed()
+                                # Water Collection Control set to off (0)
+                                rov_control.water_pump_control(40, 0)
+                                pass
 
-                        # Water Collection Control set to off (0)
-                        rov_control.water_pump_control(40, 0)
-                        pass
+                        # Initalize ROV Data
+                        elif cmd_id == "z":
+                                # Set k value for salinity probe. Water type is sent to pressure sensor each time after it is set
+                                atlas_sensor.set_kval(kval) 
+                                pass
 
-                # Initalize ROV Data
-                elif cmd_id == "z":
-                        # Set k value for salinity probe. Water type is sent to pressure sensor each time after it is set
-                        atlas_sensor.set_kval(kval) 
-                        pass
+                        # End Expedition operation, quit loop and program when depth is approx 2ft or 0.867 psi
+                        elif cmd_id == "f":
+                                # Drive ROV 
+                                rov_control.left_stick_control(lt_xaxis, lt_yaxis, orient)
+                                rov_control.right_stick_control(rt_xaxis, rt_yaxis, orient)
+                                rov_control.set_motor_speed()
 
-                # End Expedition operation, quit loop and program when depth is approx 2ft or 0.867 psi
-                elif cmd_id == "f":
-                        # Drive ROV 
-                        rov_control.left_stick_control(lt_xaxis, lt_yaxis, orient)
-                        rov_control.right_stick_control(rt_xaxis, rt_yaxis, orient)
-                        rov_control.set_motor_speed()
+                                # Set LEDs
+                                rov_control.light_control(headlights)
 
-                        # Set LEDs
-                        rov_control.light_control(headlights)
+                                # Terminate when pressure is less than 2ft or 0.867 psi
+                                if depth <= 0.867:
+                                        end_expedition = True
+                                pass
+                        else:
+                                print("Error, invalid command ID value: ", cmd_id)
 
-                        # Terminate when pressure is less than 2ft or 0.867 psi
-                        if depth <= 0.867:
-                                end_expedition = True
-                        pass
-                else:
-                        print("Error, invalid command ID value: ", cmd_id)
-
-                #ser.flushInput() # Flush serial port
+                        #ser.flushInput() # Flush serial port
 
 
-                # Get sensor measurements
-                if sensor_button == "1":
-                        print("water type: ", water_type)
-                        orient = rov.get_essential_meas(water_type, atlas_sensor.get_ec(), atlas_sensor.get_do(), atlas_sensor.get_ph())        # get pressure and temp. 1st input = salt/fresh water (1/0)
-                        atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
-                else: 
-                        #orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
-                        orient = rov.get_essential_meas(water_type, atlas_sensor.get_ec(), atlas_sensor.get_do(), atlas_sensor.get_ph())        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        # Get sensor measurements
+                        if sensor_button == "1":
+                                print("water type: ", water_type)
+                                orient = rov.get_essential_meas(water_type, atlas_sensor.get_ec(), atlas_sensor.get_do(), atlas_sensor.get_ph())        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                                atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
+                        else: 
+                                #orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                                orient = rov.get_essential_meas(water_type, atlas_sensor.get_ec(), atlas_sensor.get_do(), atlas_sensor.get_ph())        # get pressure and temp. 1st input = salt/fresh water (1/0)
 
-                #count += 1
+                        #count += 1
 
-                """End While Loop"""
+                        """End While Loop"""
+
+                except KeyboardInterrupt:
+                        # Shut down thrusters and sensor thread
+                        atlas_sensor.terminate_thread()
+                        rov_control.disarm()
+                        return 0
+
+
         # Write sensor data to serial port for last time before quit 
         rov.write_serial_port(ser, rov.send_sensor_data())
 
         # Shut down sensor thread before terminating the program
         atlas_sensor.terminate_thread()
+
+        # Shut down thrusters
+        rov_control.disarm()
+
         print("GOODBYE!")
 
         return 0 # End main() Definition # 
+
+
 
 
 # Runs the main just defined above

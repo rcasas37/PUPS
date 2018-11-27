@@ -2,8 +2,7 @@
 	<id_char>S</id_char>
 	<Temperature>Temp</Temperature>
 	<Pressure>Pres</Pressure>
-	<Dissolved_Oxygen>DOxy</Dissolved_Oxygen>
-	<Salinity>Cond!</Salinity>
-	<pH>pH</pH>
-	<Errored_Sensor>Er</Errored_Sensor>
+	<Dissolved_Oxygen>0.00</Dissolved_Oxygen>
+	<Salinity>-1</Salinity>
+	<pH>-1</pH>
 </sensor_array>

@@ -279,11 +279,12 @@ def program():
                                 print(ec_reading[2])
                                 ######Must save salinity temp value for use below save in "salinity" variable
                                 root.find("Salinity").text = ec_reading[2]
-                                device.set_ec_val(ec_reading[2])
-                                ec_error = 0
+                                #device.set_ec_val(ec_reading[2])
+                                #ec_error = 0
                         except:
                                 # Return error value 
-                                ec_error = -1
+                                #ec_error = -1
+                                root.find("Salinity").text = "-1" 
 
                 elif num_sensors == 1:
                         try:
@@ -296,11 +297,12 @@ def program():
                                 do_reading = (device.query("R")).split()       # Get DO measurement and split the command into a list to get the measurement as a string
                                 print(do_reading[2])
                                 root.find("Dissolved_Oxygen").text = do_reading[2]
-                                device.set_do_val(do_reading[2])
-                                do_error = 0
+                                #device.set_do_val(do_reading[2])
+                                #do_error = 0
                         except:
                                 # Return error value 
-                                do_error = -1
+                                #do_error = -1
+                                root.find("Dissolved_Oxygen").text = "-1"
                 else:
                         try:
                                 device.set_i2c_address(99)
@@ -310,11 +312,12 @@ def program():
                                 ph_reading = (device.query("R")).split()        # Get pH measurement
                                 print(ph_reading[2])
                                 root.find("pH").text = ph_reading[2]
-                                device.set_ph_val(ph_reading[2])
-                                ph_error = 0
+                                #device.set_ph_val(ph_reading[2])
+                                #ph_error = 0
                         except:
                                 # Return error value 
-                                ph_error = -1
+                                root.find("pH").text = "-1" 
+                                #ph_error = -1
                 
                 try:
                         tree.write(xml_file)         # Saves all changes to the sensors.xml on the SD card
