@@ -283,7 +283,7 @@ class control:
    Return:
       N/A
    """
-   def left_stick_control(self, left_x, left_y, orient=[0,0,0,0]):
+   def left_stick_control(self, left_x, left_y, orient=["0","0","0","0"]):
       #Check to see what direction it is going in the y axis
       if left_y > self.dead_band:
           self.speed_m1 = -self.norm_values(left_y-self.dead_band)
@@ -291,12 +291,12 @@ class control:
           self.speed_m3 =  self.norm_values(left_y+self.dead_band)
       #Reset speed values to defaults
       else:
-          self.speed_m1 = 0 
-          self.speed_m3 = 0 
-          
-          # Stabilize north and south
-          if orient[0] == 1: self.speed_m3 = -self.stabilize_var
-          elif orient[1] == 1: self.speed_m1 = -self.stabilize_var
+          # Stabilize north and south, else okay so do nothing
+          if orient[0] == "1": self.speed_m3 = -self.stabilize_var
+          elif orient[1] == "1": self.speed_m1 = -self.stabilize_var
+          else:
+             self.speed_m1 = 0 
+             self.speed_m3 = 0 
 
       #Check to see what direction it is going in the x axis
       if left_x > self.dead_band:
@@ -305,12 +305,12 @@ class control:
           self.speed_m4 = self.norm_values(left_x+self.dead_band)
       #Reset speed values to defaults
       else:
-          self.speed_m2 = 0 
-          self.speed_m4 = 0 
-
-          # Stabilize east and west
-          if orient[2] == 1: self.speed_m4 = -self.stabilize_var
-          elif orient[3] == 1: self.speed_m2 = -self.stabilize_var
+          # Stabilize east and west, else okay so do nothing
+          if orient[2] == "1": self.speed_m4 = -self.stabilize_var
+          elif orient[3] == "1": self.speed_m2 = -self.stabilize_var
+          else: 
+             self.speed_m2 = 0 
+             self.speed_m4 = 0 
 
    """
    Main function calls sub functions that handle what is done depending on the incoming
@@ -324,7 +324,7 @@ class control:
    Return:
       N/A
    """
-   def right_stick_control(self, right_x, right_y, orient=[0,0,0,0]):
+   def right_stick_control(self, right_x, right_y, orient=["0","0","0","0"]):
       #Check to see what direction it is going in the y axis
       if right_y > self.dead_band:        #Rise
           self.speed_m1 += self.norm_values(right_y-self.dead_band)
