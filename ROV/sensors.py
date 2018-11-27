@@ -245,7 +245,7 @@ def program():
 
         # Initalize access to the sensors.xml file
         base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-        xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
+        xml_file = os.path.join(base_path, "xml_atlas.xml")   # Join base_path with actual .xml file name
         tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
         root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
 

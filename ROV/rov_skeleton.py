@@ -152,9 +152,15 @@ class rov:
                 tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
                 root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
                 '''
+                # Initalize access to the sensors.xml file
+                base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+                xml_file = os.path.join(base_path, "xml_atlas.xml")   # Join base_path with actual .xml file name
+                tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
+                root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
+
                 # create sensor string from sensors.xml 
-                sensor_str= (self.root1.find("id_char").text + "," + self.root1.find("pH").text + "," + self.root1.find("Dissolved_Oxygen").text + "," +
-                            self.root1.find("Salinity").text + "," + self.root1.find("Temperature").text + "," + self.root1.find("Pressure").text + "," +
+                sensor_str= (self.root1.find("id_char").text + "," + root1.find("pH").text + "," + root1.find("Dissolved_Oxygen").text + "," +
+                            root1.find("Salinity").text + "," + self.root1.find("Temperature").text + "," + self.root1.find("Pressure").text + "," +
                             self.root1.find("Errored_Sensor").text + "," + self.root1.find("N").text + "," +  self.root1.find("E").text + "," + self.root1.find("S").text + "," +
                             self.root1.find("W").text + ";") 
 
