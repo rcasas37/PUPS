@@ -90,14 +90,10 @@ class rov:
                 self.root1.find("id_char").text = "S"         # S=sensor packet 
                 self.root1.find("Temperature").text = "Temp"
                 self.root1.find("Pressure").text = "Pres"
-                self.root1.find("pH").text = "pH"
-                self.root1.find("Salinity").text = "Cond"
-                self.root1.find("Dissolved_Oxygen").text = "DOxy"
                 self.root1.find("N").text = "0" 
                 self.root1.find("S").text = "0" 
                 self.root1.find("E").text = "0" 
                 self.root1.find("W").text = "0" 
-                self.root1.find("Errored_Sensor").text = "Er"
 
                 self.tree1.write(self.xml_file1)    # Saves all changes to the sensors.xml on the SD card
 
@@ -108,12 +104,9 @@ class rov:
                 self.root2 = self.tree2.getroot()                                   # Returns root of the xml file to get access to all elements 
 
                 self.root2.find("id_char").text = "S"         # S=sensor packet 
-                self.root2.find("Temperature").text = "Temp"
-                self.root2.find("Pressure").text = "Pres"
                 self.root2.find("pH").text = "pH"
                 self.root2.find("Salinity").text = "Cond!"
                 self.root2.find("Dissolved_Oxygen").text = "DOxy"
-                self.root2.find("Errored_Sensor").text = "Er"
 
                 self.tree2.write(self.xml_file2)    # Saves all changes to the sensors.xml on the SD card
                 return
@@ -145,13 +138,7 @@ class rov:
                 we want to write to the serial port
         """
         def send_sensor_data(self):
-                '''
-                # Open sensor.xml read from and concatenate all sensor data into string close sensor.xml
-                base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-                xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
-                tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
-                root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
-                '''
+                # Set default sensor packet if atlas sensors fail via try and except below, send sensor read value of -1 (error)
                 sensor_str= (self.root1.find("id_char").text + ",-1,-1,-1," +
                             self.root1.find("Temperature").text + "," + self.root1.find("Pressure").text + "," +
                             self.root1.find("N").text + "," +  self.root1.find("E").text + "," + self.root1.find("S").text + "," +
