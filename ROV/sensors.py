@@ -34,6 +34,13 @@ class atlas_sensors(threading.Thread):
         default_bus = 1                     # the default bus for I2C on the newer Raspberry Pis, certain older boards use bus 0
         default_address = 97                # the default address for the sensor
         current_addr = default_address
+        global ph_val 
+        ph_val = 7
+        global ec_val 
+        ec_val = 25
+        global do_val 
+        do_val = 0
+
         #kval = "10"
         #pres_comp_val = ".3"
         #temp_comp_val = "25"
@@ -173,6 +180,33 @@ class atlas_sensors(threading.Thread):
                 global temp_comp_val
                 return temp_comp_val
 
+        # pH value (as float)
+        def set_ph(self, ph):
+                global ph_val
+                ph_val = ph
+
+        def get_ph(self):
+                global ph_val 
+                return ph_val 
+        
+        # EC value (as float)
+        def set_ec(self, ec):
+                global ec_val
+                ec_val = ec
+        
+        def get_ec(self):
+                global ec_val
+                return ec_val
+
+        # DO value (as float)
+        def set_do(self, do):
+                global do_val
+                do_val = do
+
+        def get_do(self):
+                global do_val
+                return do_val
+
 def program():
         device = atlas_sensors()         # Creates the I2C port object, specify the address or bus if necessary
 
@@ -207,10 +241,10 @@ def program():
                 error = "Atlas Sensor Error: " 
 
         # Initalize access to the sensors.xml file
-        base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-        xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
-        tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
-        root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
+        #base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+        #xml_file = os.path.join(base_path, "xml_atlas.xml")   # Join base_path with actual .xml file name
+        #tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
+        #root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
 
 
         # Initilize values used on atlas sensor measurements
@@ -219,6 +253,9 @@ def program():
         # For while loop
         usr_input = "R"
         num_sensors = 0             #Must do it once for each sensor
+        ec_error = 0
+        do_error = 0
+        ph_error = 0
 
         # Get one DO, EC and pH sensor reading
         while num_sensors != 3:
@@ -238,12 +275,12 @@ def program():
                                 ec_reading = (device.query("R")).split()        # Get Salinity measurement
                                 print(ec_reading[2])
                                 ######Must save salinity temp value for use below save in "salinity" variable
-                                root.find("Salinity").text = ec_reading[2]
+                                #root.find("Salinity").text = ec_reading[2]
+                                self.set_ec_val(ec_reading[2])
+                                ec_error = 0
                         except:
-                                # Add errored sensor to the xml sensor data
-                                error_addr_str = root.find("Errored_Sensor").text   # Get data already in xml
-                                full_error_str = error_addr_str + "_100"            # Append errored sensor to existing data
-                                root.find("Errored_Sensor").text = error + full_error_str   # Set the xml feild
+                                # Return error value 
+                                ec_error = 1
 
                 elif num_sensors == 1:
                         try:
@@ -255,12 +292,12 @@ def program():
                                 print(device.query("T," + str(device.get_temp_comp())))     # Set Temperature compensation value 
                                 do_reading = (device.query("R")).split()       # Get DO measurement and split the command into a list to get the measurement as a string
                                 print(do_reading[2])
-                                root.find("Dissolved_Oxygen").text = do_reading[2]
+                               # root.find("Dissolved_Oxygen").text = do_reading[2]
+                                self.set_do_val(do_reading[2])
+                                do_error = 0
                         except:
-                                # Add errored sensor to the xml sensor data
-                                error_addr_str = root.find("Errored_Sensor").text   # Get data already in xml
-                                full_error_str = error_addr_str + "_97"              # Append errored sensor to existing data
-                                root.find("Errored_Sensor").text = error + full_error_str   # Set the xml feild
+                                # Return error value 
+                                do_error = 1
                 else:
                         try:
                                 device.set_i2c_address(99)
@@ -269,14 +306,14 @@ def program():
                                 print(device.query("T," + str(device.get_temp_comp())))     # Set Temperature compensation value 
                                 ph_reading = (device.query("R")).split()        # Get pH measurement
                                 print(ph_reading[2])
-                                root.find("pH").text = ph_reading[2]
+                               # root.find("pH").text = ph_reading[2]
+                                self.set_ph_val(ph_reading[2])
+                                ph_error = 0
                         except:
-                                # Add errored sensor to the xml sensor data
-                                error_addr_str = root.find("Errored_Sensor").text   # Get data already in xml
-                                full_error_str = error_addr_str + "_99"             # Append errored sensor to existing data
-                                root.find("Errored_Sensor").text = error + full_error_str   # Set the xml feild
+                                # Return error value 
+                                ph_error = 1
 
-                tree.write(xml_file)         # Saves all changes to the sensors.xml on the SD card
+                #tree.write(xml_file)         # Saves all changes to the sensors.xml on the SD card
 
                 """
                 if len(usr_input) == 0:

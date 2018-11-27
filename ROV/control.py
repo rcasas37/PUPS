@@ -192,6 +192,7 @@ class control:
       w1 - Channel that the water pump is connected to. Defaulted to 12
       w1_en1 - GPIOs needed to control direction of water pump. Defaulted to 25
       w1_en2 - GPIOs needed to control direction of water pump. Defaulted to 8
+      off - Offset for the PWM signal in ms that corrects for the hardware PWM driver
    Return:
       N/A
    """
@@ -215,6 +216,7 @@ class control:
       self.speed_m3 = 0 
       self.speed_m4 = 0 
       self.stabilize_var = 40   # 20% of motor speed
+      self.dead_band = 4000
 
    """
    Sends the initialization signal to all motors, sets the light off, water pump
@@ -270,22 +272,23 @@ class control:
 
    """
    Main function calls sub functions that handle what is done depending on the incoming
-   x and y axis values from the left stick. Created a software deadband of +/- 4000 to 
-   prevent jittering when the controller sticks are not touched. Tilts ROV in a single 
+   x and y axis values from the left stick. Created a software deadband of +/- dead_band val set in
+   __init__() to prevent jittering when the controller sticks are not touched. Tilts ROV in a single 
    direction, downward (always negative speed values).
    Parameters:
       self - Needed for all functions in class
       left_x - Controller value from x-axis on left stick 
       left_y - Controller value from y-axis on left stick
+      orient - a binary tuple list that denotes if the rov is tilted in any direction (1=past 45 deg)
    Return:
       N/A
    """
    def left_stick_control(self, left_x, left_y, orient=[0,0,0,0]):
       #Check to see what direction it is going in the y axis
-      if left_y > 4000:
-          self.speed_m1 = -self.norm_values(left_y-3999)
-      elif left_y < -4000:
-          self.speed_m3 =  self.norm_values(left_y+3999)
+      if left_y > self.dead_band:
+          self.speed_m1 = -self.norm_values(left_y-self.dead_band)
+      elif left_y < -self.dead_band:
+          self.speed_m3 =  self.norm_values(left_y+self.dead_band)
       #Reset speed values to defaults
       else:
           self.speed_m1 = 0 
@@ -296,10 +299,10 @@ class control:
           elif orient[1] == 1: self.speed_m1 = -self.stabilize_var
 
       #Check to see what direction it is going in the x axis
-      if left_x > 4000:
-          self.speed_m2 = -self.norm_values(left_x-3999)
-      elif left_x < -4000:
-          self.speed_m4 = self.norm_values(left_x+3999)
+      if left_x > self.dead_band:
+          self.speed_m2 = -self.norm_values(left_x-self.dead_band)
+      elif left_x < -self.dead_band:
+          self.speed_m4 = self.norm_values(left_x+self.dead_band)
       #Reset speed values to defaults
       else:
           self.speed_m2 = 0 
@@ -311,33 +314,34 @@ class control:
 
    """
    Main function calls sub functions that handle what is done depending on the incoming
-   x and y axis values from the right stick. Created a software deadband of +/- 4000 to 
-   prevent jittering when the controller sticks are not touched.
+   x and y axis values from the right stick. Created a software deadband of +/- dead_band
+   val set in __init__() to prevent jittering when the controller sticks are not touched.
    Parameters:
       self - Needed for all functions in class
       right_x - Controller value from x-axis on left stick 
       right_y - Controller value from y-axis on left stick
+      orient - a binary tuple list that denotes if the rov is tilted in any direction (1=past 45 deg)
    Return:
       N/A
    """
    def right_stick_control(self, right_x, right_y, orient=[0,0,0,0]):
       #Check to see what direction it is going in the y axis
-      if right_y > 4000:        #Rise
-          self.speed_m1 += self.norm_values(right_y-3999)
-          self.speed_m2 += self.norm_values(right_y-3999)
-          self.speed_m3 += self.norm_values(right_y-3999)
-          self.speed_m4 += self.norm_values(right_y-3999)
-      elif right_y < -4000:     #Dive
-          self.speed_m1 += self.norm_values(right_y+3999)
-          self.speed_m2 += self.norm_values(right_y+3999)
-          self.speed_m3 += self.norm_values(right_y+3999)
-          self.speed_m4 += self.norm_values(right_y+3999)
+      if right_y > self.dead_band:        #Rise
+          self.speed_m1 += self.norm_values(right_y-self.dead_band)
+          self.speed_m2 += self.norm_values(right_y-self.dead_band)
+          self.speed_m3 += self.norm_values(right_y-self.dead_band)
+          self.speed_m4 += self.norm_values(right_y-self.dead_band)
+      elif right_y < -self.dead_band:     #Dive
+          self.speed_m1 += self.norm_values(right_y+self.dead_band)
+          self.speed_m2 += self.norm_values(right_y+self.dead_band)
+          self.speed_m3 += self.norm_values(right_y+self.dead_band)
+          self.speed_m4 += self.norm_values(right_y+self.dead_band)
 
       #Check to see what direction it is going in the x axis
-      if right_x > 4000:
-          self.rotate_ccw(self.norm_values(right_x-3999) * 2)   # Mult by 2 to get full power since norm_vals returns half power
-      elif right_x < -4000:
-          self.rotate_cw(self.norm_values(right_x+3999) * 2)
+      if right_x > self.dead_band:
+          self.rotate_ccw(self.norm_values(right_x-self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
+      elif right_x < -self.dead_band:
+          self.rotate_cw(self.norm_values(right_x+self.dead_band) * 2)
       else:
           self.pwm.set_pulse_width(self.m5, 1500 + self.offset)
           self.pwm.set_pulse_width(self.m6, 1500 + self.offset)

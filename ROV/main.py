@@ -54,7 +54,7 @@ def main():
         atlas_sensor_thread.start()
 
         # Open serial port communication
-        ser = serial.Serial(port='/dev/ttyS0', baudrate=19200, parity=serial.PARITY_NONE,
+        ser = serial.Serial(port='/dev/ttyS0', baudrate=38400, parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=0.010)
 
         cmd_id = "0" 
@@ -133,13 +133,18 @@ def main():
                 # Save Command Center data into variables
                 if msg_len == 8:
                         cmd_id = cmd_list[0]
-                        lt_xaxis = int(cmd_list[1])
-                        lt_yaxis = int(cmd_list[2])
-                        rt_xaxis = int(cmd_list[3])
-                        rt_yaxis = int(cmd_list[4])
+                        if rov.check_int(cmd_list[1]):
+                                lt_xaxis = int(cmd_list[1])
+                        if rov.check_int(cmd_list[2]):
+                                lt_yaxis = int(cmd_list[2])
+                        if rov.check_int(cmd_list[3]):
+                                rt_xaxis = int(cmd_list[3])
+                        if rov.check_int(cmd_list[4]):
+                                rt_yaxis = int(cmd_list[4])
                         collector_button = cmd_list[5]
                         sensor_button = cmd_list[6]
-                        headlights = int(cmd_list[7])
+                        if rov.check_int(cmd_list[7]):
+                                headlights = int(cmd_list[7])
 
                 elif msg_len == 3:
                         cmd_id = cmd_list[0]
@@ -210,10 +215,11 @@ def main():
                 # Get sensor measurements
                 if sensor_button == "1":
                         print("water type: ", water_type)
-                        orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        orient = rov.get_essential_meas(water_type, atlas_sensor.get_ec(), atlas_sensor.get_do(), atlas_sensor.get_ph())        # get pressure and temp. 1st input = salt/fresh water (1/0)
                         atlas_sensor.set_stop_flag(0) # 0 =go get atlas sensor meas
                 else: 
-                        orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        #orient = rov.get_essential_meas(water_type)        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                        orient = rov.get_essential_meas(water_type, atlas_sensor.get_ec(), atlas_sensor.get_do(), atlas_sensor.get_ph())        # get pressure and temp. 1st input = salt/fresh water (1/0)
 
                 #count += 1
 

@@ -27,6 +27,7 @@ import xml.etree.ElementTree as et  # Module provides .xml file manipulation and
 
 class rov:
         default_sensor_xml = "xml_sensors.xml"   
+        default_atlas_xml = "xml_atlas.xml"   
         default_command_xml = "xml_commands.xml"   
         cmd_xml_elem = ["id_char", "lt_xaxis", "lt_yaxis", "rt_xaxis", "rt_yaxis", "a_button", "x_button", "k_value", "water_type"]
 
@@ -41,11 +42,15 @@ class rov:
         Notes:
                 ROV class initilization function called upon when ROV object is created.
         """
-        def __init__(self, sensor_xml_file=default_sensor_xml, command_xml_file=default_command_xml):
+        def __init__(self, sensor_xml_file=default_sensor_xml, command_xml_file=default_command_xml, atlas_xml_file=default_atlas_xml):
                 # Init imu sensor object
                 self.bno = BNO055.BNO055(i2c=3, rst=18)         # Create bno object that uses bitbanged i2c line (3)
-                if not self.bno.begin():
-                        raise RuntimeError('Failed to initialize BNO055! Is the sensor connected?')
+                try:
+                        # Must initialize imu sensor before reading it
+                        if not self.bno.begin():
+                                print("IMU sensor not initalized - rov_skeleton")
+                except:
+                        print("IMU sensor not initalized1 - rov_skeleton")
 
                 # Init temperature sensor object
                 self.temp_sensor = tsys01.TSYS01()              # Create temperature object that uses standard i2c line (1) 
@@ -56,6 +61,7 @@ class rov:
                 self.pres_sensor = ms5837.MS5837_30BA()         # Create pressure object that uses standard i2c line (1) 
                 #if not self.pres_sensor.init():
                 #        print("Error initializing pressure sensor.")            # Print not needed in final version
+
 
                 # Initilize all values in commands.xml to defaults (0)
                 self.base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
@@ -82,47 +88,49 @@ class rov:
                 self.root1 = self.tree1.getroot()                                   # Returns root of the xml file to get access to all elements 
 
                 self.root1.find("id_char").text = "S"         # S=sensor packet 
-                self.root1.find("Temperature").text = "Temperature"
-                self.root1.find("Pressure").text = "Pressure"
-                self.root1.find("pH").text = "pHval"
-                self.root1.find("Salinity").text = "Salinity"
+                self.root1.find("Temperature").text = "Temp"
+                self.root1.find("Pressure").text = "Pres"
+                self.root1.find("pH").text = "pH"
+                self.root1.find("Salinity").text = "Cond"
                 self.root1.find("Dissolved_Oxygen").text = "DOxy"
                 self.root1.find("N").text = "0" 
                 self.root1.find("S").text = "0" 
                 self.root1.find("E").text = "0" 
                 self.root1.find("W").text = "0" 
-                self.root1.find("Errored_Sensor").text = "0"
+                self.root1.find("Errored_Sensor").text = "Er"
 
                 self.tree1.write(self.xml_file1)    # Saves all changes to the sensors.xml on the SD card
+
+                # Initilize all values in sensors.xml to defaults (0)
+                self.base_path2 = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
+                self.xml_file2 = os.path.join(self.base_path2, atlas_xml_file)     # Join base_path with actual .xml file name
+                self.tree2 = et.parse(self.xml_file2)                               # Save file into memory to work with its children/elements
+                self.root2 = self.tree2.getroot()                                   # Returns root of the xml file to get access to all elements 
+
+                self.root2.find("id_char").text = "S"         # S=sensor packet 
+                self.root2.find("Temperature").text = "Temp"
+                self.root2.find("Pressure").text = "Pres"
+                self.root2.find("pH").text = "pH"
+                self.root2.find("Salinity").text = "Cond!"
+                self.root2.find("Dissolved_Oxygen").text = "DOxy"
+                self.root2.find("Errored_Sensor").text = "Er"
+
+                self.tree2.write(self.xml_file2)    # Saves all changes to the sensors.xml on the SD card
                 return
 
 
 
         """
-        Reads a specific element from the commands.xml file for motor/ROV control
+        Reads a specific element from the commands.xml file for motor/ROV control and returns it
         Parameters:
                 cmd_element - The element of interest within the xml 
         Return:
-                command_str - The value from the xml of the element selected through cmd_element 
+                The value from the xml of the element selected through cmd_element 
         Notes:
         """
         def read_command_xml(self, cmd_element):
-                '''
-                # Read from command xml at specific point so I
-                #may need more function input parameters
+                return self.root.find(cmd_element).text
 
-                # Open command.xml for reading
-                base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-                xml_file = os.path.join(base_path, "xml_commands.xml")  # Join base_path with actual .xml file name
-                tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
-                root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
-
-                # Use cmd_element parameter to grab specific element inside command.xml for motor control 
-                #SEE above comment 
-                '''
-                command_str = root.find(cmd_element).text
-
-                return command_str
 
 
         """
@@ -192,18 +200,21 @@ class rov:
         Parameters:
                 water_choice - chosen by the user at startup
         Return:
-                depth and orientation tuple 
+                Binary orientation tuple of size 4. Where 1 denotes tilted past 45 degrees 
         Notes:
         """
-        def get_essential_meas(self, water_choice):
+        def get_essential_meas(self, water_choice, ec, do, ph):
+                # Save atlas sensor data to sensors xml
+                self.root1.find("Salinity").text = str(ec) 
+                self.root1.find("Dissolved_Oxygen").text = str(do) 
+                self.root1.find("pH").text = str(ph) 
+
                 # Get Pressure measurement and write it to sensors.xml
                 depth = self.get_pressure(water_choice)
-                #write_xml("0", "Pressure", str(depth))
                 self.root1.find("Pressure").text = depth
 
                 # Get Temperature measurement and write it to sensors.xml
                 c_temp = self.get_temperature()
-                #write_xml("0", "Temperature", str(c_temp))
                 self.root1.find("Temperature").text = c_temp
 
                 # Get IMU measurement and write it to sensors.xml
@@ -216,7 +227,6 @@ class rov:
                 self.root1.find("E").text = orientation[2]
                 self.root1.find("W").text = orientation[3]
 
-                #nsew
                 # Saves all changes to the sensors.xml on the SD card
                 self.tree1.write(self.xml_file1)                    
 
@@ -236,12 +246,16 @@ class rov:
         Notes:
         """
         def check_orientation(self, roll, pitch):
-                tilt_data = "" 
-                # Default the orientations to OKAY (not tilted off of any axis by more than 45 degrees
+                # Check to make sure IMU sensor is working
+                if roll == 500 and pitch == 500:
+                        return "-1","-1","-1","-1"
+
+                # Default the orientations to OKAY or zero (not tilted off of any axis by more than 45 degrees
                 n = "0"
                 s = "0"
                 e = "0"
                 w = "0"
+                tilt_data = "" 
                 
                 # Check if roll or pitch exceeds 45 degree threshold
                 if roll < -45: e = "1"
@@ -266,20 +280,6 @@ class rov:
 
                 return n,s,e,w
 
-
-
-        """
-        Attempts to stabilize rov via accelerometer and gyro if user sends to mvmt cmds
-        Parameters:
-                list of parameters
-        Return:
-                Do we return any value?
-        Notes:
-        """
-        def stabilize_rov(self):
-                # This one is gonna be a beach
-
-                return
 
 
         """
@@ -327,14 +327,11 @@ class rov:
                 # Open and write sensor_str to serial port
                 sensor_encoded = sensor_str.encode()
                 ser.write(sensor_encoded)
-
-                # This is the sensor string I have
-                ############print("This is the sensor string I have to send: ", sensor_str)
-
                 return
 
 
         """
+        DELETE ME
         Writes each command data to the command.xml for motor use
         Parameters:
                 cmd_str - A single rov command that will be writen to the commands.xml
@@ -359,6 +356,7 @@ class rov:
 
 
         """
+        DELETE ME
         Writes individual string data to a single element in the chosen xml file.
         Parameters:
                 Select the xml to open, the element in the xml to overwrite, string to write to xml 
@@ -413,18 +411,10 @@ class rov:
                 try:
                         # Read the Euler angles for heading, roll, pitch (all in degrees).
                         heading, roll, pitch = self.bno.read_euler()
-
-                        # Print everything out.
                         #print('H={0:0.2F} R={1:0.2F} P={2:0.2F}'.format(heading, roll, pitch))
-
-                        # Orientation as a quaternion:
-                        #x,y,z,w = self.bno.read_quaternion()
-                        #print('x={0:0.3F} y={1:0.3F} z={2:0.3F} w={3}'.format(x, y, z, w))
-                        
                 except:
-                        print("IMU sensor not read")
-                        #return 0,0,0,0
-                        return 0,0
+                        self.bno.begin()    # Try to restart BNO055
+                        return 500,500      # Return values that will NEVER be read for Roll and Pitch
 
                 #return x,y,z,w
                 return roll, pitch
@@ -467,10 +457,6 @@ class rov:
 
                 if self.pres_sensor.read():
                         depth = self.pres_sensor.pressure(ms5837.UNITS_psi)           # Get presure in psi
-                        #####print("P: %0.4f m \t T: %0.2f C  %0.2f F\n" % (         # Print not needed in final version
-                        ###depth,      # Sensor depth, either fresh or salf water depending on above
-                        ###sensor.temperature(), # Default is degrees C (no arguments)
-                        ###sensor.temperature(ms5837.UNITS_Farenheit))) # Request Farenheit
                 else:
                         print ("Error reading pressure sensor.")            # Print not needed in final version
                         #exit(1)
@@ -509,6 +495,22 @@ class rov:
                 
                 return c_temp 
 
+        """
+        Checks a passed string to determine if it is an int. It also accounts for '-'
+        and '+' signs just in case; as well as the empty string "". E.g. returns true
+        for vals such as: "10", "-10" and "+10" false for any other char that is not an int.
+        Parameters:
+                s - String that will be checked if an integer value is present 
+        Return:
+                True or False depending on if passed string is an integer. 
+        Notes:
+        """
+        def check_int(self, s):
+                if s == "":
+                        return False
+                if s[0] in ('-', '+'):
+                        return s[1:].isdigit()
+                return s.isdigit()
 
 
 
