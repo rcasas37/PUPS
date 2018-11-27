@@ -268,7 +268,7 @@ class control:
       Normalized values
    """
    def norm_values(self, analog_value):
-      return ((analog_value // 140) // 2)   # Divide by 2 to split operation band
+      return ((analog_value // 140.331707) // 2)   # Divide by 2 to split operation band
 
    """
    Main function calls sub functions that handle what is done depending on the incoming
@@ -388,6 +388,12 @@ class control:
          self.pwm.set_pulse_width(self.m4, 1475 + self.speed_m4 + self.offset)
       else:
          self.pwm.set_pulse_width(self.m4, 1500 + self.offset)
+
+      # Reset motor speeds to avoid constant addition to class variable
+      self.speed_m1 = 0
+      self.speed_m2 = 0
+      self.speed_m3 = 0
+      self.speed_m4 = 0
 
 
    """

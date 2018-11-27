@@ -1,6 +1,6 @@
 <sensor_array title="ROV Sensors">
 	<id_char>S</id_char>
-	<Dissolved_Oxygen>DOxy</Dissolved_Oxygen>
-	<Salinity>Cond!</Salinity>
-	<pH>pH</pH>
+	<Dissolved_Oxygen>0.00</Dissolved_Oxygen>
+	<Salinity>0.00</Salinity>
+	<pH>0.000</pH>
 </sensor_array>
