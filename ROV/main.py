@@ -204,8 +204,8 @@ def main():
                         rov_control.light_control(headlights)
 
                         # Terminate when pressure is less than 2ft or 0.867 psi
-                        if depth <= 0.867:
-                                end_expedition = True
+                        #if depth <= 0.867:
+                        end_expedition = True
                         pass
                 else:
                         print("Error, invalid command ID value: ", cmd_id)
