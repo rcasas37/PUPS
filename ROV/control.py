@@ -196,7 +196,7 @@ class control:
    Return:
       N/A
    """
-   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=22, w1_en2=8, off=30):   # enable 1 is 22, needs to be 25 via schematics
+   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=25, w1_en2=8, off=30):   # enable 1 is 22, needs to be 25 via schematics
       self.pi = pi #pigpio.pi()
       #self.pi = pigpio.pi()
       self.pwm = PWM(self.pi)
@@ -215,8 +215,8 @@ class control:
       self.speed_m2 = 0 
       self.speed_m3 = 0 
       self.speed_m4 = 0 
-      self.stabilize_var = 0   # 40 = 20% of motor speed
-      self.dead_band = 4500
+      self.stabilize_var = 40   # 40 = 20% of motor speed
+      self.dead_band = 5000
 
    """
    Sends the initialization signal to all motors, sets the light off, water pump
@@ -336,6 +336,15 @@ class control:
           self.speed_m2 += -self.norm_values(right_y+self.dead_band)
           self.speed_m3 += -self.norm_values(right_y+self.dead_band)
           self.speed_m4 += -self.norm_values(right_y+self.dead_band)
+      else:
+          # If pause is pressed turn off all motors
+          if right_y == self.dead_band and right_x == self.dead_band:
+             self.speed_m1 = 0
+             self.speed_m2 = 0
+             self.speed_m3 = 0
+             self.speed_m4 = 0
+             self.speed_m5 = 0
+             self.speed_m6 = 0
 
       #Check to see what direction it is going in the x axis
       if right_x > self.dead_band:
@@ -451,11 +460,11 @@ class control:
       N/A
    """
    def water_pump_control(self, pwm, en):
-      if en == 0:
+      if en == "0":
          self.pwm.set_duty_cycle(self.w1, pwm)
          self.pi.write(self.w1_en1, 0)
          self.pi.write(self.w1_en2, 0)
-      elif en == 1:
+      elif en == "1":
          self.pwm.set_duty_cycle(self.w1, pwm)
          self.pi.write(self.w1_en1, 0)
          self.pi.write(self.w1_en2, 1)

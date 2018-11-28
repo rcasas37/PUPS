@@ -205,11 +205,6 @@ class rov:
         Notes:
         """
         def get_essential_meas(self, water_choice, ec, do, ph):
-                # Save atlas sensor data to sensors xml
-                #self.root1.find("Salinity").text = str(ec) 
-                #self.root1.find("Dissolved_Oxygen").text = str(do) 
-                #self.root1.find("pH").text = str(ph) 
-
                 # Get Pressure measurement and write it to sensors.xml
                 depth = self.get_pressure(water_choice)
                 self.root1.find("Pressure").text = str(depth)
@@ -231,7 +226,7 @@ class rov:
                 # Saves all changes to the sensors.xml on the SD card
                 self.tree1.write(self.xml_file1)                    
 
-                return orientation 
+                return orientation,depth 
 
 
         """
