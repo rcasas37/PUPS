@@ -1,7 +1,7 @@
 <sensor_array title="ROV Sensors">
 	<id_char>S</id_char>
-	<Temperature>-1</Temperature>
-	<Pressure>-1</Pressure>
+	<Temperature>23.0402269483</Temperature>
+	<Pressure>14.8518643436</Pressure>
 	<N>0</N>
 	<E>0</E>
 	<S>1</S>

@@ -212,11 +212,11 @@ class rov:
 
                 # Get Pressure measurement and write it to sensors.xml
                 depth = self.get_pressure(water_choice)
-                self.root1.find("Pressure").text = depth
+                self.root1.find("Pressure").text = str(depth)
 
                 # Get Temperature measurement and write it to sensors.xml
                 c_temp = self.get_temperature()
-                self.root1.find("Temperature").text = c_temp
+                self.root1.find("Temperature").text = str(c_temp)
 
                 # Get IMU measurement and write it to sensors.xml
                 roll,pitch = self.get_imu()

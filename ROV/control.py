@@ -196,7 +196,7 @@ class control:
    Return:
       N/A
    """
-   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=25, w1_en2=8, off=30):
+   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=22, w1_en2=8, off=30):   # enable 1 is 22, needs to be 25 via schematics
       self.pi = pi #pigpio.pi()
       #self.pi = pigpio.pi()
       self.pwm = PWM(self.pi)
@@ -215,8 +215,8 @@ class control:
       self.speed_m2 = 0 
       self.speed_m3 = 0 
       self.speed_m4 = 0 
-      self.stabilize_var = 40   # 20% of motor speed
-      self.dead_band = 4000
+      self.stabilize_var = 0   # 40 = 20% of motor speed
+      self.dead_band = 4500
 
    """
    Sends the initialization signal to all motors, sets the light off, water pump
@@ -268,7 +268,7 @@ class control:
       Normalized values
    """
    def norm_values(self, analog_value):
-      return ((analog_value // 140.331707) // 2)   # Divide by 2 to split operation band
+      return ((analog_value // 137.892683) // 2)   # Divide by 2 to split operation band
 
    """
    Main function calls sub functions that handle what is done depending on the incoming
@@ -286,9 +286,9 @@ class control:
    def left_stick_control(self, left_x, left_y, orient=["0","0","0","0"]):
       #Check to see what direction it is going in the y axis
       if left_y > self.dead_band:
-          self.speed_m1 = -self.norm_values(left_y-self.dead_band)
+          self.speed_m1 = self.norm_values(left_y-self.dead_band)
       elif left_y < -self.dead_band:
-          self.speed_m3 =  self.norm_values(left_y+self.dead_band)
+          self.speed_m3 =  -self.norm_values(left_y+self.dead_band)
       #Reset speed values to defaults
       else:
           # Stabilize north and south, else okay so do nothing
@@ -300,9 +300,9 @@ class control:
 
       #Check to see what direction it is going in the x axis
       if left_x > self.dead_band:
-          self.speed_m2 = -self.norm_values(left_x-self.dead_band)
+          self.speed_m2 = self.norm_values(left_x-self.dead_band)
       elif left_x < -self.dead_band:
-          self.speed_m4 = self.norm_values(left_x+self.dead_band)
+          self.speed_m4 = -self.norm_values(left_x+self.dead_band)
       #Reset speed values to defaults
       else:
           # Stabilize east and west, else okay so do nothing
@@ -327,15 +327,15 @@ class control:
    def right_stick_control(self, right_x, right_y, orient=["0","0","0","0"]):
       #Check to see what direction it is going in the y axis
       if right_y > self.dead_band:        #Rise
-          self.speed_m1 += self.norm_values(right_y-self.dead_band)
-          self.speed_m2 += self.norm_values(right_y-self.dead_band)
-          self.speed_m3 += self.norm_values(right_y-self.dead_band)
-          self.speed_m4 += self.norm_values(right_y-self.dead_band)
+          self.speed_m1 += -self.norm_values(right_y-self.dead_band)
+          self.speed_m2 += -self.norm_values(right_y-self.dead_band)
+          self.speed_m3 += -self.norm_values(right_y-self.dead_band)
+          self.speed_m4 += -self.norm_values(right_y-self.dead_band)
       elif right_y < -self.dead_band:     #Dive
-          self.speed_m1 += self.norm_values(right_y+self.dead_band)
-          self.speed_m2 += self.norm_values(right_y+self.dead_band)
-          self.speed_m3 += self.norm_values(right_y+self.dead_band)
-          self.speed_m4 += self.norm_values(right_y+self.dead_band)
+          self.speed_m1 += -self.norm_values(right_y+self.dead_band)
+          self.speed_m2 += -self.norm_values(right_y+self.dead_band)
+          self.speed_m3 += -self.norm_values(right_y+self.dead_band)
+          self.speed_m4 += -self.norm_values(right_y+self.dead_band)
 
       #Check to see what direction it is going in the x axis
       if right_x > self.dead_band:
