@@ -50,7 +50,7 @@ def main():
         headlights = 0              # - 
         kval = "0"                  # - 
         water_type = "0"            # Variables to store cmd center data (above) 
-        count = 0
+        error_count = 0
         orient = [0,0,0,0,""]
 
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
@@ -81,9 +81,6 @@ def main():
         """
         while end_expedition != True:
                 try:
-                        #print("inWaiting() bytes: ", ser.inWaiting())
-                        #if ser.inWaiting():
-
                         # Get control data from serial port
                         cmd_message = rov.read_serial_port(ser)         # Read from serial port
 
@@ -102,8 +99,21 @@ def main():
                         if msg_len != 8 and msg_len != 3 and msg_len != 1:
                                 # Command message was in error so flush port and restart the while loop
                                 ser.flushInput() # Flush serial port
+                                
+                                #Shut off motors if count of bad messages is 10
+                                error_count += 1
+                                if error_count == 10:
+                                        # No data received, turn off thrusters, write normalized 0's (5000) to each motor axis to shut down 
+                                        print("10 bad messages")
+                                        rov_control.left_stick_control(5000, 5000)
+                                        rov_control.right_stick_control(5000, 5000)
+                                        rov_control.set_motor_speed()
+                                        rov_control.water_pump_control(40, 0)
+                                        error_count = 0
                                 continue
                         else:
+                                error_count = 0     # Got good data, reset error count
+
                                 # If message is of length 8, 3, or 1 and not empty the pass onto normal operation of ROV
                                 if cmd_list[0] != '':
                                         # Print read results as debug
@@ -138,7 +148,6 @@ def main():
                                 if cmd_id == '':        # If no data is received
                                         continue
                         else:
-                                print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", msg_len)
                                 continue
                         
                         # ROV Control based on packet received and parsed above into main.py variables
@@ -199,6 +208,9 @@ def main():
 
                         else:                       # Get essential measurements only 
                                 orient,depth = rov.get_essential_meas(water_type, atlas_sensor.get_ec(), atlas_sensor.get_do(), atlas_sensor.get_ph())        # get pressure and temp. 1st input = salt/fresh water (1/0)
+
+                        # Reset cmd_list to zeros
+                        #cmd_list = ["C","0","0","0","0","0","0"] 
 
 
                         """End While Loop"""

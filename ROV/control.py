@@ -215,6 +215,8 @@ class control:
       self.speed_m2 = 0 
       self.speed_m3 = 0 
       self.speed_m4 = 0 
+      self.speed_m5 = 0 
+      self.speed_m6 = 0 
       self.stabilize_var = 40   # 40 = 20% of motor speed
       self.dead_band = 5000
 
@@ -343,17 +345,24 @@ class control:
              self.speed_m2 = 0
              self.speed_m3 = 0
              self.speed_m4 = 0
-             self.speed_m5 = 0
-             self.speed_m6 = 0
-
+      #'''
       #Check to see what direction it is going in the x axis
       if right_x > self.dead_band:
-          self.rotate_ccw(self.norm_values(right_x-self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
+          #self.rotate_ccw(self.norm_values(right_x-self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
+          self.speed_m5 = (self.norm_values(right_x-self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
+          self.speed_m6 = (self.norm_values(right_x-self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
       elif right_x < -self.dead_band:
-          self.rotate_cw(self.norm_values(right_x+self.dead_band) * 2)
+          #self.rotate_cw(self.norm_values(right_x+self.dead_band) * 2)
+          self.speed_m5 = (self.norm_values(right_x+self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
+          self.speed_m6 = (self.norm_values(right_x+self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
       else:
-          self.pwm.set_pulse_width(self.m5, 1500 + self.offset)
-          self.pwm.set_pulse_width(self.m6, 1500 + self.offset)
+          # If pause is pressed turn off all motors
+          if right_y == self.dead_band and right_x == self.dead_band:
+             self.speed_m5 = 0
+             self.speed_m6 = 0
+          #self.pwm.set_pulse_width(self.m5, 1500 + self.offset)
+          #self.pwm.set_pulse_width(self.m6, 1500 + self.offset)
+      #'''
 
 
    """
@@ -397,12 +406,27 @@ class control:
          self.pwm.set_pulse_width(self.m4, 1475 + self.speed_m4 + self.offset)
       else:
          self.pwm.set_pulse_width(self.m4, 1500 + self.offset)
+    
+      #'''
+      # Set motor 5 and 6 speed
+      if self.speed_m5 > 0 and self.speed_m6 > 0:
+         self.pwm.set_pulse_width(self.m5, 1525 + self.speed_m4 + self.offset)
+         self.pwm.set_pulse_width(self.m6, 1525 + self.speed_m4 + self.offset)
+      elif self.speed_m5 < 0 and self.speed_m6 < 0:
+         self.pwm.set_pulse_width(self.m5, 1475 + self.speed_m4 + self.offset)
+         self.pwm.set_pulse_width(self.m6, 1475 + self.speed_m4 + self.offset)
+      else:
+         self.pwm.set_pulse_width(self.m5, 1500 + self.offset)
+         self.pwm.set_pulse_width(self.m6, 1500 + self.offset)
+      #'''
 
       # Reset motor speeds to avoid constant addition to class variable
       self.speed_m1 = 0
       self.speed_m2 = 0
       self.speed_m3 = 0
       self.speed_m4 = 0
+      self.speed_m5 = 0
+      self.speed_m6 = 0
 
 
    """
