@@ -52,7 +52,7 @@ def main():
         water_type = "0"            # Variables to store cmd center data (above) 
         error_count = 0
         orient = [0,0,0,0,""]
-
+        
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
         rov = rov_skeleton.rov()		            # Init rov class/module instance
         pi = pigpio.pi()                                    # Init Raspberry Pi class instance
