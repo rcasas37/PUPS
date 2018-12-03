@@ -99,20 +99,8 @@ def main():
                         if msg_len != 8 and msg_len != 3 and msg_len != 1:
                                 # Command message was in error so flush port and restart the while loop
                                 ser.flushInput() # Flush serial port
-                                
-                                #Shut off motors if count of bad messages is 10
-                                error_count += 1
-                                if error_count == 10:
-                                        # No data received, turn off thrusters, write normalized 0's (5000) to each motor axis to shut down 
-                                        print("10 bad messages")
-                                        rov_control.left_stick_control(5000, 5000)
-                                        rov_control.right_stick_control(5000, 5000)
-                                        rov_control.set_motor_speed()
-                                        rov_control.water_pump_control(40, 0)
-                                        error_count = 0
                                 continue
                         else:
-                                error_count = 0     # Got good data, reset error count
 
                                 # If message is of length 8, 3, or 1 and not empty the pass onto normal operation of ROV
                                 if cmd_list[0] != '':
@@ -138,16 +126,31 @@ def main():
                                         sensor_button = cmd_list[6]
                                         if rov.check_int(cmd_list[7]):
                                                 headlights = int(cmd_list[7])
+                                error_count = 0     # Got good data, reset error count
                         elif msg_len == 3:      # Data is initalization packet
                                 cmd_id = cmd_list[0]
                                 if cmd_id == "z":
                                         kval = cmd_list[1]
                                         water_type = cmd_list[2]
+                                error_count = 0     # Got good data, reset error count
                         elif msg_len == 1:      # Data is pause packet or no data received 
                                 cmd_id = cmd_list[0]
                                 if cmd_id == '':        # If no data is received
+
+                                        #Shut off motors if count of bad messages > 10
+                                        print("Here: ", error_count)
+                                        error_count += 1
+                                        if error_count > 10:
+                                                # No data received, turn off thrusters, write normalized 0's (5000) to each motor axis to shut down 
+                                                print("10 bad messages")
+                                                rov_control.left_stick_control(5000, 5000)
+                                                rov_control.right_stick_control(5000, 5000)
+                                                rov_control.set_motor_speed()
+                                                rov_control.water_pump_control(40, 0)
+                                                error_count = 0
                                         continue
                         else:
+                                error_count = 0     # Got good data, reset error count
                                 continue
                         
                         # ROV Control based on packet received and parsed above into main.py variables

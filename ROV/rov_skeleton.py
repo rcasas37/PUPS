@@ -105,7 +105,7 @@ class rov:
 
                 self.root2.find("id_char").text = "S"         # S=sensor packet 
                 self.root2.find("pH").text = "pH"
-                self.root2.find("Salinity").text = "Cond!"
+                self.root2.find("Salinity").text = "Cond"
                 self.root2.find("Dissolved_Oxygen").text = "DOxy"
 
                 self.tree2.write(self.xml_file2)    # Saves all changes to the sensors.xml on the SD card
