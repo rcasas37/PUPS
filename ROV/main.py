@@ -136,18 +136,16 @@ def main():
                         elif msg_len == 1:      # Data is pause packet or no data received 
                                 cmd_id = cmd_list[0]
                                 if cmd_id == '':        # If no data is received
-
                                         #Shut off motors if count of bad messages > 10
-                                        print("Here: ", error_count)
                                         error_count += 1
                                         if error_count > 10:
                                                 # No data received, turn off thrusters, write normalized 0's (5000) to each motor axis to shut down 
-                                                print("10 bad messages")
+                                                print("10 bad messages")        # Print read results as debug
                                                 rov_control.left_stick_control(5000, 5000)
                                                 rov_control.right_stick_control(5000, 5000)
                                                 rov_control.set_motor_speed()
                                                 rov_control.water_pump_control(40, 0)
-                                                error_count = 0
+                                                error_count = 0                 # Reset error count to avoid int overflow given long no connect
                                         continue
                         else:
                                 error_count = 0     # Got good data, reset error count
