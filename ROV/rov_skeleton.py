@@ -2,11 +2,11 @@
 Texas A&M University
 Electronic Systems Engineering Technology
 ESET-420 Capstone II
-Author: SEAL
+Author: Landon Ledbetter
 File: rov_skeleton.py
 --------
-Contains the rov class and functions that run SEAL's rov. Including movement, 
-sensor readings, and communication to SEAL's cmd center.
+Contains the rov class and functions that run SEAL's rov. Including 
+sensor readings and communication to SEAL's cmd center.
 """
 
 # Import python/sensor modules
@@ -25,28 +25,39 @@ import os           # Module used to find the file directory path for reading an
 import xml.etree.ElementTree as et  # Module provides .xml file manipulation and functions
 
 
+"""
+The rov class handles initalizing xml files, setting up and managing essential sensor objects and takes measurements
+such as temperature, pressure, and IMU orientation data. Class contains functions that reads and writes data
+to and from xmls and it also has functions that reads and writes the appropriate messages to and from the
+serial port. 
+"""
 class rov:
+        # rov class member variables
         default_sensor_xml = "xml_sensors.xml"   
         default_atlas_xml = "xml_atlas.xml"   
         default_command_xml = "xml_commands.xml"   
         cmd_xml_elem = ["id_char", "lt_xaxis", "lt_yaxis", "rt_xaxis", "rt_yaxis", "a_button", "x_button", "k_value", "water_type"]
 
+
         """
         Initilizes the .xml files with values of zeros since this is only called 
-        upon once at startup of the ROV, initalizes sensor objects for continues use with the rov class.
+        upon once at startup of the ROV, initalizes sensor objects for continued use within
+        the rov class.
         Parameters:
-                sensor_xml - Programmer can change the file to open and use if wanted
-                command_xml - Programmer can change the file to open and use if wanted
+                sensor_xml_file - Programmer can change the file to open and use if wanted
+                command_xml_file - Programmer can change the file to open and use if wanted
+                atlas_xml_file - Programmer can change the file to open and use if wanted
         Return:
                 None 
         Notes:
-                ROV class initilization function called upon when ROV object is created.
+                ROV class initilization function called upon when ROV object is created in main
         """
         def __init__(self, sensor_xml_file=default_sensor_xml, command_xml_file=default_command_xml, atlas_xml_file=default_atlas_xml):
                 # Init imu sensor object
                 self.bno = BNO055.BNO055(i2c=3, rst=18)         # Create bno object that uses bitbanged i2c line (3)
                 try:
-                        # Must initialize imu sensor before reading it
+                        # Must initialize imu sensor before reading it checking each time in imu function takes approx 0.5 sec 
+                        # and is thus impractical
                         if not self.bno.begin():
                                 print("IMU sensor not initalized - rov_skeleton")
                 except:
@@ -54,18 +65,13 @@ class rov:
 
                 # Init temperature sensor object
                 self.temp_sensor = tsys01.TSYS01()              # Create temperature object that uses standard i2c line (1) 
-                #if not self.temp_sensor.init():
-                #    print("Error initializing temperature sensor.")         # Print not needed in final version
 
                 # Init pressure sensor object
                 self.pres_sensor = ms5837.MS5837_30BA()         # Create pressure object that uses standard i2c line (1) 
-                #if not self.pres_sensor.init():
-                #        print("Error initializing pressure sensor.")            # Print not needed in final version
-
 
                 # Initilize all values in commands.xml to defaults (0)
                 self.base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-                self.xml_file = os.path.join(self.base_path, command_xml_file)     # Join base_path with actual .xml file name
+                self.xml_file = os.path.join(self.base_path, command_xml_file)    # Join base_path with actual .xml file name
                 self.tree = et.parse(self.xml_file)                               # Save file into memory to work with its children/elements
                 self.root = self.tree.getroot()                                   # Returns root of the xml file to get access to all elements 
                 
@@ -78,7 +84,6 @@ class rov:
                 self.root.find("x_button").text = "0"        # Pressed("1") or not pressed("0")
                 self.root.find("k_value").text = "10"        # Our probe is 10
                 self.root.find("water_type").text = "salt"   # fresh or salt 
-
                 self.tree.write(self.xml_file)    # Saves all changes to the commands.xml on the SD card
 
                 # Initilize all values in sensors.xml to defaults (0)
@@ -94,12 +99,11 @@ class rov:
                 self.root1.find("S").text = "0" 
                 self.root1.find("E").text = "0" 
                 self.root1.find("W").text = "0" 
-
                 self.tree1.write(self.xml_file1)    # Saves all changes to the sensors.xml on the SD card
 
-                # Initilize all values in sensors.xml to defaults (0)
+                # Initilize all values in atlas.xml to defaults (0)
                 self.base_path2 = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-                self.xml_file2 = os.path.join(self.base_path2, atlas_xml_file)     # Join base_path with actual .xml file name
+                self.xml_file2 = os.path.join(self.base_path2, atlas_xml_file)      # Join base_path with actual .xml file name
                 self.tree2 = et.parse(self.xml_file2)                               # Save file into memory to work with its children/elements
                 self.root2 = self.tree2.getroot()                                   # Returns root of the xml file to get access to all elements 
 
@@ -107,32 +111,17 @@ class rov:
                 self.root2.find("pH").text = "pH"
                 self.root2.find("Salinity").text = "Cond"
                 self.root2.find("Dissolved_Oxygen").text = "DOxy"
-
                 self.tree2.write(self.xml_file2)    # Saves all changes to the sensors.xml on the SD card
                 return
 
 
-
         """
-        Reads a specific element from the commands.xml file for motor/ROV control and returns it
-        Parameters:
-                cmd_element - The element of interest within the xml 
-        Return:
-                The value from the xml of the element selected through cmd_element 
-        Notes:
-        """
-        def read_command_xml(self, cmd_element):
-                return self.root.find(cmd_element).text
-
-
-
-        """
-        Sends sensor data. Opens sensor.xml and combines all data into a comma delineated string 
-        and returns the string ready to send over the serial port 
+        Sends sensor data. Opens atlas.xml and checks if it is in use by atlas thread, if not it
+        combines all data into a comma delineated string and returns the string 
         Parameters:
                None 
         Return:
-               sensor_str - the concatinated sensor string e.g.: "S,pH,DO,Sal,Temp,Presure,Gyro1,Accel1,Error_addr;" 
+               sensor_str - the concatinated sensor string e.g.: "S,pH,DO,Sal,Temp,Presure,N,E,S,W;" 
         Notes:
                 Only used in conjunction with write_serial_port(), this function returns the string
                 we want to write to the serial port
@@ -156,55 +145,22 @@ class rov:
                                     self.root1.find("N").text + "," +  self.root1.find("E").text + "," + self.root1.find("S").text + "," +
                                     self.root1.find("W").text + ";") 
                 except:
-                        print("XMLXMLXML parse error.")
+                        print("XMLXMLXML parse error.")     # Debug print shows when atlas.xml is already open in atlas thread
                         pass
 
                 return sensor_str
 
 
-
         """
-        Limits the number of significant figures (chars) that each sensor data string can take
-        up in the sensor data string.
-        Parameters:
-                What parameters do I need? 
-        Return:
-                Do i return anything at all or just re-write to sensor.xml???
-        Notes:
-        """
-        def sig_fig_sensor_data(self):
-                # Create sensor string from sensor.xml 
-                sensor_str= (self.root1.find("Temperature").text + self.root1.find("Pressure").text + self.root1.find("pH").text + 
-                        self.root1.find("Salinity").text + self.root1.find("Dissolved_Oxygen").text + self.root1.find("Errored_Sensor").text + ";") 
-                return
-
-
-
-        """
-        Parses data received from serial port and writes it to .xml
-        Parameters:
-                list of parameters
-        Return:
-                Do we return any value?
-        Notes:
-        """
-        def parse_control_data(self):
-                # parse the data string from buffer then write each piece to .xml
-
-                # write_xml()        # writes to control.xml values of each control data pt.
-                return
-
-
-
-        """
-        Obtains temp, pressure, and IMU (quaternions: x,y,z,w) measurements
+        Obtains temp, pressure, and IMU (Euler angles tilt measurements (N,E,S,W)
         Parameters:
                 water_choice - chosen by the user at startup
         Return:
-                Binary orientation tuple of size 4. Where 1 denotes tilted past 45 degrees 
+                orientation - Binary orientation tuple of size 4. Where 1 denotes tilted past 45 degrees
+                depth - Depth of rov in PSI
         Notes:
         """
-        def get_essential_meas(self, water_choice, ec, do, ph):
+        def get_essential_meas(self, water_choice):
                 # Get Pressure measurement and write it to sensors.xml
                 depth = self.get_pressure(water_choice)
                 self.root1.find("Pressure").text = str(depth)
@@ -231,15 +187,15 @@ class rov:
 
         """
         Checks the orientation of the ROV and returns a binary tuple of 4 values that represent north,
-        south, east, and west. A 1 for any of the 4 values means that the rov is tilted past 45 degrees
-        in that direction. This means that at most there should only ever be at most 2 values that are 1.
-        This also writes the direction in which the ROV is tilting if any.
+        south, east, and west. A "1" for any of the 4 values means that the rov is tilted past 45 degrees
+        in that direction. This also writes that direction to the command center so the user can correct.
         Parameters:
                 Roll - The angle tilted off of the x-axis
                 Pitch - The angle tilted off of the y-axis
         Return:
-                Return binary tuple of horizontal coordinate plane where 1 means it is tilted past threshold 
+                Return binary tuple (size 4) of horizontal coordinate plane where 1 means it is tilted past threshold of 45 degrees 
         Notes:
+                At most only 2 of the 4 variables can be a 1 at any given time i.e. North east or southwest etc
         """
         def check_orientation(self, roll, pitch):
                 # Check to make sure IMU sensor is working
@@ -251,7 +207,6 @@ class rov:
                 s = "0"
                 e = "0"
                 w = "0"
-                tilt_data = "" 
                 
                 # Check if roll or pitch exceeds 45 degree threshold
                 if roll < -45: e = "1"
@@ -259,23 +214,8 @@ class rov:
 
                 if pitch < 45: s = "1"
                 elif pitch > 135: n = "1"
-                
-                '''Delete'''
-                # Write the error string to the sensor xml
-                if n == "1": tilt_data = "North"
-                elif s == "1": tilt_data = "South"
-                elif e == "1": tilt_data = "East"
-                elif w == "1": tilt_data = "West"
-                if n == "1" and e == "1": tilt_data = "Northeast"
-                elif s == "1" and e == "1": tilt_data = "Southeast"
-                elif n == "1" and w == "1": tilt_data = "Northwest"
-                elif s == "1" and w == "1": tilt_data = "Northwest"
-                
-                #print("Tilted past 45 degrees: ", tilt_data)
-                '''Delete'''
 
                 return n,s,e,w
-
 
 
         """
@@ -293,31 +233,29 @@ class rov:
                 len_eol = len(eol)
                 line_str = bytearray() 
                 while True:
-                        #ser.flushInput()        # Flush serial port
-                        char = ser.read(1)      # Read 1 byte or 1 char
+                        char = ser.read(1)          # Read 1 byte/character
                         if char:
-                                #print("charrrr::::::::::: ", char)
-                                #if char.decode() != ";":    # Is the current char the terminating char? No then append it.
                                 line_str += char    # Append a single char string to the line_str 
                                 if line_str[-len_eol:] == eol:                  # Check if char is terminating character
                                         break
-                                if size is not None and len(line_str) >= size:  # Check if message is exists in the buffer
+                                if size is not None and len(line_str) >= size:  # Check if message exists in the buffer
                                         break
-                        else:
-                                #print("NO CHARACTER TO READ")
+
+                        else:   # No bytes to read
                                 break
                 return bytes(line_str) 
 
 
         """
-        Pysically writes sensor array data to the tether to the command center terminated by a ';'  
+        Physically writes sensor string data to the tether to the command center terminated by a ';'  
         Parameters:
                 ser - The serial port object to read bytes of data
                 sensor_str - The sensor string we have to write to the tether
         Return:
                 None
         Notes:
-                Only used in conjunction with send_sensor_data() as the sensor_str input parameter
+                Only used in conjunction with send_sensor_data() as the sensor_str input parameter.
+                This is only ever called from main.py
         """
         def write_serial_port(self, ser, sensor_str):
                 # Open and write sensor_str to serial port
@@ -326,82 +264,16 @@ class rov:
                 return
 
 
-        """
-        DELETE ME
-        Writes each command data to the command.xml for motor use
-        Parameters:
-                cmd_str - A single rov command that will be writen to the commands.xml
-        Return:
-                None
-        Notes:
-        """
-        def write_cmd_xml(self, cmd_str):
-                cmd_list = cmd_str.split(",")           # Get list of each individual cmd from cmd center
-                i = 0
-                length = len(cmd_list)
-                print("Length of cmd_list: %d" % len(cmd_list))
-                if (length != 0 and length <= 9):
-                        for cmd in cmd_list:                    # Write each individual element at a time to the command.xml
-                                #self.write_xml("1", self.cmd_xml_elem[i], cmd)
-                                self.root.find(self.cmd_xml_elem[i]).text = cmd
-                                i += 1
-                else:
-                        print("command message is not greater than 1 or larger than 9")
-                return
-
-
 
         """
-        DELETE ME
-        Writes individual string data to a single element in the chosen xml file.
-        Parameters:
-                Select the xml to open, the element in the xml to overwrite, string to write to xml 
-        Return:
-                None 
-        Notes:
-        """
-        def write_xml(xml_choice, xml_element, string_data):
-                try:
-                        # Write to command.xml
-                        if xml_choice == "1":
-                                # Open command.xml for reading
-                                base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-                                xml_file = os.path.join(base_path, "xml_commands.xml")  # Join base_path with actual .xml file name
-                                tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
-                                root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
-                                
-                                # Write the new data to the element chosen
-                                root.find(xml_element).text = string_data
-                                tree.write(xml_file)    # Saves all changes to the command.xml
-
-                        # Write to sensor.xml
-                        elif xml_choice == "0":
-                                # Open command.xml for reading
-                                base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-                                xml_file = os.path.join(base_path, "xml_sensors.xml")   # Join base_path with actual .xml file name
-                                tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
-                                root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
-
-                                # Write the new data to the element chosen
-                                root.find(xml_element).text = string_data
-                                tree.write(xml_file)    # Saves all changes to the sensor.xml
-                        else:
-                                print("Error in write_xml() function of rov_skelton no xml was written to.")
-                except:
-                        print("Error writing temp or press to XML.")
-
-                return
-
-
-
-        """
-        Obtains a quaternion orientation packet "x,y,z,w" measurement from BNO055 sensor
-        Called only by get_essential_meas() part of rov class.
+        Obtains a Euler angle orientation heading, pitch, and roll measurement from BNO055 sensor
+        Called only by get_essential_meas() part of the rov class.
         Parameters:
                 None 
         Return:
-                Returns tuple of quaternion data, 3 vectors and the rotation about the vector
+                Returns tuple (size 2) of roll and pitch data 
         Notes:
+                If BNO055 is not read try to restart and return invalide roll and pitch values
         """
         def get_imu(self):
                 try:
@@ -420,42 +292,40 @@ class rov:
         Obtains a single pressure measurement from pressure sensor
         Called only by get_essential_meas() part of rov class.
         Parameters:
-                Water density chioce (salt/fresh watter) as string,
+                water_choice - Water density chioce (salt/fresh watter) as string,
         Return:
-                Returns Depth as float in meters, Prints Temp. as float in Celsius
+                depth - Depth as float in meters, Prints Temp. as float in Celsius
         Notes:
+                Returns "-1" if sensor is not connected
         """
         def get_pressure(self, water_choice):
-
-                # Create sensor object
-                #self.pres_sensor = ms5837.MS5837_30BA() # Default I2C bus is 1 (Raspberry Pi 3)
-                
+                # Check if pressure sensor is still there by initalizing it before each reading
                 try:
                         # Must initialize pressure sensor before reading it
                         if not self.pres_sensor.init():
-                                print("Error initializing pressure sensor.")            # Print not needed in final version
+                                print("Error initializing pressure sensor.")# Print debug 
                 except:
                         return "-1"
 
                 # Freshwater vs Saltwater depth measurements set via user input form cmd center
-                if water_choice == "1":
-                        # Saltwater
+                # default is freshwater if initalization packet is missed
+                if water_choice == "1":     # Saltwater
                         self.pres_sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
-                        freshwaterDepth = self.pres_sensor.depth() # default is freshwater
+                        freshwaterDepth = self.pres_sensor.depth() 
                         water_choice = "0"
-                elif water_choice == "0":
-                        # Freshwater
+
+                elif water_choice == "0":   # Freshwater
                         self.pres_sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
-                        freshwaterDepth = self.pres_sensor.depth() # default is freshwater
+                        freshwaterDepth = self.pres_sensor.depth() 
                         water_choice = "1"
+
                 else:
-                        print("Error on water density choice.")         # Print not needed in final version
+                        print("Error on water density choice.")             # Print debug 
 
                 if self.pres_sensor.read():
-                        depth = self.pres_sensor.pressure(ms5837.UNITS_psi)           # Get presure in psi
+                        depth = self.pres_sensor.pressure(ms5837.UNITS_psi) # Get presure in psi
                 else:
-                        print ("Error reading pressure sensor.")            # Print not needed in final version
-                        #exit(1)
+                        print ("Error reading pressure sensor.")            # Print debug 
                 return depth
 
 
@@ -466,30 +336,27 @@ class rov:
         Parameters:
                 None 
         Return:
-                Returns temperature as float in Celcius 
+                c_temp - temperature as float in Celcius 
         Notes:
+                Returns "-1" if sensor is not connected
         """
         def get_temperature(self):
-                # Create sensor object
-                #self.temp_sensor = tsys01.TSYS01()
-
+                # Check if temperature sensor is still there by initalizing it before each reading
                 try:
                         # Must initilize temp sensor object
                         if not self.temp_sensor.init():
-                            print("Error initializing temperature sensor.")         # Print not needed in final version
+                            print("Error initializing temperature sensor.")     # Print debug 
                 except:
                         return "-1"
 
                 # Read temp sensor once and save in c_temp variable
                 if not self.temp_sensor.read():
-                    print("Error reading temperature sensor.")          # Print not needed in final version
-                    #exit(1)
+                    print("Error reading temperature sensor.")                  # Print debug 
                 
-                c_temp = self.temp_sensor.temperature()                           # Get celcius temp
-                #####f_temp = sensor.temperature(tsys01.UNITS_Farenheit)     # Get farenheit temp
-                ######print("T: %.2f C\t%.2f F" % (c_temp, f_temp))           # Print not needed in final version
+                c_temp = self.temp_sensor.temperature()                         # Get celcius temp
                 
                 return c_temp 
+
 
         """
         Checks a passed string to determine if it is an int. It also accounts for '-'
@@ -498,7 +365,7 @@ class rov:
         Parameters:
                 s - String that will be checked if an integer value is present 
         Return:
-                True or False depending on if passed string is an integer. 
+                True/False - depending on if passed string is an integer. 
         Notes:
         """
         def check_int(self, s):
@@ -509,84 +376,5 @@ class rov:
                 return s.isdigit()
 
 
-
-############################################################
-################ ROV Class Helper functions#################
-############################################################
-
-
-"""
-Obtains a single pressure measurement from pressure sensor
-Called only by get_essential_meas() part of rov class.
-Parameters:
-        Water density chioce (salt/fresh watter) as string,
-Return:
-        Returns Depth as float in meters, Prints Temp. as float in Celsius
-Notes:
-"""
-def get_pressure(water_choice):
-
-        # Create sensor object
-        sensor = ms5837.MS5837_30BA() # Default I2C bus is 1 (Raspberry Pi 3)
-
-        # Must initialize pressure sensor before reading it
-        if not sensor.init():
-                print("Error initializing pressure sensor.")            # Print not needed in final version
-                exit(1)
-
-        # Freshwater vs Saltwater depth measurements set via user input form cmd center
-        if water_choice == "1":
-                # Saltwater
-                sensor.setFluidDensity(ms5837.DENSITY_SALTWATER)
-                freshwaterDepth = sensor.depth() # default is freshwater
-                water_choice = "0"
-        elif water_choice == "0":
-                # Freshwater
-                sensor.setFluidDensity(ms5837.DENSITY_FRESHWATER)
-                freshwaterDepth = sensor.depth() # default is freshwater
-                water_choice = "1"
-        else:
-                print("Error on water density choice.")         # Print not needed in final version
-
-        if sensor.read():
-                depth = sensor.pressure(ms5837.UNITS_psi)           # Get presure in psi
-                #####print("P: %0.4f m \t T: %0.2f C  %0.2f F\n" % (         # Print not needed in final version
-                ###depth,      # Sensor depth, either fresh or salf water depending on above
-                ###sensor.temperature(), # Default is degrees C (no arguments)
-                ###sensor.temperature(ms5837.UNITS_Farenheit))) # Request Farenheit
-        else:
-                print ("Error reading pressure sensor.")            # Print not needed in final version
-                exit(1)
-        return depth
-
-
-
-"""
-Obtains a single temperature measurement from termperature sensor
-Called only by get_essential_meas() part of rov class.
-Parameters:
-        None 
-Return:
-        Returns temperature as float in Celcius 
-Notes:
-"""
-def get_temperature():
-        # Create sensor object
-        sensor = tsys01.TSYS01()
-
-        # Must initilize temp sensor object
-        if not sensor.init():
-            print("Error initializing temperature sensor.")         # Print not needed in final version
-            exit(1)
-
-        # Read temp sensor once and save in c_temp variable
-        if not sensor.read():
-            print("Error reading temperature sensor.")          # Print not needed in final version
-            exit(1)
-        
-        c_temp = sensor.temperature()                           # Get celcius temp
-        #####f_temp = sensor.temperature(tsys01.UNITS_Farenheit)     # Get farenheit temp
-        ######print("T: %.2f C\t%.2f F" % (c_temp, f_temp))           # Print not needed in final version
-        
-        return c_temp 
+# End rov class functions
 

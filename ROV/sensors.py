@@ -3,11 +3,13 @@
 Texas A&M University
 Electronic Systems Engineering Technology
 ESET-420 Capstone II
-Author: SEAL
+Author: Atlas Scientific. Edits by: Landon Ledbetter
 File: sensor.py
 --------
-Contains all the sensor classes and functions that are use to 
-take sensor readings within the ROV
+Contains the atlas sensor class and functions that are use to 
+take sensor readings within the ROV this is run as a separate thread
+since the disolved oxygen, pH, and conductivity probes take approximately 3
+seconds to poll once.
 """
 
 import io         # used to create file streams
@@ -22,14 +24,11 @@ import xml.etree.ElementTree as et # For writing to xml file
 import os
 
 
-# Controls when the atlas sensor thread gets a measurement
-stop_flag = 1           # stop=1 and run=0
+# Global Variables
+stop_flag = 1           # stop=1 and run=0 controls when atlas sensor thread gets a measurement controlled by main.py
 kval = "10"             # Our probe is k10
 pres_comp_val = "101"   # Pres. compensation value is in kpa
 temp_comp_val = "25"    # Temp. compensation value is in Celsius
-ph_val = 7
-ec_val = 0
-do_val = 0
 
 class atlas_sensors(threading.Thread):
         long_timeout = 1.5                  # the timeout needed to query readings and calibrations
@@ -37,10 +36,6 @@ class atlas_sensors(threading.Thread):
         default_bus = 1                     # the default bus for I2C on the newer Raspberry Pis, certain older boards use bus 0
         default_address = 97                # the default address for the sensor
         current_addr = default_address
-
-        #kval = "10"
-        #pres_comp_val = ".3"
-        #temp_comp_val = "25"
 
         def __init__(self, address=default_address, bus=default_bus):
                 # open two file streams, one for reading and one for writing
@@ -65,12 +60,6 @@ class atlas_sensors(threading.Thread):
                 temp_comp_val = "25"
                 super(atlas_sensors, self).__init__()
                 self._stop_event = threading.Event()
-                global ph_val
-                ph_val = 7
-                global ec_val
-                ec_val = 0
-                global do_val
-                do_val = 0
 
         def terminate_thread(self):
                 self._stop_event.set()
@@ -174,7 +163,7 @@ class atlas_sensors(threading.Thread):
                 pres_in_kpa = 10 * pres_comp_val 
                 return pres_in_kpa
 
-        # Temperature value (as float)
+        # temperature value (as float)
         def set_temp_comp(self, new_temp):
                 global temp_comp_val
                 temp_comp_val = new_temp
@@ -183,36 +172,9 @@ class atlas_sensors(threading.Thread):
                 global temp_comp_val
                 return temp_comp_val
 
-        # pH value (as float)
-        def set_ph(self, ph):
-                global ph_val 
-                ph_val = ph
-
-        def get_ph(self):
-                global ph_val
-                return ph_val 
-        
-        # EC value (as float)
-        def set_ec(self, ec):
-                global ec_val
-                ec_val = ec
-        
-        def get_ec(self):
-                global ec_val
-                return ec_val
-
-        # DO value (as float)
-        def set_do(self, do):
-                global do_val
-                do_val = do
-
-        def get_do(self):
-                global do_val
-                return do_val
 
 def program():
         device = atlas_sensors()         # Creates the I2C port object, specify the address or bus if necessary
-
         try:
                 # Initalize Conductivity Sensor
                 device.set_i2c_address(100)
@@ -226,7 +188,6 @@ def program():
                         kval = "10"
                 device.query("K," + device.get_kval())        # Set default k parameter as 10
                 device.query("T,23")        # Set default temp as 23C 
-                #device.query("L,0")        # Disable EC LED
                 
                 # Initalize Dissolved Oxygen Sensor
                 device.set_i2c_address(97)
@@ -234,12 +195,11 @@ def program():
                 device.query("O,%,0")
                 device.query("T,23")        # Set default temp as 23C 
                 device.query("P,101")       # Set default pressure as 101kpa 
-                #device.query("L,0")        # Disable DO LED
 
                 # Initalize pH Sensor
                 device.set_i2c_address(99)
                 device.query("T,23")        # Set default temp as 23C 
-                #device.query("L,0")        # Disable pH LED
+
         except:
                 error = "Atlas Sensor Error: " 
 
@@ -249,23 +209,17 @@ def program():
         tree = et.parse(xml_file)                               # Save file into memory to work with its children/elements
         root = tree.getroot()                                   # Returns root of the xml file to get access to all elements 
 
-
-        # Initilize values used on atlas sensor measurements
-        salinity = 0                        # Holds salinity measurement for DO sensor
-
         # For while loop
         usr_input = "R"
-        num_sensors = 0             #Must do it once for each sensor
-        ec_error = 0
-        do_error = 0
-        ph_error = 0
+        num_sensors = 0     # Must do it once for each sensor
+        salinity = 0        # Holds salinity measurement for DO sensor
 
         # Get one DO, EC and pH sensor reading
         while num_sensors != 3:
                 while device.get_stop_flag() == 1:
                         # do nothing. If stop flag is 0 = go then do the below
                         time.sleep(1)
-                        dummyinput = "dummy variable"
+                        pass
 
                 #Set i2c address to poll each sensor once: EC=100, DO=97, pH=99        
                 if num_sensors == 0:
@@ -273,17 +227,14 @@ def program():
                                 device.set_i2c_address(100)
                                 print("Testing EC probe...")
 
-                                print(device.query("K," + str(device.get_kval())))              # Set K value of Salinity measurement default 10
-                                print(device.query("T," + str(device.get_temp_comp())))    # Set Temperature compensation value 
-                                ec_reading = (device.query("R")).split()        # Get Salinity measurement
+                                print(device.query("K," + str(device.get_kval())))      # Set K value of Salinity measurement default 10
+                                print(device.query("T," + str(device.get_temp_comp()))) # Set Temperature compensation value 
+                                ec_reading = (device.query("R")).split()                # Get Salinity measurement
                                 print(ec_reading[2])
                                 ######Must save salinity temp value for use below save in "salinity" variable
                                 root.find("Salinity").text = ec_reading[2]
-                                #device.set_ec_val(ec_reading[2])
-                                #ec_error = 0
                         except:
                                 # Return error value 
-                                #ec_error = -1
                                 root.find("Salinity").text = "-1" 
 
                 elif num_sensors == 1:
@@ -291,48 +242,32 @@ def program():
                                 device.set_i2c_address(97)
                                 print("Testing DO probe...")
 
-                                print(device.query("P," + str(device.get_pres_comp())))     # Set Pressure compensation value 
-                                ####print(device.query(salinity))                           # Set salinity compensation value 
-                                print(device.query("T," + str(device.get_temp_comp())))     # Set Temperature compensation value 
-                                do_reading = (device.query("R")).split()       # Get DO measurement and split the command into a list to get the measurement as a string
+                                print(device.query("P," + str(device.get_pres_comp()))) # Set Pressure compensation value 
+                                ####print(device.query(salinity))                       # Set salinity compensation value 
+                                print(device.query("T," + str(device.get_temp_comp()))) # Set Temperature compensation value 
+                                do_reading = (device.query("R")).split()                # Get DO measurement and split the command into a list to get the measurement as a string
                                 print(do_reading[2])
                                 root.find("Dissolved_Oxygen").text = do_reading[2]
-                                #device.set_do_val(do_reading[2])
-                                #do_error = 0
                         except:
                                 # Return error value 
-                                #do_error = -1
                                 root.find("Dissolved_Oxygen").text = "-1"
                 else:
                         try:
                                 device.set_i2c_address(99)
                                 print("Testing pH probe...")
 
-                                print(device.query("T," + str(device.get_temp_comp())))     # Set Temperature compensation value 
-                                ph_reading = (device.query("R")).split()        # Get pH measurement
+                                print(device.query("T," + str(device.get_temp_comp()))) # Set Temperature compensation value 
+                                ph_reading = (device.query("R")).split()                # Get pH measurement
                                 print(ph_reading[2])
                                 root.find("pH").text = ph_reading[2]
-                                #device.set_ph_val(ph_reading[2])
-                                #ph_error = 0
                         except:
                                 # Return error value 
                                 root.find("pH").text = "-1" 
-                                #ph_error = -1
                 
                 try:
                         tree.write(xml_file)         # Saves all changes to the sensors.xml on the SD card
                 except:
                         print("Error writing atlas sensors to xml")
-
-                """
-                if len(usr_input) == 0:
-                        print ("Please input valid command.")
-                else:
-                        try:
-                                print(device.query(usr_input))
-                        except IOError:
-                                print("Query failed \n - Address may be invalid, use List_addr command to see available addresses")
-                """
                 
                 #Increment to test the next sensor
                 num_sensors += 1
@@ -341,40 +276,5 @@ def program():
                         num_sensors = 0             #Reset this variable to restart upon new user input
                         device.set_stop_flag(1)     #Thread should stop now now since stop_flag = 1 
 
-###this stuff is block commented out since we will not be operating the atlas sensors from the cmd line
-""" 
-                if usr_input.upper().startswith("list_addr"):
-                        devices = device.list_i2c_devices()
-                        for i in range(len (devices)):
-                                print (devices[i])
-                # address command lets you change which address the raspberry pi will poll
-                elif usr_input.upper().startswith("address"):
-                        addr = int(string.split(usr_input, ',')[1])
-                        device.set_i2c_address(addr)
-                        print("i2c address set to " + str(addr))
-                # continuous polling command automatically polls the board
-                elif usr_input.upper().startswith("poll"):
-                        delaytime = float(string.split(usr_input, ',')[1])
-                        # check for polling time being too short, change it to the minimum timeout if too short
-                        if delaytime < atlas_sensors.long_timeout:
-                                print("polling time is shorter than timeout, setting polling time to %0.2f" % atlas_sensors.long_timeout)
-                                delaytime = atlas_sensors.long_timeout
-                        # get the information of the board you're polling
-                        info = string.split(device.query("i"), ",")[1]
-                        print("polling %s sensor every %0.2f seconds, press ctrl-c to stop polling" % (info, delaytime))
-                        try:
-                                while true:
-                                        print(device.query("r"))
-                                        time.sleep(delaytime - atlas_sensors.long_timeout)
-                        except keyboardinterrupt:                 # catches the ctrl-c command, which breaks the loop above
-                                print("continuous polling stopped")
-"""
-                # if not a special keyword, pass commands straight to board
-                #else:
+# End sensor.py file
 
-#this code (ie main loop) will only execute if we run this file as a program and it
-#will not execute when someone wants to just import it as a module and call
-#the functions available within the class atlas_sensors
-
-#if __name__ == '__main__':
-#        main()

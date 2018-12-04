@@ -2,7 +2,7 @@
 Texas A&M University
 Electronic Systems Engineering Technology
 ESET-420 Capstone II
-Author: Rogelio Casas Jr. 
+Author: Rogelio Casas Jr. Edits by: Landon Ledbetter 
 File: control.py
 --------------------------------------------------------------------------------------
 Contains the classes needed to control movement for the ROV. This is done by
@@ -12,7 +12,6 @@ It uses the PWM class that was created by PIGPIO for the PCA9685 module.
 
 import time
 import pigpio
-#import motors
 import control
 
 """
@@ -196,7 +195,7 @@ class control:
    Return:
       N/A
    """
-   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=25, w1_en2=8, off=30):   # enable 1 is 22, needs to be 25 via schematics
+   def __init__(self, pi=0, pwm=0, m1=0, m2=1, m3=2, m4=3, m5=4, m6=5, l1=6, w1=12, w1_en1=25, w1_en2=8, off=30): 
       self.pi = pi #pigpio.pi()
       #self.pi = pigpio.pi()
       self.pwm = PWM(self.pi)
@@ -218,7 +217,7 @@ class control:
       self.speed_m5 = 0 
       self.speed_m6 = 0 
       self.stabilize_var = 40   # 40 = 20% of motor speed
-      self.dead_band = 5000
+      self.dead_band = 5000     # Change deadband based on xbox controller resting joystick state
 
    """
    Sends the initialization signal to all motors, sets the light off, water pump
@@ -276,7 +275,8 @@ class control:
    Main function calls sub functions that handle what is done depending on the incoming
    x and y axis values from the left stick. Created a software deadband of +/- dead_band val set in
    __init__() to prevent jittering when the controller sticks are not touched. Tilts ROV in a single 
-   direction, downward (always negative speed values).
+   direction, downward (always positive speed values). Values set for motors 1-4 here are added to 
+   the values in right_stick_control() so that one resource is only set and used in a single place.
    Parameters:
       self - Needed for all functions in class
       left_x - Controller value from x-axis on left stick 
@@ -345,30 +345,21 @@ class control:
              self.speed_m2 = 0
              self.speed_m3 = 0
              self.speed_m4 = 0
-      #'''
-      #Check to see what direction it is going in the x axis
+
+      #Check to see what direction analog stick is going is going in the x axis
       if right_x > self.dead_band:
           self.rotate_ccw(self.norm_values(right_x-self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
-          #self.speed_m5 = (self.norm_values(right_x-self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
-          #self.speed_m6 = (self.norm_values(right_x-self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
       elif right_x < -self.dead_band:
           self.rotate_cw(self.norm_values(right_x+self.dead_band) * 2)
-          #self.speed_m5 = (self.norm_values(right_x+self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
-          #self.speed_m6 = (self.norm_values(right_x+self.dead_band) * 2)   # Mult by 2 to get full power since norm_vals returns half power
       else:
-          # If pause is pressed turn off all motors
-          #if right_y == self.dead_band and right_x == self.dead_band:
-          #   self.speed_m5 = 0
-          #   self.speed_m6 = 0
           self.pwm.set_pulse_width(self.m5, 1500 + self.offset)
           self.pwm.set_pulse_width(self.m6, 1500 + self.offset)
-      #'''
 
 
    """
    Sets motor speed for motors 1-4 as they are both used by the right and left joysticks
-   from the command center. Motors 5-6 are only changed by one therefore they are 
-   excluded.
+   from the command center. Motors 5-6 are only changed by one joystick therefore they are 
+   excluded, since they are set after identified in right_stick_control().
    Parameters:
       self - Needed for all functions in class
    Return:
@@ -406,27 +397,12 @@ class control:
          self.pwm.set_pulse_width(self.m4, 1475 + self.speed_m4 + self.offset)
       else:
          self.pwm.set_pulse_width(self.m4, 1500 + self.offset)
-    
-      '''
-      # Set motor 5 and 6 speed
-      if self.speed_m5 > 0 and self.speed_m6 > 0:
-         self.pwm.set_pulse_width(self.m5, 1525 + self.speed_m4 + self.offset)
-         self.pwm.set_pulse_width(self.m6, 1525 + self.speed_m4 + self.offset)
-      elif self.speed_m5 < 0 and self.speed_m6 < 0:
-         self.pwm.set_pulse_width(self.m5, 1475 + self.speed_m4 + self.offset)
-         self.pwm.set_pulse_width(self.m6, 1475 + self.speed_m4 + self.offset)
-      else:
-         self.pwm.set_pulse_width(self.m5, 1500 + self.offset)
-         self.pwm.set_pulse_width(self.m6, 1500 + self.offset)
-      '''
 
       # Reset motor speeds to avoid constant addition to class variable
       self.speed_m1 = 0
       self.speed_m2 = 0
       self.speed_m3 = 0
       self.speed_m4 = 0
-      #self.speed_m5 = 0
-      #self.speed_m6 = 0
 
 
    """
@@ -494,6 +470,10 @@ class control:
          self.pi.write(self.w1_en2, 1)
 
 
+'''
+Example program for how the above class should be utilized. This function is only run if
+this file is called on its own via "python control.py".
+'''
 if __name__ == "__main__":
 
    import time

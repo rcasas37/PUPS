@@ -2,7 +2,7 @@
 Texas A&M University
 Electronic Systems Engineering Technology
 ESET-420 Capstone II
-Author: SEAL
+Author: Landon Ledbetter
 File: main.py
 --------
 Contains the main loop and uses functions that run SEAL's rov. Including
@@ -38,7 +38,6 @@ def main():
         end_expedition = False 	    # Variable to end program's main
         depth = 20                  # Program terminates if depth is less than 16.867psi
         cmd_id = "0" 	            # Command ID stored as decimal number in python
-        cmd_input = "n"
         cmd_message = "p,0,0,0,0,0,0,0"     # Init command message list to store data recieved 
         cmd_list = [0,0,0,0,0,0,0]  # Init cmd_list to store data recieved minus the eol ";" into a list variable
         lt_xaxis = 0                # Variables to store cmd center data (below) 
@@ -50,8 +49,8 @@ def main():
         headlights = 0              # - 
         kval = "0"                  # - 
         water_type = "0"            # Variables to store cmd center data (above) 
-        error_count = 0
-        orient = [0,0,0,0,""]
+        error_count = 0             # Init error count for empty command packets
+        orient = ["0","0","0","0"]  # Init tilt orientation data
         
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
         rov = rov_skeleton.rov()		            # Init rov class/module instance
@@ -69,13 +68,11 @@ def main():
         # Open serial port communication
         ser = serial.Serial(port='/dev/ttyS0', baudrate=19200, parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS, timeout=0.010)
-
-
         ser.flushInput() # Flush serial port
 
         """
         Description While Loop:
-        Reads and writes to the tether.
+        Reads and writes to the tether/RPi serial port.
         Operates the ROV: controls the thrusters and takes sensor measurements.
         Logic to control the ROV's different states obtained from command center packets.
         """
@@ -83,9 +80,6 @@ def main():
                 try:
                         # Get control data from serial port
                         cmd_message = rov.read_serial_port(ser)         # Read from serial port
-
-                        # CRC Check here before we use the message
-
                         cmd_message = cmd_message.replace(";", "")      # Remove the eol ";" from the message to use the data
 
                         # Write sensor data to serial port 
@@ -101,8 +95,7 @@ def main():
                                 ser.flushInput() # Flush serial port
                                 continue
                         else:
-
-                                # If message is of length 8, 3, or 1 and not empty the pass onto normal operation of ROV
+                                # If message is of length 8, 3, or 1 and not empty, pass onto normal ROV operation
                                 if cmd_list[0] != '':
                                         # Print read results as debug
                                         print("*************************************************************************************************************************: ", msg_len)
@@ -110,7 +103,7 @@ def main():
                                 pass
 
                         # Save Command Center data into main.py variables
-                        if msg_len == 8:        # Data is normal ROV control packet 
+                        if msg_len == 8:            # Data is normal ROV control packet 
                                 cmd_id = cmd_list[0]
                                 if cmd_id == "C":
                                         # Check to ensure that the data is an integer before trying to convert string data to integer
@@ -127,28 +120,30 @@ def main():
                                         if rov.check_int(cmd_list[7]):
                                                 headlights = int(cmd_list[7])
                                 error_count = 0     # Got good data, reset error count
-                        elif msg_len == 3:      # Data is initalization packet
+
+                        elif msg_len == 3:          # Data is initalization packet
                                 cmd_id = cmd_list[0]
                                 if cmd_id == "z":
                                         kval = cmd_list[1]
                                         water_type = cmd_list[2]
                                 error_count = 0     # Got good data, reset error count
-                        elif msg_len == 1:      # Data is pause packet or no data received 
+
+                        elif msg_len == 1:          # Data is pause packet or no data received 
                                 cmd_id = cmd_list[0]
                                 if cmd_id == '':        # If no data is received
                                         #Shut off motors if count of bad messages > 10
                                         error_count += 1
                                         if error_count > 10:
                                                 # No data received, turn off thrusters, write normalized 0's (5000) to each motor axis to shut down 
-                                                print("10 bad messages")        # Print read results as debug
+                                                print("10 bad messages")    # Print debug
                                                 rov_control.left_stick_control(5000, 5000)
                                                 rov_control.right_stick_control(5000, 5000)
                                                 rov_control.set_motor_speed()
                                                 rov_control.water_pump_control(40, 0)
-                                                error_count = 0                 # Reset error count to avoid int overflow given long no connect
+                                                error_count = 0             # Reset error count to avoid int overflow given long no connect
                                         continue
-                        else:
-                                error_count = 0     # Got good data, reset error count
+                        else:           # Unexpected packet, go get next
+                                error_count = 0     # Reset error count
                                 continue
                         
                         # ROV Control based on packet received and parsed above into main.py variables
@@ -199,20 +194,16 @@ def main():
                                 pass
 
                         else:
-                                print("Error, invalid command ID value: ", cmd_id)
+                                print("Error, invalid command ID value: ", cmd_id)  # Debug print the errored cmd_id
 
                         # Get sensor measurements
                         if sensor_button == "1":    # Get all measurements
                                 print("water type: ", water_type)
-                                orient,depth = rov.get_essential_meas(water_type, atlas_sensor.get_ec(), atlas_sensor.get_do(), atlas_sensor.get_ph())        # get pressure and temp. 1st input = salt/fresh water (1/0)
+                                orient,depth = rov.get_essential_meas(water_type)        # get pressure, temp., and IMU input = salt/fresh water (1/0)
                                 atlas_sensor.set_stop_flag(0)       # 0=go get atlas sensor meas
 
                         else:                       # Get essential measurements only 
-                                orient,depth = rov.get_essential_meas(water_type, atlas_sensor.get_ec(), atlas_sensor.get_do(), atlas_sensor.get_ph())        # get pressure and temp. 1st input = salt/fresh water (1/0)
-
-                        # Reset cmd_list to zeros
-                        #cmd_list = ["C","0","0","0","0","0","0"] 
-
+                                orient,depth = rov.get_essential_meas(water_type)        # get pressure, temp., and IMU input = salt/fresh water (1/0)
 
                         """End While Loop"""
 
@@ -222,8 +213,6 @@ def main():
                         atlas_sensor.terminate_thread()
                         rov_control.disarm()
                         raise
-                        #return 0
-
 
         # Write sensor data to serial port for last time before quit 
         rov.write_serial_port(ser, rov.send_sensor_data())
