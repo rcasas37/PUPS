@@ -221,6 +221,12 @@ def main():
                         # Shut down thrusters and sensor thread
                         atlas_sensor.terminate_thread()
                         rov_control.disarm()
+
+                        # If rov does not exit correctly it could corrupt xml files which will cause it to crash on
+                        # next boot. Thus, added this to fix xmls after erroneous quit of main.py it just copies xml structure
+                        # to the xmls the main.py file utilizes
+                        os.system("cp xml_sen_backup.xml xml_sensors.xml")
+                        os.system("cp xml_at_backup.xml xml_atlas.xml")
                         raise
                         #return 0
 
