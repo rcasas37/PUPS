@@ -147,9 +147,9 @@ class atlas_sensors(threading.Thread):
         # Kval (as string)
         def set_kval(self, usr_kval):
                 global kval
-                if usr_val == "1":
+                if usr_kval == "1":
                     kval = "10" 
-                elif usr_val == "0":
+                elif usr_kval == "0":
                     kval = "1" 
 
         def get_kval(self):
