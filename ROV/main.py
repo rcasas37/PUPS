@@ -47,7 +47,7 @@ def main():
         collector_button = 0        # - 
         sensor_button = "0"         # - 
         headlights = 0              # - 
-        kval = "0"                  # - 
+        kval = "1"                  # - 
         water_type = "0"            # Variables to store cmd center data (above) 
         error_count = 0             # Init error count for empty command packets
         orient = ["0","0","0","0"]  # Init tilt orientation data
