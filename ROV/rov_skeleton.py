@@ -35,7 +35,6 @@ class rov:
         # rov class member variables
         default_sensor_xml = "xml_sensors.xml"   
         default_atlas_xml = "xml_atlas.xml"   
-        default_command_xml = "xml_commands.xml"   
         cmd_xml_elem = ["id_char", "lt_xaxis", "lt_yaxis", "rt_xaxis", "rt_yaxis", "a_button", "x_button", "k_value", "water_type"]
 
 
@@ -52,7 +51,7 @@ class rov:
         Notes:
                 ROV class initilization function called upon when ROV object is created in main
         """
-        def __init__(self, sensor_xml_file=default_sensor_xml, command_xml_file=default_command_xml, atlas_xml_file=default_atlas_xml):
+        def __init__(self, sensor_xml_file=default_sensor_xml, atlas_xml_file=default_atlas_xml):
                 # Init imu sensor object
                 self.bno = BNO055.BNO055(i2c=3, rst=18)         # Create bno object that uses bitbanged i2c line (3)
                 try:
@@ -68,23 +67,6 @@ class rov:
 
                 # Init pressure sensor object
                 self.pres_sensor = ms5837.MS5837_30BA()         # Create pressure object that uses standard i2c line (1) 
-
-                # Initilize all values in commands.xml to defaults (0)
-                self.base_path = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
-                self.xml_file = os.path.join(self.base_path, command_xml_file)    # Join base_path with actual .xml file name
-                self.tree = et.parse(self.xml_file)                               # Save file into memory to work with its children/elements
-                self.root = self.tree.getroot()                                   # Returns root of the xml file to get access to all elements 
-                
-                self.root.find("id_char").text = "0"         # C=control, p=stop motors, f=end mission, z=initialize probes
-                self.root.find("lt_xaxis").text = "0"        # -32000-32000
-                self.root.find("lt_yaxis").text = "0"        # -32000-32000
-                self.root.find("rt_xaxis").text = "0"        # -32000-32000
-                self.root.find("rt_yaxis").text = "0"        # -32000-32000
-                self.root.find("a_button").text = "0"        # Pressed("1") or not pressed("0")
-                self.root.find("x_button").text = "0"        # Pressed("1") or not pressed("0")
-                self.root.find("k_value").text = "10"        # Our probe is 10
-                self.root.find("water_type").text = "salt"   # fresh or salt 
-                self.tree.write(self.xml_file)    # Saves all changes to the commands.xml on the SD card
 
                 # Initilize all values in sensors.xml to defaults (0)
                 self.base_path1 = os.path.dirname(os.path.realpath(__file__)) # Returns the directory name as str of current dir and pass it the curruent dir being run 
