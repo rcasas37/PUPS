@@ -51,6 +51,9 @@ def main():
         water_type = "0"            # Variables to store cmd center data (above) 
         error_count = 0             # Init error count for empty command packets
         orient = ["0","0","0","0"]  # Init tilt orientation data
+        os.system("cp xml_sen_backup.xml xml_sensors.xml")
+        os.system("cp xml_at_backup.xml xml_atlas.xml")
+        time.sleep(.1)              # Ensure that the xml files are formated correctly on each boot
         
         # Initialize class objects and instances. (Also inits 2 xml files with default vals)
         rov = rov_skeleton.rov()		            # Init rov class/module instance
